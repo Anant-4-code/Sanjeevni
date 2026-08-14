@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import {
   Camera,
   ArrowLeft,
@@ -25,6 +25,7 @@ import {
   Check,
   Building2,
   Calendar,
+  AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -116,6 +117,9 @@ export default function UniversalScannerHubPage() {
   const [savingToVault, setSavingToVault] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
+  // Source tracking — true when backend returned placeholder data (no API keys)
+  const [isFallback, setIsFallback] = useState(false);
+
   // Form Fields for Digital Prescription
   const [rxTitle, setRxTitle] = useState("Scanned Prescription");
   const [doctorName, setDoctorName] = useState("Attending Physician");
@@ -189,6 +193,7 @@ export default function UniversalScannerHubPage() {
         const data = await res.json();
         if (data && data.analysis) {
           setDocAnalysis(data.analysis);
+          setIsFallback(data.is_fallback === true);
         } else {
           setDocAnalysis({
             title: `Scanned ${selectedCategory.replace('_', ' ').toUpperCase()} Report`,
@@ -200,6 +205,7 @@ export default function UniversalScannerHubPage() {
               { region: "Scanned Region", observation: "No acute focal abnormality detected." }
             ]
           });
+          setIsFallback(true);
         }
       }
     } catch (e) {
@@ -461,11 +467,29 @@ export default function UniversalScannerHubPage() {
         <div className="space-y-6">
           {docAnalysis ? (
             <div className="glass-card p-6 space-y-6">
+            {/* Fallback Warning Banner — shown when no LLM keys are configured */}
+            {isFallback && (
+              <div className="flex items-start gap-3 p-4 rounded-xl border border-amber-400 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700">
+                <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider mb-0.5">AI Analysis Unavailable — Placeholder Data Shown</p>
+                  <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
+                    The values below are <strong>not derived from your document</strong>. Our AI analysis service is temporarily unavailable (API keys not configured). Please consult your physician to review the actual report.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--border)] pb-4">
               <div>
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 mb-2">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> AI REPORT ANALYSIS COMPLETE
+                <span className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 mb-2 ${
+                  isFallback
+                    ? "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
+                    : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800"
+                }`}>
+                  {isFallback ? <AlertTriangle className="w-3.5 h-3.5" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                  {isFallback ? "PLACEHOLDER DATA — AI UNAVAILABLE" : "AI REPORT ANALYSIS COMPLETE"}
                 </span>
                 <h2 className="font-display text-xl sm:text-2xl font-bold">{docAnalysis.title || "Scanned Medical Report"}</h2>
                 <p className="text-xs text-[var(--fg-muted)] mt-1">
@@ -482,9 +506,16 @@ export default function UniversalScannerHubPage() {
             </div>
 
             {/* AI Executive Summary */}
-            <div className="glass-panel p-5 rounded-2xl space-y-2 border-emerald-300 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20">
-              <h3 className="font-bold text-sm text-emerald-900 dark:text-emerald-200 flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-emerald-600" /> AI Executive Clinical Summary
+            <div className={`glass-panel p-5 rounded-2xl space-y-2 ${
+              isFallback
+                ? "border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-950/20"
+                : "border-emerald-300 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20"
+            }`}>
+              <h3 className={`font-bold text-sm flex items-center gap-2 ${
+                isFallback ? "text-amber-900 dark:text-amber-200" : "text-emerald-900 dark:text-emerald-200"
+              }`}>
+                {isFallback ? <AlertTriangle className="w-4 h-4 text-amber-600" /> : <Sparkles className="w-4 h-4 text-emerald-600" />}
+                {isFallback ? "Placeholder Summary (Not from your document)" : "AI Executive Clinical Summary"}
               </h3>
               <p className="text-xs sm:text-sm text-[var(--fg)] leading-relaxed">
                 {docAnalysis.summary || "Document processed and archived in Vault."}

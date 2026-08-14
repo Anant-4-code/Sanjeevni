@@ -865,6 +865,7 @@ def analyze_medical_document_by_category(image_bytes: bytes, category: str) -> d
 
     if nvidia_key:
         try:
+
             payload = {
                 "model": "meta/llama-3.1-70b-instruct",
                 "messages": [{"role": "user", "content": prompt}],
@@ -888,6 +889,9 @@ def analyze_medical_document_by_category(image_bytes: bytes, category: str) -> d
                     text = text.split("```")[1].split("```")[0].strip()
                 parsed = json.loads(text)
                 if isinstance(parsed, dict):
+                    parsed["_source"] = "ai_llm"
+                    parsed["_model"] = "nvidia/llama-3.1-70b"
+                    parsed["_ocr_length"] = len(raw_ocr_text)
                     return parsed
         except Exception as e:
             print(f"NVIDIA NIM 70B document analysis failed: {e}")
@@ -916,11 +920,21 @@ def analyze_medical_document_by_category(image_bytes: bytes, category: str) -> d
                     text = text.split("```")[1].split("```")[0].strip()
                 parsed = json.loads(text)
                 if isinstance(parsed, dict):
+                    parsed["_source"] = "ai_llm"
+                    parsed["_model"] = "google/gemma-4-31b"
+                    parsed["_ocr_length"] = len(raw_ocr_text)
                     return parsed
         except Exception as e:
             print(f"Google Gemma document analysis failed: {e}")
 
+    # ── Static fallback — triggered only when both LLM keys are missing/failed ──
+    # NOTE: This returns placeholder data, NOT the patient's actual values.
+    # The _source="fallback_static" flag lets the frontend show a warning banner.
     return {
+        "_source": "fallback_static",
+        "_model": None,
+        "_ocr_length": len(raw_ocr_text),
+        "_warning": "AI analysis unavailable — API keys not configured or both LLM providers timed out. Results below are PLACEHOLDER data, not derived from your document.",
         "title": f"Scanned {category.replace('_', ' ').title()} Record",
         "facility_or_lab": "Diagnostic Laboratory",
         "summary": f"Uploaded physical {category.replace('_', ' ')} processed and archived.",
@@ -956,7 +970,14 @@ async def analyze_document(
         image_bytes = await image.read()
 
     analysis = analyze_medical_document_by_category(image_bytes, category)
-    return {"status": "success", "category": category, "analysis": analysis}
+    source = analysis.get("_source", "ai_llm")
+    return {
+        "status": "success",
+        "category": category,
+        "analysis": analysis,
+        "analysis_source": source,           # "ai_llm" | "fallback_static"
+        "is_fallback": source == "fallback_static",
+    }
 
 
 @router.post("/save-document-to-vault")
