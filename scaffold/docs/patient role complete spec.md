@@ -1209,32 +1209,32 @@ CREATE TABLE copilot_refused_queries (
 
 ---
 
-## 9.9 Reminders & Notifications
+        ## 9.9 Reminders & Notifications
 
-| Feature | Sub-Feature | Status |
-|---|---|---|
-| **Dose Reminders** | Push notification at scheduled dose time | ✅ Built |
-| | Service worker background delivery | ✅ Built |
-| **Missed Dose Escalation** | +30 min gentle re-ping | 📋 Planned (§8.4) |
-| | +2 hr non-dismissable in-app banner | 📋 Planned |
-| | Caregiver notification on missed dose | 📋 Planned (§8.3 + §8.4) |
-| **Lab/Appointment Reminders** | "CBC re-check due" card from `diagnostic_orders` | 📋 Planned (§8.4) |
-| | Calendar entry creation on "Remind Me" tap | 📋 Planned |
-| **WhatsApp/SMS Deep Link** | Notification delivery via WhatsApp or SMS link | ✅ Built |
+        | Feature | Sub-Feature | Status |
+        |---|---|---|
+        | **Dose Reminders** | Push notification at scheduled dose time | ✅ Built |
+        | | Service worker background delivery | ✅ Built |
+        | **Missed Dose Escalation** | +30 min gentle re-ping | 📋 Planned (§8.4) |
+        | | +2 hr non-dismissable in-app banner | 📋 Planned |
+        | | Caregiver notification on missed dose | 📋 Planned (§8.3 + §8.4) |
+        | **Lab/Appointment Reminders** | "CBC re-check due" card from `diagnostic_orders` | 📋 Planned (§8.4) |
+        | | Calendar entry creation on "Remind Me" tap | 📋 Planned |
+        | **WhatsApp/SMS Deep Link** | Notification delivery via WhatsApp or SMS link | ✅ Built |
 
----
+        ---
 
-## 9.10 Symptom & Wellbeing Journal
+        ## 9.10 Symptom & Wellbeing Journal
 
-| Feature | Sub-Feature | Status |
-|---|---|---|
-| **Daily Check-In Widget** | 1–5 emoji wellbeing scale entry | 📋 Planned (§8.2) |
-| | Optional free-text note (max 280 chars) | 📋 Planned |
-| | Tag to a specific active medicine | 📋 Planned |
-| | One entry per day per patient | 📋 Planned |
-| **Disclaimer Label** | "This is your personal log — not medical advice" | 📋 Planned |
-| **Doctor View** | Symptom timeline visible in doctor history portal | 📋 Planned |
-| **Visit Prep Feed** | Low wellbeing days + notes appear in Visit Prep | 📋 Planned (§8.8) |
+        | Feature | Sub-Feature | Status |
+        |---|---|---|
+        | **Daily Check-In Widget** | 1–5 emoji wellbeing scale entry | 📋 Planned (§8.2) |
+        | | Optional free-text note (max 280 chars) | 📋 Planned |
+        | | Tag to a specific active medicine | 📋 Planned |
+        | | One entry per day per patient | 📋 Planned |
+        | **Disclaimer Label** | "This is your personal log — not medical advice" | 📋 Planned |
+        | **Doctor View** | Symptom timeline visible in doctor history portal | 📋 Planned |
+        | **Visit Prep Feed** | Low wellbeing days + notes appear in Visit Prep | 📋 Planned (§8.8) |
 
 ---
 

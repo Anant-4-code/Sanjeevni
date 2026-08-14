@@ -104,27 +104,28 @@ export function Navbar() {
             })}
           </nav>
 
-          {/* Profile Menu Dropdown */}
-          <div className="relative flex-shrink-0" ref={dropdownRef}>
-            <button
-              onClick={() => setProfileOpen(!profileOpen)}
-              className="flex items-center gap-2 border border-[var(--border)] bg-[var(--bg-elevated)] hover:border-[var(--fg)] pl-1.5 pr-3 py-1 rounded-full text-xs font-bold transition-all shadow-sm"
-              suppressHydrationWarning
-            >
-              {mounted && user?.avatar_url ? (
-                <img
-                  src={user.avatar_url}
-                  alt={user.full_name || "User Avatar"}
-                  className="w-5 h-5 rounded-full object-cover border border-[var(--border)]"
-                />
-              ) : (
-                <div className="w-5 h-5 rounded-full bg-[var(--bg-muted)] flex items-center justify-center text-[10px] font-extrabold text-[var(--fg)]">
-                  {mounted && user?.full_name ? user.full_name[0].toUpperCase() : "P"}
-                </div>
-              )}
-              <span suppressHydrationWarning>{mounted && user?.full_name ? user.full_name.split(" ")[0] : "Patient"}</span>
-              <ChevronDown className={`w-3.5 h-3.5 text-[var(--fg-muted)] transition-transform ${profileOpen ? "rotate-180" : ""}`} />
-            </button>
+          <div className="relative" ref={dropdownRef}>
+            {mounted ? (
+              <button
+                onClick={() => setProfileOpen(!profileOpen)}
+                className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-full hover:bg-[var(--bg-muted)] transition-colors"
+              >
+                {user?.avatar_url ? (
+                  <img
+                    src={user.avatar_url}
+                    alt={user.full_name || "User"}
+                    className="w-7 h-7 rounded-full object-cover border border-[var(--border)]"
+                  />
+                ) : (
+                  <div className="w-7 h-7 rounded-full bg-[var(--bg-muted)] flex items-center justify-center font-bold text-[10px]">
+                    {user?.full_name ? user.full_name[0].toUpperCase() : "P"}
+                  </div>
+                )}
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${profileOpen ? "rotate-180" : ""}`} />
+              </button>
+            ) : (
+              <div className="w-9 h-7 rounded-full bg-[var(--bg-muted)] animate-pulse" />
+            )}
 
             {/* Dropdown Menu */}
             {profileOpen && (

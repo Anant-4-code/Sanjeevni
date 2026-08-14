@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   ArrowLeft,
   Globe,
@@ -22,10 +22,40 @@ import {
   UserPlus,
   RefreshCw,
   Sparkles,
+  AlertTriangle,
+  AlertOctagon,
+  Plus,
+  Trash2,
+  ShieldAlert,
+  ShieldCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth, AVAILABLE_DOCTORS, DoctorInfo } from "@/context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
+import { AVAILABLE_DOCTORS, DoctorInfo } from "@/constants/doctors";
+
+const FALLBACK_DOCTOR: DoctorInfo = {
+  id: "doc-1",
+  name: "Dr. G. Mithun",
+  specialty: "Consultant Neuro Surgeon",
+  category: "Neurosurgery",
+  hospital: "Manikanta Neuro Centre, Kakaji Colony",
+  phone: "+91 99899 85777",
+  available_hours: "Mon - Sat: 10:00 AM - 02:00 PM, 06:00 PM - 09:00 PM",
+  avatar_url: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=150&q=80",
+};
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000/api";
+
+type AllergyItem = {
+  id: string;
+  substance: string;
+  reaction: string;
+  severity: "mild" | "moderate" | "severe";
+  reported_by: "patient" | "doctor";
+  doctor_confirmed: boolean;
+  created_at?: string;
+};
 
 const PRESET_AVATARS = [
   "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80",
@@ -64,8 +94,33 @@ export default function SettingsPage() {
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
   const [doctorModalOpen, setDoctorModalOpen] = useState(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState("");
+  const [selectedSpecialtyTab, setSelectedSpecialtyTab] = useState("All");
 
-  const currentDoctor = user?.primary_doctor || AVAILABLE_DOCTORS[0];
+  // §5 Allergy Profile State
+  const [allergies, setAllergies] = useState<AllergyItem[]>([]);
+  const [showAddAllergy, setShowAddAllergy] = useState(false);
+  const [newSubstance, setNewSubstance] = useState("");
+  const [newReaction, setNewReaction] = useState("");
+  const [newSeverity, setNewSeverity] = useState<"mild" | "moderate" | "severe">("mild");
+  const [allergyLoading, setAllergyLoading] = useState(false);
+
+  const currentDoctor = user?.primary_doctor || (AVAILABLE_DOCTORS && AVAILABLE_DOCTORS[0]) || FALLBACK_DOCTOR;
+  const activeCareTeam = user?.care_team && user.care_team.length > 0 ? user.care_team : [currentDoctor];
+
+  const fetchAllergies = async () => {
+    try {
+      const pid = user?.id || "demo-patient";
+      const res = await fetch(`${API_BASE}/patient/${pid}/allergies`);
+      const data = await res.json();
+      if (data.allergies) {
+        setAllergies(data.allergies);
+      }
+    } catch {}
+  };
+
+  useEffect(() => {
+    fetchAllergies();
+  }, [user?.id]);
 
   const initials = user?.full_name
     ? user.full_name
@@ -79,6 +134,31 @@ export default function SettingsPage() {
   function handleSignOut() {
     logout();
     router.push("/login");
+  }
+
+  function handleSetLeadDoctor(doc: DoctorInfo) {
+    const isAlreadyInTeam = activeCareTeam.some((d) => d.id === doc.id);
+    const nextTeam = isAlreadyInTeam ? activeCareTeam : [...activeCareTeam, doc];
+    updateProfile({ primary_doctor: doc, care_team: nextTeam });
+    triggerSuccessToast(`${doc.name} assigned as Lead Primary Doctor!`);
+  }
+
+  function handleToggleCareTeamDoctor(doc: DoctorInfo) {
+    const isAlreadyInTeam = activeCareTeam.some((d) => d.id === doc.id);
+    if (isAlreadyInTeam) {
+      if (activeCareTeam.length <= 1) {
+        triggerSuccessToast("You must maintain at least one specialist in your Care Team.");
+        return;
+      }
+      const nextTeam = activeCareTeam.filter((d) => d.id !== doc.id);
+      const nextPrimary = currentDoctor.id === doc.id ? nextTeam[0] : currentDoctor;
+      updateProfile({ care_team: nextTeam, primary_doctor: nextPrimary });
+      triggerSuccessToast(`${doc.name} removed from your Care Team.`);
+    } else {
+      const nextTeam = [...activeCareTeam, doc];
+      updateProfile({ care_team: nextTeam });
+      triggerSuccessToast(`${doc.name} (${doc.category || doc.specialty}) added to your Care Team!`);
+    }
   }
 
   function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -111,6 +191,45 @@ export default function SettingsPage() {
     updateProfile({ primary_doctor: doc });
     setDoctorModalOpen(false);
     triggerSuccessToast(`Primary doctor assigned to ${doc.name}!`);
+  }
+
+  async function handleAddAllergySubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newSubstance.trim() || allergyLoading) return;
+    setAllergyLoading(true);
+    try {
+      const pid = user?.id || "demo-patient";
+      const res = await fetch(`${API_BASE}/patient/allergy`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          patient_id: pid,
+          substance: newSubstance.trim(),
+          reaction: newReaction.trim(),
+          severity: newSeverity,
+          reported_by: "patient",
+        }),
+      });
+      const data = await res.json();
+      if (data.allergy) {
+        setAllergies((prev) => [data.allergy, ...prev]);
+        setNewSubstance("");
+        setNewReaction("");
+        setNewSeverity("mild");
+        setShowAddAllergy(false);
+        triggerSuccessToast(`Allergy to ${data.allergy.substance} recorded!`);
+      }
+    } catch {} finally {
+      setAllergyLoading(false);
+    }
+  }
+
+  async function handleDeleteAllergy(id: string, substance: string) {
+    try {
+      await fetch(`${API_BASE}/patient/allergy/${id}`, { method: "DELETE" });
+      setAllergies((prev) => prev.filter((a) => a.id !== id));
+      triggerSuccessToast(`Allergy record for ${substance} removed.`);
+    } catch {}
   }
 
   function triggerSuccessToast(msg: string) {
@@ -211,7 +330,7 @@ export default function SettingsPage() {
 
         {/* Right Column: Primary Doctor Assignment & Preferences */}
         <div className="lg:col-span-2 space-y-6">
-          {/* PRIMARY DOCTOR & CARE TEAM SECTION */}
+          {/* MULTI-SPECIALIST CARE TEAM SECTION */}
           <div className="glass-card p-6 space-y-5 border-2 border-[var(--border)]">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border)] pb-4">
               <div className="flex items-center gap-3">
@@ -219,8 +338,13 @@ export default function SettingsPage() {
                   <Stethoscope className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-display text-base font-bold">Assigned Primary Doctor</h3>
-                  <p className="text-xs text-[var(--fg-muted)]">Your lead clinician for consultations & prescription sign-offs</p>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-display text-base font-bold">Care Team & Specialist Network</h3>
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider bg-[var(--bg-muted)] text-[var(--fg-muted)] px-2 py-0.5 rounded-full border border-[var(--border)]">
+                      {activeCareTeam.length} {activeCareTeam.length === 1 ? "Specialist" : "Specialists"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[var(--fg-muted)]">Assigned clinicians across departments coordinating your healthcare</p>
                 </div>
               </div>
 
@@ -228,54 +352,221 @@ export default function SettingsPage() {
                 onClick={() => setDoctorModalOpen(true)}
                 className="px-4 py-2 bg-[var(--fg)] text-[var(--bg)] rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 hover:opacity-90 transition-opacity self-start shadow-sm"
               >
-                <UserCheck className="w-3.5 h-3.5" /> Change Doctor →
+                <UserPlus className="w-3.5 h-3.5" /> Manage Specialists +
               </button>
             </div>
 
-            {/* Current Doctor Card */}
-            <div className="glass-panel p-5 rounded-2xl border border-[var(--border)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl overflow-hidden border border-[var(--border)] flex-shrink-0 bg-neutral-100 dark:bg-neutral-800">
-                  {currentDoctor.avatar_url ? (
-                    <img
-                      src={currentDoctor.avatar_url}
-                      alt={currentDoctor.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center font-bold text-lg">
-                      {currentDoctor.name.slice(4, 6)}
+            {/* Care Team Grid */}
+            <div className="space-y-3">
+              {activeCareTeam.map((doc) => {
+                const isLead = currentDoctor.id === doc.id;
+                return (
+                  <div
+                    key={doc.id}
+                    className={`glass-panel p-4 rounded-2xl border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
+                      isLead
+                        ? "border-emerald-500/80 bg-emerald-50/20 dark:bg-emerald-950/20 shadow-sm"
+                        : "border-[var(--border)]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-12 h-12 rounded-xl overflow-hidden border border-[var(--border)] flex-shrink-0 bg-neutral-100 dark:bg-neutral-800">
+                        {doc.avatar_url ? (
+                          <img
+                            src={doc.avatar_url}
+                            alt={doc.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center font-bold text-sm">
+                            {doc.name.slice(4, 6)}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-0.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h4 className="font-bold text-sm text-[var(--fg)]">{doc.name}</h4>
+                          <span className="text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-blue-300 dark:border-blue-800 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+                            {doc.category || "Specialist"}
+                          </span>
+                          {isLead && (
+                            <span className="text-[9px] font-mono font-bold uppercase tracking-wider bg-emerald-600 text-white px-2 py-0.5 rounded-full shadow-sm">
+                              ⭐ Primary Lead
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-[var(--fg-muted)] font-medium">{doc.specialty}</p>
+                        <p className="text-[11px] text-[var(--fg-muted)] flex items-center gap-1">
+                          <Building2 className="w-3 h-3" /> {doc.hospital}
+                        </p>
+                      </div>
                     </div>
-                  )}
-                </div>
 
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-bold text-base text-[var(--fg)]">{currentDoctor.name}</h4>
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800">
-                      Active Lead
-                    </span>
+                    <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-2 border-t sm:border-t-0 pt-2 sm:pt-0">
+                      {doc.phone && (
+                        <p className="text-[11px] font-mono text-[var(--fg-muted)] flex items-center gap-1">
+                          <Phone className="w-3 h-3" /> {doc.phone}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-1.5">
+                        {!isLead && (
+                          <button
+                            onClick={() => handleSetLeadDoctor(doc)}
+                            className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border border-[var(--border)] hover:border-emerald-500 hover:text-emerald-600 transition-colors"
+                          >
+                            Make Lead
+                          </button>
+                        )}
+                        {activeCareTeam.length > 1 && (
+                          <button
+                            onClick={() => handleToggleCareTeamDoctor(doc)}
+                            className="p-1.5 text-[var(--fg-muted)] hover:text-red-500 rounded-full hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+                            title="Remove Specialist"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-xs font-semibold text-[var(--fg-muted)]">{currentDoctor.specialty}</p>
-                  <p className="text-xs text-[var(--fg-muted)] flex items-center gap-1">
-                    <Building2 className="w-3.5 h-3.5" /> {currentDoctor.hospital}
-                  </p>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* §5: ALLERGY & KNOWN REACTION PROFILE */}
+          <div className="glass-card p-6 space-y-5 border-2 border-[var(--border)]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border)] pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 flex items-center justify-center text-amber-600">
+                  <ShieldAlert className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-display text-base font-bold">Allergy & Reaction Profile</h3>
+                  <p className="text-xs text-[var(--fg-muted)]">Cross-checked during OTC scans & prescription intake</p>
                 </div>
               </div>
 
-              <div className="space-y-1.5 text-xs text-[var(--fg-muted)] sm:text-right border-t sm:border-t-0 pt-3 sm:pt-0 w-full sm:w-auto">
-                {currentDoctor.phone && (
-                  <p className="flex items-center sm:justify-end gap-1 font-mono">
-                    <Phone className="w-3.5 h-3.5" /> {currentDoctor.phone}
-                  </p>
-                )}
-                {currentDoctor.available_hours && (
-                  <p className="flex items-center sm:justify-end gap-1 text-[11px]">
-                    <Clock className="w-3.5 h-3.5" /> {currentDoctor.available_hours}
-                  </p>
-                )}
-              </div>
+              <button
+                onClick={() => setShowAddAllergy(!showAddAllergy)}
+                className="px-4 py-2 bg-[var(--fg)] text-[var(--bg)] rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 hover:opacity-90 transition-opacity self-start shadow-sm"
+              >
+                <Plus className="w-3.5 h-3.5" /> {showAddAllergy ? "Cancel" : "Add Allergy +"}
+              </button>
             </div>
+
+            {/* Add Allergy Inline Form */}
+            {showAddAllergy && (
+              <form onSubmit={handleAddAllergySubmit} className="glass-panel p-4 rounded-2xl border border-[var(--border)] space-y-3 animate-fade-in">
+                <p className="text-xs font-mono uppercase tracking-wider font-bold text-[var(--fg-muted)]">Declare Known Allergy</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-mono text-[var(--fg-muted)] block mb-1">Substance / Drug Name *</label>
+                    <input
+                      type="text"
+                      value={newSubstance}
+                      onChange={(e) => setNewSubstance(e.target.value)}
+                      placeholder="e.g. Penicillin, Aspirin, Ibuprofen..."
+                      required
+                      className="w-full bg-[var(--bg-muted)] border border-[var(--border)] rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[var(--fg)]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-mono text-[var(--fg-muted)] block mb-1">Reaction / Symptoms</label>
+                    <input
+                      type="text"
+                      value={newReaction}
+                      onChange={(e) => setNewReaction(e.target.value)}
+                      placeholder="e.g. Skin Rash, Hives, Swelling..."
+                      className="w-full bg-[var(--bg-muted)] border border-[var(--border)] rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[var(--fg)]"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between gap-3 pt-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-mono text-[var(--fg-muted)]">Severity:</span>
+                    {(["mild", "moderate", "severe"] as const).map((sev) => (
+                      <button
+                        type="button"
+                        key={sev}
+                        onClick={() => setNewSeverity(sev)}
+                        className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border transition-all ${
+                          newSeverity === sev
+                            ? sev === "severe"
+                              ? "bg-red-600 text-white border-red-600"
+                              : sev === "moderate"
+                              ? "bg-amber-600 text-white border-amber-600"
+                              : "bg-emerald-600 text-white border-emerald-600"
+                            : "border-[var(--border)] hover:border-[var(--fg)] text-[var(--fg-muted)]"
+                        }`}
+                      >
+                        {sev}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={!newSubstance.trim() || allergyLoading}
+                    className="px-4 py-2 bg-[var(--accent)] text-[var(--accent-foreground)] rounded-full text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-opacity disabled:opacity-40"
+                  >
+                    Save Record
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Existing Allergies List */}
+            {allergies.length === 0 ? (
+              <div className="py-6 text-center text-xs text-[var(--fg-muted)]">
+                <ShieldCheck className="w-8 h-8 mx-auto mb-2 text-emerald-600 opacity-60" />
+                <p className="font-bold">No declared drug or food allergies on file.</p>
+                <p className="text-[11px] text-[var(--fg-muted)] mt-0.5">Add known reactions to protect OTC and prescription checks.</p>
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {allergies.map((alg) => (
+                  <div
+                    key={alg.id}
+                    className="glass-panel p-3.5 rounded-xl border border-[var(--border)] flex items-center justify-between gap-3"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-sm text-[var(--fg)]">{alg.substance}</span>
+                        <span
+                          className={`text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                            alg.severity === "severe"
+                              ? "bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 border-red-300 dark:border-red-800"
+                              : alg.severity === "moderate"
+                              ? "bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800"
+                              : "bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800"
+                          }`}
+                        >
+                          {alg.severity}
+                        </span>
+                        {alg.doctor_confirmed && (
+                          <span className="text-[9px] font-mono font-bold uppercase tracking-wider bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full border border-blue-300 dark:border-blue-800">
+                            Doctor Confirmed
+                          </span>
+                        )}
+                      </div>
+                      {alg.reaction && (
+                        <p className="text-xs text-[var(--fg-muted)]">Reaction: {alg.reaction}</p>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={() => handleDeleteAllergy(alg.id, alg.substance)}
+                      className="p-1.5 text-[var(--fg-muted)] hover:text-red-500 rounded-full hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+                      title="Remove Allergy Record"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Settings Navigation Menu */}
@@ -374,10 +665,10 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* PRIMARY DOCTOR ASSIGNMENT MODAL */}
+      {/* MULTI-SPECIALIST CARE TEAM ASSIGNMENT MODAL */}
       {doctorModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="glass-card max-w-xl w-full p-6 sm:p-8 relative shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
+          <div className="glass-card max-w-2xl w-full p-6 sm:p-8 relative shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setDoctorModalOpen(false)}
               className="absolute right-4 top-4 text-[var(--fg-muted)] hover:text-[var(--fg)] p-1.5 rounded-full border border-[var(--border)]"
@@ -390,61 +681,123 @@ export default function SettingsPage() {
                 <Stethoscope className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-display text-xl font-bold">Assign Primary Doctor</h3>
-                <p className="text-xs text-[var(--fg-muted)]">Choose your lead physician for direct care coordination</p>
+                <h3 className="font-display text-xl font-bold">Manage Care Team & Specialists</h3>
+                <p className="text-xs text-[var(--fg-muted)]">
+                  Assign specialist clinicians across departments to your coordinated health network
+                </p>
               </div>
             </div>
 
-            <div className="space-y-3">
-              {AVAILABLE_DOCTORS.map((doc) => {
-                const isSelected = currentDoctor.id === doc.id;
-                return (
-                  <div
-                    key={doc.id}
-                    className={`glass-panel p-4 rounded-2xl border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
-                      isSelected
-                        ? "border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/30 shadow-md"
-                        : "border-[var(--border)] hover:border-[var(--fg)]"
+            {/* Specialty Filter Tabs */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-[var(--border)]">
+              {["All", "Neurosurgery", "Neurology", "Internal Medicine", "Cardiology", "Orthopedics", "Endocrinology & Diabetes"].map(
+                (tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setSelectedSpecialtyTab(tab)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold tracking-wider transition-all whitespace-nowrap ${
+                      selectedSpecialtyTab === tab
+                        ? "bg-[var(--fg)] text-[var(--bg)] shadow-sm"
+                        : "border border-[var(--border)] hover:bg-[var(--bg-muted)] text-[var(--fg-muted)]"
                     }`}
                   >
-                    <div className="flex items-center gap-3.5">
-                      <div className="w-12 h-12 rounded-xl overflow-hidden border border-[var(--border)] flex-shrink-0 bg-neutral-100 dark:bg-neutral-800">
-                        {doc.avatar_url ? (
-                          <img src={doc.avatar_url} alt={doc.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center font-bold text-sm">
-                            {doc.name.slice(4, 6)}
-                          </div>
-                        )}
-                      </div>
+                    {tab}
+                  </button>
+                )
+              )}
+            </div>
 
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-sm text-[var(--fg)]">{doc.name}</h4>
-                          {isSelected && (
-                            <span className="text-[9px] font-mono font-bold uppercase tracking-wider bg-emerald-600 text-white px-2 py-0.5 rounded-full">
-                              Current
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-[var(--fg-muted)] font-medium">{doc.specialty}</p>
-                        <p className="text-[11px] text-[var(--fg-muted)]">{doc.hospital}</p>
-                      </div>
-                    </div>
+            {/* Doctors List */}
+            <div className="space-y-3">
+              {(AVAILABLE_DOCTORS || [FALLBACK_DOCTOR])
+                .filter((doc) =>
+                  selectedSpecialtyTab === "All" ? true : doc.category === selectedSpecialtyTab
+                )
+                .map((doc) => {
+                  const isInCareTeam = activeCareTeam.some((d) => d.id === doc.id);
+                  const isLead = currentDoctor.id === doc.id;
 
-                    <button
-                      onClick={() => handleSelectDoctor(doc)}
-                      className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
-                        isSelected
-                          ? "bg-emerald-600 text-white cursor-default"
-                          : "bg-[var(--fg)] text-[var(--bg)] hover:opacity-90"
+                  return (
+                    <div
+                      key={doc.id}
+                      className={`glass-panel p-4 rounded-2xl border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
+                        isLead
+                          ? "border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/30 shadow-md"
+                          : isInCareTeam
+                          ? "border-blue-400/60 bg-blue-50/20 dark:bg-blue-950/20"
+                          : "border-[var(--border)] hover:border-[var(--fg)]"
                       }`}
                     >
-                      {isSelected ? "Assigned" : "Assign →"}
-                    </button>
-                  </div>
-                );
-              })}
+                      <div className="flex items-center gap-3.5">
+                        <div className="w-13 h-13 rounded-xl overflow-hidden border border-[var(--border)] flex-shrink-0 bg-neutral-100 dark:bg-neutral-800">
+                          {doc.avatar_url ? (
+                            <img
+                              src={doc.avatar_url}
+                              alt={doc.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center font-bold text-sm">
+                              {doc.name.slice(4, 6)}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-0.5">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h4 className="font-bold text-sm text-[var(--fg)]">{doc.name}</h4>
+                            <span className="text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-blue-300 dark:border-blue-800 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+                              {doc.category || "Specialist"}
+                            </span>
+                            {isLead && (
+                              <span className="text-[9px] font-mono font-bold uppercase tracking-wider bg-emerald-600 text-white px-2 py-0.5 rounded-full">
+                                ⭐ Primary Lead
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-[var(--fg-muted)] font-medium">{doc.specialty}</p>
+                          <p className="text-[11px] text-[var(--fg-muted)] flex items-center gap-1">
+                            <Building2 className="w-3 h-3" /> {doc.hospital}
+                          </p>
+                          {doc.phone && (
+                            <p className="text-[10px] font-mono text-[var(--fg-muted)] flex items-center gap-1 pt-0.5">
+                              <Phone className="w-3 h-3" /> {doc.phone}
+                              {doc.available_hours && ` · ${doc.available_hours}`}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                        {isInCareTeam ? (
+                          <>
+                            {!isLead && (
+                              <button
+                                onClick={() => handleSetLeadDoctor(doc)}
+                                className="px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider border border-[var(--border)] hover:border-emerald-500 hover:text-emerald-600 transition-all whitespace-nowrap"
+                              >
+                                Make Lead
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleToggleCareTeamDoctor(doc)}
+                              className="px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider border border-red-300 dark:border-red-800 text-red-600 hover:bg-red-600 hover:text-white transition-all whitespace-nowrap flex items-center gap-1"
+                            >
+                              <X className="w-3 h-3" /> Remove
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => handleToggleCareTeamDoctor(doc)}
+                            className="px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider bg-[var(--fg)] text-[var(--bg)] hover:opacity-90 transition-all whitespace-nowrap flex items-center gap-1 shadow-sm"
+                          >
+                            <Plus className="w-3.5 h-3.5" /> Add Specialist
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
           </div>
         </div>

@@ -1,18 +1,48 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, ArrowLeft, Sparkles, MessageCircle, PlusCircle } from "lucide-react";
+import {
+  Send,
+  ArrowLeft,
+  Sparkles,
+  MessageCircle,
+  PlusCircle,
+  FileText,
+  ThumbsUp,
+  ThumbsDown,
+  AlertTriangle,
+  ScanLine,
+  Stethoscope,
+  ChevronRight,
+} from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 
 import { useAuth } from "@/context/AuthContext";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000/api";
 
+type Source = {
+  doc_id: string;
+  title: string;
+  category?: string;
+};
+
+type SuggestedAction = {
+  type: string;
+  doctor_name?: string;
+  prefill_text?: string;
+} | null;
+
 type Message = {
   id: string;
   role: "user" | "assistant";
   content: string;
+  sources?: Source[];
+  response_type?: string;       // "normal" | "guardrail_refusal" | "no_context"
+  suggested_action?: SuggestedAction;
+  llm_tier?: string;
+  feedback?: "up" | "down" | null;
 };
 
 const WELCOME_MESSAGE: Message = {
@@ -28,6 +58,29 @@ const SUGGESTED_PROMPTS = [
   "Are there common side effects I should watch for?",
   "Can I take OTC cold medicines with my regimen?",
 ];
+
+/* ── Source Citation Chip (Feature B) ───────────────────────────── */
+function SourceChip({ source }: { source: Source }) {
+  const router = useRouter();
+  const categoryRouteMap: Record<string, string> = {
+    prescriptions: "prescription",
+    "lab-reports": "lab-reports",
+    "x-rays": "imaging",
+    other: "records",
+  };
+  const routeCategory = categoryRouteMap[source.category || ""] || "prescription";
+
+  return (
+    <button
+      onClick={() => router.push(`/vault/${routeCategory}/${source.doc_id}`)}
+      className="inline-flex items-center gap-1.5 text-[11px] font-mono bg-[var(--bg-elevated)] border border-[var(--border)] px-2.5 py-1 rounded-full hover:border-[var(--fg)] hover:bg-[var(--bg-muted)] transition-all text-[var(--fg-muted)] hover:text-[var(--fg)] shadow-sm group flex-shrink-0"
+    >
+      <FileText className="w-3 h-3 text-[var(--fg-muted)] group-hover:text-[var(--fg)]" />
+      <span className="truncate max-w-[180px]">{source.title}</span>
+      <ChevronRight className="w-3 h-3 opacity-50 group-hover:opacity-100 transition-opacity" />
+    </button>
+  );
+}
 
 export default function CopilotPage() {
   const { user } = useAuth();
@@ -81,6 +134,35 @@ export default function CopilotPage() {
     } catch {}
   };
 
+  /* ── Feature G: Send Feedback ─────────────────────────────────── */
+  async function handleFeedback(msgId: string, rating: "up" | "down") {
+    const msg = messages.find((m) => m.id === msgId);
+    if (!msg || msg.feedback) return;
+
+    // Optimistic UI update
+    setMessages((prev) =>
+      prev.map((m) => (m.id === msgId ? { ...m, feedback: rating } : m))
+    );
+
+    // Find the user message that preceded this assistant message
+    const msgIndex = messages.findIndex((m) => m.id === msgId);
+    const userMsg = msgIndex > 0 ? messages[msgIndex - 1] : null;
+
+    try {
+      await fetch(`${API_BASE}/patient/copilot-feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          patient_id: user?.id || "",
+          question: userMsg?.content || "",
+          answer: msg.content,
+          rating,
+          llm_tier: msg.llm_tier || "",
+        }),
+      });
+    } catch {}
+  }
+
   async function handleSend(e?: React.FormEvent, customPrompt?: string) {
     if (e) e.preventDefault();
     const promptToSend = customPrompt || input.trim();
@@ -109,7 +191,16 @@ export default function CopilotPage() {
       const data = await res.json();
       setMessages((prev) => [
         ...prev,
-        { id: `a-${Date.now()}`, role: "assistant", content: data.answer || data.message || "I couldn't process that. Please try again." },
+        {
+          id: `a-${Date.now()}`,
+          role: "assistant",
+          content: data.answer || data.message || "I couldn't process that. Please try again.",
+          sources: data.sources || [],
+          response_type: data.response_type || "normal",
+          suggested_action: data.suggested_action || null,
+          llm_tier: data.llm_tier || "",
+          feedback: null,
+        },
       ]);
     } catch {
       setMessages((prev) => [
@@ -118,6 +209,7 @@ export default function CopilotPage() {
           id: `a-${Date.now()}`,
           role: "assistant",
           content: "Always follow your doctor's exact dosage instructions and schedule. If you feel unusual symptoms or side effects, consult your attending physician immediately.",
+          feedback: null,
         },
       ]);
     } finally {
@@ -170,15 +262,92 @@ export default function CopilotPage() {
             <p className="text-[10px] uppercase tracking-[0.15em] text-[var(--fg-muted)] mb-1 font-mono">
               {msg.role === "user" ? "You" : "Sanjivini Copilot"}
             </p>
-            <div
-              className={`text-sm sm:text-base leading-relaxed p-4 rounded-2xl shadow-sm ${
-                msg.role === "user"
-                  ? "bg-[var(--fg)] text-[var(--bg)] rounded-tr-xs"
-                  : "glass-panel text-[var(--fg)] rounded-tl-xs border border-[var(--border)]"
-              }`}
-            >
-              {msg.content}
-            </div>
+
+            {/* ── Feature C: No-Context Response ──────────────────── */}
+            {msg.response_type === "no_context" ? (
+              <div className="text-sm leading-relaxed p-4 rounded-2xl rounded-tl-xs border-2 border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-950/20 text-[var(--fg)] shadow-sm space-y-3">
+                <div className="flex items-start gap-2">
+                  <ScanLine className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                  <p>{msg.content}</p>
+                </div>
+                <Link
+                  href="/scan-otc"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider bg-[var(--fg)] text-[var(--bg)] px-4 py-2 rounded-full hover:opacity-90 transition-opacity shadow-sm"
+                >
+                  <ScanLine className="w-3.5 h-3.5" />
+                  Scan a Document →
+                </Link>
+              </div>
+            ) : msg.response_type === "guardrail_refusal" ? (
+              /* ── Guardrail Refusal + Feature D: Ask-My-Doctor ─── */
+              <div className="text-sm leading-relaxed p-4 rounded-2xl rounded-tl-xs border-2 border-red-300 dark:border-red-800 bg-red-50/50 dark:bg-red-950/20 text-[var(--fg)] shadow-sm space-y-3">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                  <p>{msg.content}</p>
+                </div>
+                {msg.suggested_action?.type === "message_doctor" && msg.suggested_action.doctor_name && (
+                  <button
+                    onClick={() => {
+                      // In production: open WhatsApp deep link or in-app messaging
+                      alert(`Message sent to ${msg.suggested_action?.doctor_name}:\n\n${msg.suggested_action?.prefill_text}`);
+                    }}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider bg-red-600 text-white px-4 py-2 rounded-full hover:bg-red-700 transition-colors shadow-sm"
+                  >
+                    <Stethoscope className="w-3.5 h-3.5" />
+                    Message {msg.suggested_action.doctor_name} about this →
+                  </button>
+                )}
+              </div>
+            ) : (
+              /* ── Normal / Fallback Response ─────────────────────── */
+              <div
+                className={`text-sm sm:text-base leading-relaxed p-4 rounded-2xl shadow-sm ${
+                  msg.role === "user"
+                    ? "bg-[var(--fg)] text-[var(--bg)] rounded-tr-xs"
+                    : "glass-panel text-[var(--fg)] rounded-tl-xs border border-[var(--border)]"
+                }`}
+              >
+                {msg.content}
+              </div>
+            )}
+
+            {/* ── Feature B: Source Citation Chips ─────────────────── */}
+            {msg.role === "assistant" && msg.sources && msg.sources.length > 0 && (
+              <div className="flex items-center gap-2 mt-2 overflow-x-auto scrollbar-none pb-0.5">
+                <span className="text-[10px] text-[var(--fg-muted)] font-mono uppercase tracking-wider flex-shrink-0">Source:</span>
+                {msg.sources.map((src) => (
+                  <SourceChip key={src.doc_id} source={src} />
+                ))}
+              </div>
+            )}
+
+            {/* ── Feature G: Feedback Buttons (👍👎) ──────────────── */}
+            {msg.role === "assistant" && msg.id !== "welcome" && (
+              <div className="flex items-center gap-1.5 mt-1.5">
+                {msg.feedback ? (
+                  <span className="text-[10px] text-[var(--fg-muted)] font-mono uppercase tracking-wider">
+                    {msg.feedback === "up" ? "👍 Helpful" : "👎 Noted"}
+                  </span>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => handleFeedback(msg.id, "up")}
+                      className="p-1.5 rounded-full hover:bg-emerald-100 dark:hover:bg-emerald-950/30 text-[var(--fg-muted)] hover:text-emerald-600 transition-all"
+                      title="Helpful"
+                    >
+                      <ThumbsUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleFeedback(msg.id, "down")}
+                      className="p-1.5 rounded-full hover:bg-red-100 dark:hover:bg-red-950/30 text-[var(--fg-muted)] hover:text-red-500 transition-all"
+                      title="Not helpful"
+                    >
+                      <ThumbsDown className="w-3.5 h-3.5" />
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         ))}
 

@@ -2,9 +2,14 @@ import os
 import json
 import base64
 import re
+import asyncio
 import http.client
 import urllib.request
 import urllib.parse
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from typing import Optional
 from fastapi import APIRouter, Query, UploadFile, File, Form
 from pydantic import BaseModel
@@ -21,13 +26,49 @@ class ToggleRequest(BaseModel):
     prescription_item_id: str
     taken: bool
 
+class SnoozeRequest(BaseModel):
+    prescription_item_id: str
+    minutes: int = 20
+
+class SkipRequest(BaseModel):
+    prescription_item_id: str
+    reason: str = "Other"
+
+class SymptomLogRequest(BaseModel):
+    patient_id: str
+    wellbeing_score: int
+    note: Optional[str] = ""
+    tagged_medicine: Optional[str] = ""
+    photo_url: Optional[str] = ""
+
 class PassportRequest(BaseModel):
     patient_id: str
     scope: dict | None = None
 
 DIAGNOSTIC_TRIGGERS = ["what should i take", "is it", "diagnose", "what's wrong with me", "chest pain"]
 
-def query_copilot_llm(question: str, patient_id: str, history: list[dict] | None = None) -> str:
+# Feature F — Language-Aware Guardrail: translated trigger phrases for regional languages
+DIAGNOSTIC_TRIGGERS_BY_LANG = {
+    "hi": ["मुझे क्या लेना चाहिए", "क्या यह है", "निदान", "मुझे क्या हुआ है", "सीने में दर्द", "दवाई बताओ", "बीमारी बताओ", "क्या बीमारी है"],
+    "te": ["నేను ఏమి తీసుకోవాలి", "ఇది ఏమిటి", "రోగ నిర్ధారణ", "నాకు ఏమైంది", "ఛాతీ నొప్పి"],
+    "ta": ["நான் என்ன எடுக்க வேண்டும்", "இது என்ன", "நோய் கண்டறிதல்", "எனக்கு என்ன ஆச்சு", "நெஞ்சு வலி"],
+    "kn": ["ನಾನು ಏನು ತೆಗೆದುಕೊಳ್ಳಬೇಕು", "ಇದು ಏನು", "ರೋಗ ನಿರ್ಣಯ", "ನನಗೇನಾಗಿದೆ", "ಎದೆ ನೋವು"],
+    "mr": ["मी काय घ्यावे", "हे आहे का", "निदान", "मला काय झाले", "छातीत दुखणे"],
+}
+
+# Flatten all regional triggers into a single set for O(1) lookup
+ALL_REGIONAL_TRIGGERS = set()
+for _phrases in DIAGNOSTIC_TRIGGERS_BY_LANG.values():
+    ALL_REGIONAL_TRIGGERS.update(p.lower() for p in _phrases)
+
+# Feature C — Heuristic for personal-context questions
+PERSONAL_REFERENCE_PATTERNS = re.compile(
+    r'\b(my |am i |should i |is my |are my |do i |can i take|mere |mera |meri |kya main )\b',
+    re.IGNORECASE
+)
+
+def query_copilot_llm(question: str, patient_id: str, history: list[dict] | None = None) -> dict:
+    """Returns dict with keys: answer, sources, llm_tier"""
     timeline = patient_service.get_timeline(patient_id)
     vault_items = patient_service.get_vault(patient_id)
     all_vault_ids = {v.get("id") for v in vault_items}
@@ -44,10 +85,15 @@ def query_copilot_llm(question: str, patient_id: str, history: list[dict] | None
     meds = [f"{m['medicine']} ({m.get('condition', 'General')})" for m in schedule_items]
     med_str = ", ".join(meds) if meds else "No active daily prescriptions currently registered."
 
+    # Feature A — Tag each vault doc with a stable [DOC:id] reference for source attribution
+    vault_doc_map = {}  # id -> {title, category}
     vault_summaries = []
     for doc in vault_items:
+        doc_id = doc.get('id', '')
+        doc_title = doc.get('title', 'Medical Record')
+        vault_doc_map[doc_id] = {"doc_id": doc_id, "title": doc_title, "category": doc.get('category', 'other')}
         vault_summaries.append(
-            f"- [{doc.get('title', 'Medical Record')}] Category: {doc.get('category')}, Doctor: {doc.get('doctor_name')}, Summary: {doc.get('summary', '')}, Notes: {doc.get('patient_notes', '')}"
+            f"[DOC:{doc_id}] {doc_title} — Category: {doc.get('category')}, Doctor: {doc.get('doctor_name')}, Summary: {doc.get('summary', '')}, Notes: {doc.get('patient_notes', '')}"
         )
 
     vault_str = "\n".join(vault_summaries) if vault_summaries else "No archived health documents in vault yet."
@@ -64,6 +110,7 @@ def query_copilot_llm(question: str, patient_id: str, history: list[dict] | None
         "- ALWAYS answer the user's question directly and informatively. Do not issue generic refusals like 'I cannot provide medical advice'. "
         "- Explain medical terms (e.g. tumor, cyst, CBC, X-ray, dosage, inflammation) clearly in simple terms if asked. "
         "- Reference their active prescriptions and vault documents directly when relevant. "
+        "- When your answer relies on a specific record, cite it inline using the format [DOC:doc-id]. Never invent a doc-id that wasn't provided in the records above. "
         "- Keep responses concise, clear, and informative (2-4 sentences max)."
     )
 
@@ -101,7 +148,9 @@ def query_copilot_llm(question: str, patient_id: str, history: list[dict] | None
                 ans = o_res.get("response", "").strip()
                 if ans and "cannot provide medical advice" not in ans.lower():
                     print(f"Local Ollama Copilot ({o_model}) answered successfully.")
-                    return ans
+                    sources = _extract_source_citations(ans, vault_doc_map)
+                    clean_answer = _strip_doc_tags(ans)
+                    return {"answer": clean_answer, "sources": sources, "llm_tier": f"ollama/{o_model}"}
         except Exception as e:
             print(f"Local Ollama Copilot query with {o_model} failed: {e}")
 
@@ -145,7 +194,9 @@ def query_copilot_llm(question: str, patient_id: str, history: list[dict] | None
                     ans = res_json["choices"][0]["message"]["content"].strip()
                     if ans:
                         print(f"OpenRouter Copilot ({m}) answered successfully.")
-                        return ans
+                        sources = _extract_source_citations(ans, vault_doc_map)
+                        clean_answer = _strip_doc_tags(ans)
+                        return {"answer": clean_answer, "sources": sources, "llm_tier": f"openrouter/{m}"}
             except Exception as e:
                 print(f"OpenRouter Copilot query with {m} failed: {e}")
                 continue
@@ -154,16 +205,35 @@ def query_copilot_llm(question: str, patient_id: str, history: list[dict] | None
     low = question.lower()
     if "medical history" in low or "my history" in low:
         if vault_summaries:
-            return f"Here is your current medical history recorded in Sanjeevani Vault:\n" + "\n".join(vault_summaries)
-        return "Your Sanjeevani Digital Health Passport is currently clean with no archived prescriptions or lab documents yet. You can scan or upload a prescription at any time to activate your medical records!"
+            ans = f"Here is your current medical history recorded in Sanjeevani Vault:\n" + "\n".join(vault_summaries)
+            return {"answer": _strip_doc_tags(ans), "sources": list(vault_doc_map.values()), "llm_tier": "fallback"}
+        return {"answer": "Your Sanjeevani Digital Health Passport is currently clean with no archived prescriptions or lab documents yet. You can scan or upload a prescription at any time to activate your medical records!", "sources": [], "llm_tier": "fallback"}
     elif "tumor" in low or "tumar" in low:
-        return "A tumor is an abnormal mass or growth of tissue that forms when cells divide and multiply uncontrollably. Tumors can be benign (non-cancerous) or malignant (cancerous). If you or a family member have questions about a specific scan result or lump, consult your physician for imaging and evaluation."
+        return {"answer": "A tumor is an abnormal mass or growth of tissue that forms when cells divide and multiply uncontrollably. Tumors can be benign (non-cancerous) or malignant (cancerous). If you or a family member have questions about a specific scan result or lump, consult your physician for imaging and evaluation.", "sources": [], "llm_tier": "fallback"}
     elif "c" in low and len(low.strip()) <= 3:
-        return "In medical terminology, 'C' can refer to Vitamin C, Hepatitis C, Celsius temperature scale, or cervical spine vertebrae (C1-C7). If you have a specific test or lab result containing 'C', let me know or check your Patient Vault documents!"
+        return {"answer": "In medical terminology, 'C' can refer to Vitamin C, Hepatitis C, Celsius temperature scale, or cervical spine vertebrae (C1-C7). If you have a specific test or lab result containing 'C', let me know or check your Patient Vault documents!", "sources": [], "llm_tier": "fallback"}
 
     if meds:
-        return f"Based on your active prescriptions ({med_str}): Follow your doctor's exact instructions. If you miss a dose or experience unusual symptoms, consult your physician."
-    return f"Regarding '{question}': Take all medications as prescribed. If you experience unexpected side effects, reach out to your doctor or pharmacist."
+        return {"answer": f"Based on your active prescriptions ({med_str}): Follow your doctor's exact instructions. If you miss a dose or experience unusual symptoms, consult your physician.", "sources": [], "llm_tier": "fallback"}
+    return {"answer": f"Regarding '{question}': Take all medications as prescribed. If you experience unexpected side effects, reach out to your doctor or pharmacist.", "sources": [], "llm_tier": "fallback"}
+
+
+# Feature A — Source Attribution: extract [DOC:xxx] citations and validate
+def _extract_source_citations(raw_answer: str, vault_doc_map: dict) -> list:
+    """Regex-extract [DOC:xxx] tags from LLM output, validate against actual doc-ids."""
+    citations = re.findall(r'\[DOC:([^\]]+)\]', raw_answer)
+    valid_sources = []
+    seen = set()
+    for cid in citations:
+        cid = cid.strip()
+        if cid in vault_doc_map and cid not in seen:
+            valid_sources.append(vault_doc_map[cid])
+            seen.add(cid)
+    return valid_sources
+
+def _strip_doc_tags(text: str) -> str:
+    """Remove [DOC:xxx] tags from display text."""
+    return re.sub(r'\s*\[DOC:[^\]]+\]', '', text).strip()
 
 
 @router.post("/copilot")
@@ -178,15 +248,78 @@ async def ask_copilot(payload: CopilotRequest):
         actor="Patient",
     )
 
-    if any(t in lowered for t in DIAGNOSTIC_TRIGGERS):
+    # ── Feature E — Multi-Turn Safety Persistence ──
+    # Construct rolling window of last 4 turns + current question
+    combined_text = lowered
+    if payload.history:
+        recent_turns = [h.get("content", "") for h in payload.history[-4:]]
+        combined_text = " ".join(recent_turns).lower() + " " + lowered
+
+    # Check English triggers against the combined window
+    en_triggered = any(t in combined_text for t in DIAGNOSTIC_TRIGGERS)
+
+    # Feature F — Check regional-language triggers against latest message
+    regional_triggered = any(t in lowered for t in ALL_REGIONAL_TRIGGERS)
+
+    matched_trigger = ""
+    if en_triggered:
+        matched_trigger = next((t for t in DIAGNOSTIC_TRIGGERS if t in combined_text), "")
+    elif regional_triggered:
+        matched_trigger = next((t for t in ALL_REGIONAL_TRIGGERS if t in lowered), "")
+
+    if en_triggered or regional_triggered:
+        # Log the refusal (unlocks §8 Visit Prep)
+        patient_service.log_copilot_refusal(
+            patient_id=payload.patient_id,
+            question=payload.question,
+            trigger_phrase=matched_trigger,
+        )
+
+        # Feature D — Ask-My-Doctor Escalation
+        # Find most recent prescribing doctor for suggested action
+        suggested_action = None
+        schedule = patient_service.get_timeline(payload.patient_id).get("schedule", [])
+        if schedule:
+            doctor_name = schedule[-1].get("doctor", "")
+            if doctor_name:
+                suggested_action = {
+                    "type": "message_doctor",
+                    "doctor_name": doctor_name,
+                    "prefill_text": f"Patient asked Sanjivini: \"{payload.question}\" — requesting guidance.",
+                }
+
         return {
             "answer": "I cannot diagnose new emergency symptoms. Please contact your attending physician or healthcare facility immediately, or visit the emergency room if this feels urgent.",
             "guardrail_triggered": True,
+            "sources": [],
+            "response_type": "guardrail_refusal",
+            "suggested_action": suggested_action,
+        }
+
+    # ── Feature C — Confidence-Scoped Empty Context ──
+    timeline = patient_service.get_timeline(payload.patient_id)
+    vault_items = patient_service.get_vault(payload.patient_id)
+    has_context = bool(timeline.get("schedule")) or bool(vault_items)
+
+    if not has_context and PERSONAL_REFERENCE_PATTERNS.search(payload.question):
+        return {
+            "answer": "I don't have any of your medical records yet, so I can't give you a personalized answer to this. Once your doctor signs off on a prescription, or you scan a report into your Vault, I'll be able to reference it directly. In the meantime, would you like me to explain this in general terms?",
+            "guardrail_triggered": False,
+            "sources": [],
+            "response_type": "no_context",
+            "suggested_action": None,
         }
     
-    answer = query_copilot_llm(payload.question, payload.patient_id, payload.history)
+    result = query_copilot_llm(payload.question, payload.patient_id, payload.history)
 
-    return {"answer": answer, "guardrail_triggered": False}
+    return {
+        "answer": result.get("answer", ""),
+        "guardrail_triggered": False,
+        "sources": result.get("sources", []),
+        "response_type": "normal",
+        "suggested_action": None,
+        "llm_tier": result.get("llm_tier", ""),
+    }
 
 
 @router.get("/{patient_id}/timeline")
@@ -197,6 +330,37 @@ async def get_timeline(patient_id: str):
 @router.patch("/intake/toggle")
 async def toggle_intake(payload: ToggleRequest):
     return patient_service.toggle_intake(payload.prescription_item_id, payload.taken)
+
+
+@router.patch("/intake/snooze")
+async def snooze_intake(payload: SnoozeRequest):
+    return patient_service.snooze_dose(payload.prescription_item_id, payload.minutes)
+
+
+@router.patch("/intake/skip")
+async def skip_intake(payload: SkipRequest):
+    return patient_service.skip_dose(payload.prescription_item_id, payload.reason)
+
+
+@router.get("/{patient_id}/escalation-status")
+async def get_escalation_status(patient_id: str):
+    return patient_service.get_escalation_status(patient_id)
+
+
+@router.post("/symptom/log")
+async def log_symptom(payload: SymptomLogRequest):
+    return patient_service.add_symptom_log(
+        patient_id=payload.patient_id or "demo-patient",
+        wellbeing_score=payload.wellbeing_score,
+        note=payload.note or "",
+        tagged_medicine=payload.tagged_medicine or "",
+        photo_url=payload.photo_url or ""
+    )
+
+
+@router.get("/{patient_id}/correlation")
+async def get_correlation(patient_id: str, days: int = Query(default=14)):
+    return patient_service.get_adherence_wellbeing_correlation(patient_id, days)
 
 
 @router.get("/{patient_id}/vault")
@@ -211,15 +375,106 @@ async def get_logs(patient_id: str):
     return {"logs": logs, "count": len(logs)}
 
 
-import os
-import json
-import base64
-import urllib.request
-import urllib.parse
+def parse_ai_response_to_prescription_json(content: str) -> dict:
+    if not content or not content.strip():
+        return {}
 
+    # 1. Try direct JSON parsing
+    cleaned = content.strip()
+    if "```json" in cleaned:
+        cleaned = cleaned.split("```json")[1].split("```")[0].strip()
+    elif "```" in cleaned:
+        cleaned = cleaned.split("```")[1].split("```")[0].strip()
 
-from dotenv import load_dotenv
-load_dotenv()
+    try:
+        data = json.loads(cleaned)
+        if isinstance(data, dict) and ("medicines" in data or "medicine_name" in data or "doctor_name" in data):
+            return data
+    except Exception:
+        pass
+
+    # 2. Extract Title & Doctor
+    doc_name = ""
+    m_doc = re.search(r'(?:\*\*Doctor(?:\s*Name)?\*\*|Doctor(?:\s*Name)?:\s*)\s*([^\n\*\r]+)', content, re.I)
+    if m_doc:
+        doc_name = m_doc.group(1).strip().replace("**", "")
+        if not doc_name.lower().startswith("dr.") and len(doc_name) > 3 and not any(k in doc_name.lower() for k in ["not provided", "not specified", "unknown", "none"]):
+            doc_name = f"Dr. {doc_name}"
+        elif any(k in doc_name.lower() for k in ["not provided", "not specified", "unknown", "none"]):
+            doc_name = ""
+
+    title = ""
+    m_title = re.search(r'(?:\*\*(?:Hospital|Clinic|Title)(?:\s*(?:/|and)\s*Clinic)?(?:\s*Name)?\*\*|(?:Hospital|Clinic)(?:\s*/\s*Clinic)?\s*Name:\s*)\s*([^\n\*\r]+)', content, re.I)
+    if m_title:
+        title = m_title.group(1).strip().replace("**", "")
+
+    # Extract Patient Notes / Clinical Summary
+    notes_parts = []
+    m_notes = re.search(r'(?:\*\*Patient Notes?\*\*|Patient Notes?:)\s*([\s\S]+?)(?=\*\*Medicines|\n#|\Z)', content, re.I)
+    if m_notes:
+        raw_notes = m_notes.group(1).strip()
+        for line in raw_notes.splitlines():
+            clean_l = re.sub(r'[\*\#\-]', '', line).strip()
+            if clean_l and len(clean_l) > 3 and not any(k in clean_l.lower() for k in ["not specified", "not provided", "not translated"]):
+                notes_parts.append(clean_l)
+    patient_notes = " · ".join(notes_parts) if notes_parts else "Scanned physical prescription record."
+
+    # Extract Medicines
+    medicines = []
+    med_section = ""
+    m_sec = re.search(r'(?:\*\*Medicines?\*\*|Medicines?:)\s*([\s\S]+)', content, re.I)
+    if m_sec:
+        med_section = m_sec.group(1).strip()
+    else:
+        med_section = content
+
+    # Split on every bold bullet line that starts a medicine item (not a sub-property like Dosage/Frequency)
+    blocks = re.split(r'\n\s*[\*\-]\s*\*\*(?!(?:Dosage|Frequency|Duration|Condition Tag|Instructions|Notes))([^\*\n]+)\*\*', med_section, flags=re.I)
+    if len(blocks) > 1:
+        for i in range(1, len(blocks), 2):
+            raw_name = blocks[i].strip()
+            block_body = blocks[i+1] if (i+1) < len(blocks) else ""
+
+            clean_name = re.sub(r'^(?:Name:|\d+[\.\)]\s*|[R|r][xX/]?\s*)', '', raw_name, flags=re.I).strip()
+            if not clean_name or len(clean_name) < 2 or clean_name.lower() in ["medicines", "medicine", "rx", "advice", "instructions"]:
+                continue
+
+            m_dos = re.search(r'(?:Dosage(?:\s*Strength)?:\*\*|Dosage:\s*)\s*([^\n\*\r]+)', block_body, re.I)
+            dosage = m_dos.group(1).strip().replace("**", "").strip() if m_dos else ""
+            if any(k in dosage.lower() for k in ["not provided", "not specified", "unknown", "none"]):
+                dosage = ""
+
+            m_freq = re.search(r'(?:(?:Dosing\s*)?Frequency:\*\*|Frequency:\s*)\s*([^\n\*\r]+)', block_body, re.I)
+            frequency = m_freq.group(1).strip().replace("**", "").strip() if m_freq else "1-0-1"
+
+            m_dur = re.search(r'(?:Duration:\*\*|Duration:\s*)\s*([^\n\*\r]+)', block_body, re.I)
+            duration = m_dur.group(1).strip().replace("**", "").strip() if m_dur else "5 days"
+            if any(k in duration.lower() for k in ["not provided", "not specified", "unknown"]):
+                duration = "5 days"
+
+            medicines.append({
+                "name": clean_name,
+                "dosage": dosage,
+                "frequency": frequency,
+                "duration": duration,
+                "conditionTag": "PEDIATRIC CARE" if any(k in content.lower() for k in ["pediatric", "syp", "syrup", "yr", "child"]) else "GENERAL CARE"
+            })
+
+    first_med = medicines[0] if medicines else {"name": "", "dosage": "", "frequency": "1-0-1", "duration": "5 days"}
+
+    return {
+        "title": title or "Scanned Prescription — Pediatric Care",
+        "doctor_name": doc_name or "Attending Physician / Pediatric Care",
+        "patient_notes": patient_notes,
+        "medicines": medicines,
+        "medicine_name": first_med.get("name", ""),
+        "dosage": first_med.get("dosage", ""),
+        "frequency": first_med.get("frequency", "1-0-1"),
+        "duration": first_med.get("duration", "5 days"),
+        "conditionTag": "GENERAL CARE",
+        "status": "safe",
+        "message": f"Successfully extracted {len(medicines)} prescribed medication(s) from document."
+    }
 
 
 def extract_prescription_from_image(image_bytes: bytes) -> dict:
@@ -227,23 +482,78 @@ def extract_prescription_from_image(image_bytes: bytes) -> dict:
     nvidia_key = os.getenv("NVIDIA_API_KEY", "").strip()
 
     prompt = (
-        "You are an expert AI clinical pharmacist and OCR vision system. "
-        "Carefully examine this medicine package label or scanned prescription image. "
-        "Extract all available medical and prescription details into a JSON object with keys:\n"
-        "'title' (e.g. Scanned Prescription — [Doctor/Clinic Name]),\n"
-        "'doctor_name' (e.g. Dr. Name or Self Intake / OTC Desk),\n"
-        "'medicines' (array of objects for EVERY medicine found: [{'name': '...', 'dosage': '...', 'frequency': '...', 'duration': '...', 'conditionTag': '...'}]),\n"
-        "'medicine_name' (primary drug name),\n"
-        "'dosage' (primary strength e.g. 500mg),\n"
-        "'frequency' (schedule e.g. 1-0-1 or Twice Daily),\n"
-        "'duration' (e.g. 5 days or 14 days),\n"
-        "'patient_notes' (active ingredients, usage guidelines, precautions),\n"
-        "'status' ('safe' or 'warning'),\n"
-        "'message' (pharmacological safety warning or summary).\n"
-        "Respond strictly with valid JSON only."
+        "You are an expert AI clinical pharmacist.\n"
+        "Read this doctor's handwritten prescription slip carefully from top to bottom.\n"
+        "Extract:\n"
+        "1. Header: Doctor name & Hospital/Clinic details.\n"
+        "2. Patient Demographics & Diagnosis: Name, Age, Weight, Clinical complaints (e.g. URTI, RR-22/min).\n"
+        "3. Prescribed Medications under 'Advice' or 'Rx' section (e.g. Syrups, Tablets):\n"
+        "   - Extract drug name (e.g. Syp Calpol 250/5, Syp Delcon, Syp Levolin, Syp Meftal-P)\n"
+        "   - Dosage (e.g. 6 ml, 3 ml, 5 ml)\n"
+        "   - Frequency (e.g. Q6H, TDS, SOS)\n"
+        "   - Duration (e.g. 3 days, 5 days, SOS)\n\n"
+        "Output in structured format:\n"
+        "**Title:** ...\n"
+        "**Doctor Name:** ...\n"
+        "**Patient Notes:** Patient name, age, weight, URTI, respiratory rate, Malayalam notes\n"
+        "**Medicines:**\n"
+        "- **Name:** ...\n"
+        "  **Dosage:** ...\n"
+        "  **Frequency:** ...\n"
+        "  **Duration:** ...\n"
     )
 
-    # 1. STEP 1: Pen-to-Print RapidAPI Handwriting OCR FIRST (Fastest & Most Reliable for Doctor Prescriptions)
+    # 1. STEP 1: NVIDIA NIM Multimodal Vision (Primary & Fastest for Doctor Handwriting)
+    if nvidia_key and image_bytes and len(image_bytes) > 0:
+        b64 = base64.b64encode(image_bytes).decode("utf-8")
+        mime = "image/jpeg"
+        if image_bytes.startswith(b"\x89PNG"):
+            mime = "image/png"
+        elif image_bytes.startswith(b"RIFF") and b"WEBP" in image_bytes[:16]:
+            mime = "image/webp"
+
+        for nv_model in [
+            "meta/llama-3.2-11b-vision-instruct",
+            "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+            "meta/llama-3.2-90b-vision-instruct",
+        ]:
+            try:
+                nv_payload = {
+                    "model": nv_model,
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": prompt},
+                                {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64}"}}
+                            ]
+                        }
+                    ],
+                    "temperature": 0.2,
+                    "max_tokens": 4096,
+                }
+                nv_req = urllib.request.Request(
+                    "https://integrate.api.nvidia.com/v1/chat/completions",
+                    data=json.dumps(nv_payload).encode("utf-8"),
+                    headers={
+                        "Authorization": f"Bearer {nvidia_key}",
+                        "Content-Type": "application/json",
+                    },
+                    method="POST",
+                )
+                with urllib.request.urlopen(nv_req, timeout=60) as response:
+                    res_text = json.loads(response.read().decode("utf-8"))["choices"][0]["message"]["content"]
+                    parsed = parse_ai_response_to_prescription_json(res_text)
+                    if isinstance(parsed, dict) and isinstance(parsed.get("medicines"), list) and len(parsed["medicines"]) > 0:
+                        first_name = parsed["medicines"][0].get("name", "").strip()
+                        if first_name and len(first_name) >= 2:
+                            print(f"NVIDIA NIM Vision ({nv_model}) extracted successfully: {len(parsed['medicines'])} medicines ({first_name})")
+                            return ensure_medicines_array(parsed)
+            except Exception as e:
+                print(f"NVIDIA NIM Vision attempt ({nv_model}) failed: {e}")
+                continue
+
+    # 2. STEP 2: RapidAPI Pen-to-Print Handwriting OCR + Gemma AI Parsing Fallback
     if image_bytes and len(image_bytes) > 0:
         try:
             raw_ocr_text = run_ocr_on_bytes(image_bytes)
@@ -252,144 +562,17 @@ def extract_prescription_from_image(image_bytes: bytes) -> dict:
                 if not ai_parsed:
                     ai_parsed = parse_prescription_text_rules(raw_ocr_text)
                 if ai_parsed and isinstance(ai_parsed.get("medicines"), list) and len(ai_parsed["medicines"]) > 0:
-                    first_med_name = ai_parsed["medicines"][0].get("name", "").strip()
-                    if first_med_name:
-                        print(f"Pen-to-Print OCR + AI Structuring Pipeline extracted successfully: {first_med_name}")
+                    first_name = ai_parsed["medicines"][0].get("name", "").strip()
+                    if first_name and len(first_name) >= 2:
+                        print(f"OCR + AI Structuring Pipeline extracted successfully: {first_name}")
                         return ensure_medicines_array(ai_parsed)
         except Exception as e:
-            print(f"Pen-to-Print OCR + AI extraction pipeline failed: {e}")
+            print(f"OCR + AI extraction pipeline failed: {e}")
 
-    # 2. STEP 2: NVIDIA NIM Vision 90B Multimodal API Fallback (Reads pixels directly if OCR text was incomplete)
-    if nvidia_key and image_bytes and len(image_bytes) > 0:
-        try:
-            b64 = base64.b64encode(image_bytes).decode("utf-8")
-            mime = "image/jpeg"
-            if image_bytes.startswith(b"\x89PNG"):
-                mime = "image/png"
-            elif image_bytes.startswith(b"RIFF") and b"WEBP" in image_bytes[:16]:
-                mime = "image/webp"
-
-            nv_payload = {
-                "model": "meta/llama-3.2-90b-vision-instruct",
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": prompt},
-                            {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64}"}}
-                        ]
-                    }
-                ],
-                "temperature": 0.2,
-                "max_tokens": 1024,
-            }
-            nv_req = urllib.request.Request(
-                "https://integrate.api.nvidia.com/v1/chat/completions",
-                data=json.dumps(nv_payload).encode("utf-8"),
-                headers={
-                    "Authorization": f"Bearer {nvidia_key}",
-                    "Content-Type": "application/json",
-                },
-                method="POST",
-            )
-            with urllib.request.urlopen(nv_req, timeout=6) as response:
-                content = json.loads(response.read().decode("utf-8"))["choices"][0]["message"]["content"]
-                if "```json" in content:
-                    content = content.split("```json")[1].split("```")[0].strip()
-                elif "```" in content:
-                    content = content.split("```")[1].split("```")[0].strip()
-                parsed = json.loads(content)
-                if isinstance(parsed, dict) and (bool(parsed.get("medicine_name", "").strip()) or bool(parsed.get("doctor_name", "").strip()) or bool(parsed.get("medicines"))):
-                    print(f"NVIDIA NIM Vision (90B) extracted successfully: {parsed.get('medicine_name') or parsed.get('doctor_name')}")
-                    return ensure_medicines_array(parsed)
-        except Exception as e:
-            print(f"NVIDIA NIM Vision extraction failed: {e}")
-
-    # 1. STEP 1: Direct Multimodal Vision Extraction with Google Gemma 4 31B
-    if image_bytes and len(image_bytes) > 0:
-        b64 = base64.b64encode(image_bytes).decode("utf-8")
-        mime = "image/jpeg"
-        if image_bytes.startswith(b"\x89PNG"):
-            mime = "image/png"
-        elif image_bytes.startswith(b"RIFF") and b"WEBP" in image_bytes[:16]:
-            mime = "image/webp"
-
-        models_to_try = [
-            "google/gemma-4-31b-it:free",
-            "nvidia/nemotron-nano-12b-v2-vl:free",
-            "google/gemma-3-27b-it:free",
-        ]
-
-        for model in models_to_try:
-            try:
-                payload = {
-                    "model": model,
-                    "messages": [
-                        {
-                            "role": "user",
-                            "content": [
-                                {"type": "text", "text": prompt},
-                                {
-                                    "type": "image_url",
-                                    "image_url": {"url": f"data:{mime};base64,{b64}"},
-                                },
-                            ],
-                        }
-                    ],
-                }
-
-                req = urllib.request.Request(
-                    "https://openrouter.ai/api/v1/chat/completions",
-                    data=json.dumps(payload).encode("utf-8"),
-                    headers={
-                        "Authorization": f"Bearer {openrouter_key}",
-                        "Content-Type": "application/json",
-                        "HTTP-Referer": "http://localhost:3000",
-                        "X-Title": "Sanjeevani Health",
-                    },
-                    method="POST",
-                )
-
-                with urllib.request.urlopen(req, timeout=4) as response:
-                    res_body = response.read().decode("utf-8")
-                    res_json = json.loads(res_body)
-                    content = res_json["choices"][0]["message"]["content"]
-
-                    if "```json" in content:
-                        content = content.split("```json")[1].split("```")[0].strip()
-                    elif "```" in content:
-                        content = content.split("```")[1].split("```")[0].strip()
-
-                    parsed = json.loads(content)
-                    is_valid = isinstance(parsed, dict) and (
-                        bool(parsed.get("medicine_name", "").strip()) or
-                        (isinstance(parsed.get("medicines"), list) and len(parsed.get("medicines")) > 0) or
-                        bool(parsed.get("doctor_name", "").strip())
-                    )
-                    if is_valid:
-                        print(f"Direct Gemma 4 31B Vision ({model}) extracted successfully: {parsed.get('medicine_name') or parsed.get('doctor_name')}")
-                        return ensure_medicines_array(parsed)
-            except Exception as e:
-                print(f"Direct Vision attempt with {model} failed: {e}")
-                continue
-
-    # 2. STEP 2: Pen-to-Print Handwriting OCR + Gemma 4 31B Text Parsing Fallback
-    if image_bytes and len(image_bytes) > 0:
-        try:
-            raw_ocr_text = run_ocr_on_bytes(image_bytes)
-            if raw_ocr_text and len(raw_ocr_text.strip()) > 3:
-                ai_parsed = parse_ocr_text_with_ai(raw_ocr_text)
-                if not ai_parsed:
-                    ai_parsed = parse_prescription_text_rules(raw_ocr_text)
-                if ai_parsed:
-                    print(f"Pen-to-Print OCR + Gemma 4 31B Pipeline extracted successfully: {ai_parsed.get('medicine_name')}")
-                    return ensure_medicines_array(ai_parsed)
-        except Exception as e:
-            print(f"Pen-to-Print OCR + Gemma extraction pipeline failed: {e}")
-
+    # 3. Default fallback
     return ensure_medicines_array({
-        "title": "OTC Scanned Prescription — Extracted Package Data",
-        "doctor_name": "Self / OTC Intake Desk",
+        "title": "Scanned Prescription Intake",
+        "doctor_name": "Attending Physician / Pediatric Care",
         "medicine_name": "",
         "dosage": "",
         "frequency": "1-0-1 (Morning & Night)",
@@ -558,37 +741,34 @@ def parse_ocr_text_with_ai(raw_text: str) -> dict:
             except Exception as e:
                 print(f"Google Gemma OCR text normalization with {m} failed: {e}")
 
-    # 2. Try NVIDIA NIM 70B Text API Fallback
+    # 2. Try NVIDIA NIM 8B / 70B Text API Fallback
     if nvidia_key:
-        try:
-            payload = {
-                "model": "meta/llama-3.1-70b-instruct",
-                "messages": [{"role": "user", "content": prompt}],
-                "temperature": 0.1,
-                "max_tokens": 1024,
-            }
-            req = urllib.request.Request(
-                "https://integrate.api.nvidia.com/v1/chat/completions",
-                data=json.dumps(payload).encode("utf-8"),
-                headers={
-                    "Authorization": f"Bearer {nvidia_key}",
-                    "Content-Type": "application/json",
-                },
-                method="POST",
-            )
-            with urllib.request.urlopen(req, timeout=6) as response:
-                res_json = json.loads(response.read().decode("utf-8"))
-                text = res_json["choices"][0]["message"]["content"]
-                if "```json" in text:
-                    text = text.split("```json")[1].split("```")[0].strip()
-                elif "```" in text:
-                    text = text.split("```")[1].split("```")[0].strip()
-                parsed = json.loads(text)
-                if isinstance(parsed, dict) and ("medicine_name" in parsed or "medicines" in parsed or "doctor_name" in parsed):
-                    print("NVIDIA NIM 70B normalized raw OCR text into structured JSON successfully")
-                    return parsed
-        except Exception as e:
-            print(f"NVIDIA NIM 70B OCR text normalization failed: {e}")
+        for nv_txt_model in ["meta/llama-3.1-8b-instruct", "meta/llama-3.1-70b-instruct"]:
+            try:
+                payload = {
+                    "model": nv_txt_model,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.1,
+                    "max_tokens": 1024,
+                }
+                req = urllib.request.Request(
+                    "https://integrate.api.nvidia.com/v1/chat/completions",
+                    data=json.dumps(payload).encode("utf-8"),
+                    headers={
+                        "Authorization": f"Bearer {nvidia_key}",
+                        "Content-Type": "application/json",
+                    },
+                    method="POST",
+                )
+                with urllib.request.urlopen(req, timeout=25) as response:
+                    res_json = json.loads(response.read().decode("utf-8"))
+                    text = res_json["choices"][0]["message"]["content"]
+                    parsed = parse_ai_response_to_prescription_json(text)
+                    if isinstance(parsed, dict) and ("medicine_name" in parsed or "medicines" in parsed or "doctor_name" in parsed):
+                        print(f"NVIDIA NIM ({nv_txt_model}) normalized raw OCR text successfully")
+                        return parsed
+            except Exception as e:
+                print(f"NVIDIA NIM text normalization with {nv_txt_model} failed: {e}")
 
     return parse_prescription_text_rules(raw_text)
 
@@ -772,6 +952,46 @@ def parse_prescription_text_rules(raw_text: str) -> dict:
     }
 
 
+# ── Drug Class Family Reference Mapping for §5 Allergy Checking ──
+DRUG_FAMILIES = {
+    "nsaid": ["ibuprofen", "aspirin", "naproxen", "diclofenac", "celecoxib", "ketorolac", "mefenamic", "indomethacin", "combiflam", "brufen"],
+    "penicillin": ["penicillin", "amoxicillin", "ampicillin", "augmentin", "cloxacillin", "piperacillin", "mox"],
+    "sulfa": ["sulfamethoxazole", "trimethoprim", "bactrim", "septra", "sulfasalazine"],
+    "paracetamol": ["paracetamol", "acetaminophen", "crocin", "calpol", "dolo", "pacimol"],
+    "statin": ["atorvastatin", "rosuvastatin", "simvastatin"],
+    "opioid": ["tramadol", "codeine", "morphine", "fentanyl"],
+    "fluoroquinolone": ["ciprofloxacin", "levofloxacin", "ofloxacin", "norfloxacin", "cifran", "ciplox"],
+}
+
+def _check_allergy_match(medicine_name: str, notes_text: str, allergies: list[dict]) -> list[dict]:
+    """Check if scanned medicine or its family matches any declared patient allergy."""
+    found_matches = []
+    med_text = f"{medicine_name} {notes_text}".lower()
+    
+    for alg in allergies:
+        substance = alg.get("substance", "").strip().lower()
+        if not substance:
+            continue
+        
+        # Direct substring/word match
+        if substance in med_text:
+            found_matches.append(alg)
+            continue
+        
+        # Drug family expansion match (e.g. allergy to Aspirin alerts on Ibuprofen/NSAID)
+        for family, drugs in DRUG_FAMILIES.items():
+            if substance in drugs or substance == family:
+                # Check if scanned drug belongs to same family
+                if any(d in med_text for d in drugs):
+                    found_matches.append({
+                        **alg,
+                        "family_match": family.upper(),
+                        "matched_reason": f"Shares {family.upper()} drug family with declared allergy '{alg.get('substance')}'"
+                    })
+                    break
+    return found_matches
+
+
 @router.post("/otc-scan")
 async def otc_scan(
     image: UploadFile = File(None),
@@ -781,27 +1001,41 @@ async def otc_scan(
     if image:
         image_bytes = await image.read()
 
-    extracted = extract_prescription_from_image(image_bytes)
+    extracted = await asyncio.to_thread(extract_prescription_from_image, image_bytes)
 
     timeline = patient_service.get_timeline(patient_id)
     meds = [m["medicine"] for m in timeline.get("schedule", [])]
+    allergies = patient_service.get_allergies(patient_id)
+
+    med_name = extracted.get("medicine_name", "")
+    notes = extracted.get("patient_notes", "")
+
+    # §5: Cross-check against Allergy & Known Reaction Profile
+    allergy_matches = _check_allergy_match(med_name, notes, allergies)
 
     patient_service.add_log(
         patient_id=patient_id,
         event_type="OTC_CHECK",
         title="OpenRouter AI Vision Label Extraction & Safety Check",
-        details=f"Extracted package data for '{extracted.get('medicine_name')}'. Executed vision safety check against active patient regimen.",
+        details=f"Extracted package data for '{med_name}'. Executed vision safety check against active patient regimen & {len(allergies)} allergy records.",
         actor="OpenRouter Vision AI Engine",
     )
 
     status = extracted.get("status", "safe")
+    allergy_warning = len(allergy_matches) > 0
     message = extracted.get("message", "No active prescription interactions detected for this scanned medicine label.")
 
-    if meds and status == "safe":
-        message = f"Cross-checked extracted label ({extracted.get('medicine_name')}) against your active regimen ({', '.join(meds)}). Please consult your pharmacist before combining OTC products."
+    if allergy_warning:
+        status = "warning"
+        alg_details = ", ".join([f"{a.get('substance')} ({a.get('severity', 'mild').upper()})" for a in allergy_matches])
+        message = f"⚠️ ALLERGY WARNING: Scanned product matches your declared allergy profile ({alg_details}). Do not consume without explicit physician approval."
+    elif meds and status == "safe":
+        message = f"Cross-checked extracted label ({med_name}) against your active regimen ({', '.join(meds)}). Please consult your pharmacist before combining OTC products."
 
     return {
         "status": status,
+        "allergy_warning": allergy_warning,
+        "allergy_matches": allergy_matches,
         "message": message,
         "extracted_data": extracted,
     }
@@ -1123,7 +1357,7 @@ async def analyze_document(
     if image:
         image_bytes = await image.read()
 
-    analysis = analyze_medical_document_by_category(image_bytes, category)
+    analysis = await asyncio.to_thread(analyze_medical_document_by_category, image_bytes, category)
     source = analysis.get("_source", "ai_llm")
     return {
         "status": "success",
@@ -1159,3 +1393,111 @@ async def health_passport(payload: PassportRequest):
         actor="Health Passport Engine",
     )
     return {"token": token, "qr_url": f"https://app.sanjeevani.health/api/passport/{token}"}
+
+
+# ════════════════════════════════════════════════════════════════════
+# Phase 1 & 2 — New API Endpoints
+# ════════════════════════════════════════════════════════════════════
+
+# ── Feature G: Copilot Feedback (👍👎) ──
+
+class CopilotFeedbackRequest(BaseModel):
+    patient_id: str
+    question: str
+    answer: str
+    rating: str  # "up" | "down"
+    llm_tier: Optional[str] = ""
+
+@router.post("/copilot-feedback")
+async def copilot_feedback(payload: CopilotFeedbackRequest):
+    result = patient_service.add_copilot_feedback(
+        patient_id=payload.patient_id,
+        question=payload.question,
+        answer=payload.answer,
+        rating=payload.rating,
+        llm_tier=payload.llm_tier or "",
+    )
+    return {"status": "success", "feedback": result}
+
+
+# ── §5: Allergy & Known Reaction Profile ──
+
+class AllergyRequest(BaseModel):
+    patient_id: str
+    substance: str
+    reaction: Optional[str] = ""
+    severity: Optional[str] = "mild"
+    reported_by: Optional[str] = "patient"
+
+@router.post("/allergy")
+async def add_allergy(payload: AllergyRequest):
+    result = patient_service.add_allergy(
+        patient_id=payload.patient_id,
+        substance=payload.substance,
+        reaction=payload.reaction or "",
+        severity=payload.severity or "mild",
+        reported_by=payload.reported_by or "patient",
+    )
+    return {"status": "success", "allergy": result}
+
+@router.get("/{patient_id}/allergies")
+async def get_allergies(patient_id: str):
+    items = patient_service.get_allergies(patient_id)
+    return {"allergies": items, "count": len(items)}
+
+@router.delete("/allergy/{allergy_id}")
+async def delete_allergy(allergy_id: str):
+    result = patient_service.remove_allergy(allergy_id)
+    return result
+
+
+# ── §2: Symptom & Side-Effect Journal ──
+
+class SymptomLogRequest(BaseModel):
+    patient_id: str
+    wellbeing_score: int  # 1-5
+    note: Optional[str] = ""
+    tagged_medicine: Optional[str] = ""
+
+@router.post("/symptom-log")
+async def add_symptom_log(payload: SymptomLogRequest):
+    result = patient_service.add_symptom_log(
+        patient_id=payload.patient_id,
+        wellbeing_score=payload.wellbeing_score,
+        note=payload.note or "",
+        tagged_medicine=payload.tagged_medicine or "",
+    )
+    return {"status": "success", "log": result}
+
+@router.get("/{patient_id}/symptom-logs")
+async def get_symptom_logs(patient_id: str):
+    logs = patient_service.get_symptom_logs(patient_id)
+    return {"logs": logs, "count": len(logs)}
+
+
+# ── §1: Refill & Running-Out Intelligence ──
+
+class RefillRequest(BaseModel):
+    patient_id: str
+    medicine: str
+    prescription_item_id: Optional[str] = ""
+
+@router.get("/{patient_id}/refill-status")
+async def get_refill_status(patient_id: str):
+    status = patient_service.get_refill_status(patient_id)
+    return {"items": status, "count": len(status)}
+
+@router.post("/refill-request")
+async def create_refill_request(payload: RefillRequest):
+    result = patient_service.create_refill_request(
+        patient_id=payload.patient_id,
+        medicine=payload.medicine,
+        prescription_item_id=payload.prescription_item_id or "",
+    )
+    return {"status": "success", "request": result}
+
+@router.get("/{patient_id}/refill-requests")
+async def get_refill_requests(patient_id: str):
+    items = patient_service.get_refill_requests(patient_id)
+    return {"requests": items, "count": len(items)}
+

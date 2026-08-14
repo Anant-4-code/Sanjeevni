@@ -39,6 +39,9 @@ type MedicineDetail = {
 
 type PrescriptionFull = {
   id: string;
+  patient_id?: string;
+  title?: string;
+  category?: string;
   doctor_name: string;
   status: "verified" | "unverified";
   date: string;

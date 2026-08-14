@@ -2,15 +2,9 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-export type DoctorInfo = {
-  id: string;
-  name: string;
-  specialty: string;
-  hospital: string;
-  phone?: string;
-  available_hours?: string;
-  avatar_url?: string;
-};
+import { DoctorInfo, AVAILABLE_DOCTORS } from "@/constants/doctors";
+export { AVAILABLE_DOCTORS };
+export type { DoctorInfo };
 
 export type UserProfile = {
   id: string;
@@ -21,6 +15,7 @@ export type UserProfile = {
   is_verified: boolean;
   avatar_url?: string;
   primary_doctor?: DoctorInfo;
+  care_team?: DoctorInfo[];
 };
 
 type AuthContextType = {
@@ -37,45 +32,6 @@ const AuthContext = createContext<AuthContextType>({
   updateProfile: () => {},
 });
 
-export const AVAILABLE_DOCTORS: DoctorInfo[] = [
-  {
-    id: "doc-1",
-    name: "Dr. G. Mithun",
-    specialty: "Consultant Neuro Surgeon",
-    hospital: "Manikanta Neuro Centre, Kakaji Colony",
-    phone: "+91 99899 85777",
-    available_hours: "Mon - Sat: 10:00 AM - 02:00 PM, 06:00 PM - 09:00 PM",
-    avatar_url: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=150&q=80",
-  },
-  {
-    id: "doc-2",
-    name: "Dr. Rajesh Rai",
-    specialty: "Chief Neurologist & Stroke Specialist",
-    hospital: "Yogana Super Speciality Hospital",
-    phone: "+91 98450 12345",
-    available_hours: "Mon - Fri: 09:00 AM - 01:00 PM",
-    avatar_url: "https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=150&q=80",
-  },
-  {
-    id: "doc-3",
-    name: "Dr. Ananya Sharma",
-    specialty: "Senior Physician & Internal Medicine",
-    hospital: "Apollo Clinics & Diagnostic Desk",
-    phone: "+91 91234 56780",
-    available_hours: "Mon - Sat: 08:30 AM - 04:00 PM",
-    avatar_url: "https://images.unsplash.com/photo-1594824813629-d04b9eb970b8?w=150&q=80",
-  },
-  {
-    id: "doc-4",
-    name: "Dr. Vikram Patel",
-    specialty: "Cardiologist & Preventive Health",
-    hospital: "Fortis Escorts Heart Institute",
-    phone: "+91 97890 54321",
-    available_hours: "Tue - Sun: 11:00 AM - 05:00 PM",
-    avatar_url: "https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=150&q=80",
-  },
-];
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
 
@@ -90,6 +46,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
           if (!parsed.primary_doctor) {
             parsed.primary_doctor = AVAILABLE_DOCTORS[0];
+          }
+          if (!parsed.care_team || !Array.isArray(parsed.care_team) || parsed.care_team.length === 0) {
+            parsed.care_team = [AVAILABLE_DOCTORS[0], AVAILABLE_DOCTORS[2], AVAILABLE_DOCTORS[3]];
           }
           setUser(parsed);
         }
@@ -107,6 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       is_verified: profile.is_verified ?? true,
       avatar_url: profile.avatar_url || "",
       primary_doctor: profile.primary_doctor || AVAILABLE_DOCTORS[0],
+      care_team: profile.care_team || [AVAILABLE_DOCTORS[0], AVAILABLE_DOCTORS[2], AVAILABLE_DOCTORS[3]],
     };
     setUser(nextUser);
     try {
