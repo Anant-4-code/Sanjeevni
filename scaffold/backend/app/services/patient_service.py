@@ -653,5 +653,75 @@ class PatientService:
     def get_refill_requests(self, patient_id: str):
         return [r for r in self.refill_requests if r["patient_id"] == patient_id or patient_id == "demo-patient"]
 
+    # ── §8.8: Visit Prep Assistant Aggregation ──
+    def get_visit_prep(self, patient_id: str):
+        talking_points = []
+        
+        # 1. Symptom journal low scores or notes
+        sym_logs = self.get_symptom_logs(patient_id, limit=5)
+        for s in sym_logs:
+            if s.get("wellbeing_score", 5) <= 2 or s.get("note"):
+                med_tag = f" after {s['tagged_medicine']}" if s.get("tagged_medicine") else ""
+                talking_points.append({
+                    "category": "symptom",
+                    "icon": "HeartPulse",
+                    "title": f"Reported wellbeing score {s['wellbeing_score']}/5{med_tag}",
+                    "detail": s.get("note") or f"Logged on {s.get('log_date')}. Discuss tolerance or side effects.",
+                    "date": s.get("log_date")
+                })
+        
+        # 2. Copilot guardrail refusals
+        refusals = self.get_copilot_refusals(patient_id)
+        for r in refusals[:3]:
+            q_snippet = r['question'][:60] + ("..." if len(r['question']) > 60 else "")
+            talking_points.append({
+                "category": "question",
+                "icon": "MessageCircle",
+                "title": f"Asked AI Copilot: \"{q_snippet}\"",
+                "detail": "Emergency or diagnostic question redirected to physician. Raise directly during consultation.",
+                "date": r.get("created_at", "")[:10]
+            })
+            
+        # 3. Refill intelligence: medications ending soon
+        refill_items = self.get_refill_status(patient_id)
+        for rf in refill_items:
+            if rf.get("days_remaining") is not None and rf["days_remaining"] <= 5:
+                talking_points.append({
+                    "category": "refill",
+                    "icon": "Pill",
+                    "title": f"{rf['medicine']} course ends in {rf['days_remaining']} days",
+                    "detail": f"Ask {rf.get('doctor', 'the doctor')} about continuation, tapering, or step-down prescription.",
+                    "date": rf.get("start_date")
+                })
+                
+        # 4. Diagnostic orders & lab findings in Vault
+        vault_docs = self.get_vault(patient_id)
+        lab_docs = [v for v in vault_docs if "lab" in v.get("category", "").lower()]
+        if lab_docs:
+            talking_points.append({
+                "category": "lab",
+                "icon": "FileText",
+                "title": f"Review recent report: {lab_docs[0]['title']}",
+                "detail": f"Biomarker summary: {lab_docs[0].get('summary', 'Ready for clinical review.')}",
+                "date": lab_docs[0].get("date")
+            })
+
+        if not talking_points:
+            talking_points.append({
+                "category": "general",
+                "icon": "CheckCircle2",
+                "title": "Current treatment regimen on track",
+                "detail": "No severe symptoms or missed critical doses recorded since last visit.",
+                "date": datetime.date.today().isoformat()
+            })
+
+        return {
+            "patient_id": patient_id,
+            "doctor_name": "Dr. Nitin Sharma (Lead Physician)",
+            "appointment_date": "Tomorrow, 10:30 AM",
+            "talking_points": talking_points
+        }
+
 
 patient_service = PatientService()
+

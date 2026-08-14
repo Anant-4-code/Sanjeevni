@@ -363,6 +363,11 @@ async def get_correlation(patient_id: str, days: int = Query(default=14)):
     return patient_service.get_adherence_wellbeing_correlation(patient_id, days)
 
 
+@router.get("/{patient_id}/visit-prep")
+async def get_visit_prep(patient_id: str):
+    return patient_service.get_visit_prep(patient_id)
+
+
 @router.get("/{patient_id}/vault")
 async def get_vault(patient_id: str, category: str | None = Query(default=None)):
     items = patient_service.get_vault(patient_id, category)

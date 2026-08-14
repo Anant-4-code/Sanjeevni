@@ -20,6 +20,7 @@ app.include_router(doctor.router, prefix="/api/doctor", tags=["doctor"])
 app.include_router(pharmacy.router, prefix="/api/pharmacy", tags=["pharmacy"])
 app.include_router(lab.router, prefix="/api/lab", tags=["lab"])
 app.include_router(copilot.router, prefix="/api/patient", tags=["patient"])
+app.include_router(copilot.router, prefix="/api/copilot", tags=["copilot"])
 
 
 @app.get("/health")
