@@ -17,6 +17,9 @@ import {
   AlertTriangle,
   X,
   CheckCircle2,
+  FileText,
+  ImageOff,
+  Eye,
 } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
@@ -394,13 +397,13 @@ export default function PrescriptionDetailPage() {
                 />
               ) : (
                 <div className="text-center p-8 space-y-3">
-                  <div className="w-16 h-16 rounded-full bg-emerald-950/60 border border-emerald-800 flex items-center justify-center mx-auto text-emerald-400">
-                    <FileText className="w-8 h-8" />
+                  <div className="w-14 h-14 rounded-2xl bg-neutral-900 border border-neutral-800 flex items-center justify-center mx-auto text-neutral-400">
+                    <ImageOff className="w-7 h-7" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-sm text-white">{prescription.title || "Scanned Medical Record"}</h4>
+                    <h4 className="font-bold text-sm text-white">Original Physical Scan Image Not Available</h4>
                     <p className="text-xs text-neutral-400 mt-1 max-w-sm mx-auto leading-relaxed">
-                      Digitized and archived in Vault. Extracted by Tesseract OCR & Gemma AI Clinical Engine.
+                      This record does not have a physical photo or scanned image attached. All transcribed clinical details are safely archived in your Vault above.
                     </p>
                   </div>
                 </div>

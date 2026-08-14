@@ -595,183 +595,180 @@ def parse_ocr_text_with_ai(raw_text: str) -> dict:
 
 def parse_prescription_text_rules(raw_text: str) -> dict:
     import re
+    if not raw_text or not raw_text.strip():
+        return {
+            "title": "Scanned Prescription",
+            "doctor_name": "Attending Physician",
+            "facility_or_lab": "Medical Clinic",
+            "medicine_name": "",
+            "dosage": "",
+            "frequency": "1-0-1",
+            "duration": "5 days",
+            "medicines": [],
+            "conditionTag": "GENERAL CARE",
+            "patient_notes": "No legible text extracted from document scan.",
+            "status": "warning",
+            "message": "No prescription text detected in image."
+        }
+
     lines = [l.strip() for l in raw_text.splitlines() if l.strip()]
     med_list = []
     found_doctor = ""
     found_clinic = ""
-    notes_lines = []
+    valid_clinical_notes = []
+
+    # Frequency pattern
+    freq_regex = re.compile(
+        r'\b(1-0-1|1-0-0|0-0-1|0-1-0|1-1-1|1-1-0|0-1-1|once daily|twice daily|thrice daily|od|bd|tds|qid|hs|sos|stat|q\d+h|before meals?|after meals?|at bedtime|bedtime)\b',
+        re.IGNORECASE
+    )
+    # Dosage pattern
+    dos_regex = re.compile(
+        r'\b(\d+(?:\.\d+)?\s*(?:mg|g|ml|mcg|iu|%|tablet|tab|capsule|cap|drops))\b',
+        re.IGNORECASE
+    )
+    # Duration pattern
+    dur_regex = re.compile(
+        r'\b(?:x\s*)?(\d+\s*(?:days?|weeks?|months?|d|w|m|yrs?))\b',
+        re.IGNORECASE
+    )
 
     for line in lines:
         l_lower = line.lower()
-        
-        # Doctor matching
-        if ("dr." in l_lower or "dr " in l_lower or "doctor" in l_lower or "mithun" in l_lower):
-            if not found_doctor:
-                found_doctor = "Dr. G. Mithun (M.S., M.Ch. — Consultant Neuro Surgeon)" if "mithun" in l_lower else line
-            continue
-            
-        # Clinic/Hospital matching
+
+        # 1. Doctor matching (generic)
+        if not found_doctor:
+            doc_m = re.search(r'\b(?:dr\.?|doctor)\s+([a-zA-Z\.\s]{3,30})', line, re.IGNORECASE)
+            if doc_m:
+                found_doctor = f"Dr. {doc_m.group(1).strip()}"
+                continue
+            elif any(doc_word in l_lower for doc_word in ["consultant", "physician", "surgeon", "specialist"]) and len(line) < 60:
+                if not any(k in l_lower for k in ["road", "cell", "phone", "lane", "pin"]):
+                    found_doctor = line
+                    continue
+
+        # 2. Clinic/Hospital matching (generic)
         if not found_clinic and any(k in l_lower for k in [
-            "hospital", "clinic", "centre", "center", "medicare", "nursing home", "yogana", "manikanta",
-            "multispeciality", "multispecialty", "speciality", "specialty", "rkp", "polyclinic", "healthcare"
+            "hospital", "clinic", "centre", "center", "medicare", "nursing home", "healthcare",
+            "multispeciality", "multispecialty", "speciality", "specialty", "polyclinic", "diagnostic"
+        ]) and len(line) < 70:
+            if not any(k in l_lower for k in ["road", "cell", "phone", "lane", "regd", "pin", "cell:"]):
+                found_clinic = line
+                continue
+
+        # 3. Skip junk lines: contact details, addresses, registration, timestamps (use word boundaries)
+        skip_junk = bool(re.search(
+            r'\b(?:tel|cell|phone|mob|fax)\s*[:\.\d]|\b(?:pincode|pin\s*code|\+91)\b|\b(?:road|street|colony|lane|dist|nagar)\b|\b(?:regd|lic|regn)\s*[\.\:\#\d]|\b(?:m\.s\.|m\.d\.|m\.ch\.|mbbs|bams|bhms)\b|\b(?:sunday holiday|not valid for medico|appointment|email|website)\b',
+            line,
+            re.IGNORECASE
+        )) or bool(re.search(r'\b(?:\d{10}|\d{6})\b', line))
+        if skip_junk:
+            continue
+
+        # 4. Skip pure dates, fractions, short numbers or noisy OCR fragments
+        if re.match(r'^[\d\s\/\.,\-\:\;\(\)]+$', line) or len(line) < 3:
+            continue
+
+        # Check character cleanliness: if more than 35% characters are non-alphanumeric (excluding space/dash), skip as noise
+        clean_chars = sum(1 for c in line if c.isalnum() or c in ' -.,')
+        if clean_chars / len(line) < 0.65:
+            continue
+
+        # 5. Check if line represents a Medicine Item
+        has_form_prefix = bool(re.search(r'\b(?:tab(?:let)?|cap(?:sule)?|syrup|syp|inj(?:ection)?|oint(?:ment)?|drops?|gel|cream|susp(?:ension)?|lotion|sachet|t\.|c\.)\b', line, re.IGNORECASE))
+        has_num_prefix = bool(re.match(r'^(?:\d+[\.\)\-]?|\([0-9ivx]+\)|[R|r][xX/]?\s*)\s*[a-zA-Z]', line))
+        has_dosage = bool(dos_regex.search(line))
+        has_frequency = bool(freq_regex.search(line))
+
+        if has_form_prefix or (has_num_prefix and (has_dosage or has_frequency or len(line.split()) <= 6)) or (has_dosage and has_frequency):
+            # Extract Dosage
+            dos_m = dos_regex.search(line)
+            dosage = dos_m.group(1).strip() if dos_m else ""
+
+            # Extract Frequency
+            freq_m = freq_regex.search(line)
+            frequency = freq_m.group(1).strip() if freq_m else "1-0-1"
+
+            # Extract Duration
+            dur_m = dur_regex.search(line)
+            duration = dur_m.group(1).strip() if dur_m else "5 days"
+
+            # Clean drug name: strip numbering, bullet, dosage, frequency, duration, meal instructions
+            clean_name = re.sub(r'^(?:\d+[\.\)\-]?|\([0-9ivx]+\)|[R|r][xX/]?\s*)\s*', '', line)
+            if dosage:
+                clean_name = re.sub(re.escape(dosage), '', clean_name, flags=re.IGNORECASE)
+            if freq_m:
+                clean_name = re.sub(r'\b' + re.escape(freq_m.group(0)) + r'\b', '', clean_name, flags=re.IGNORECASE)
+            if dur_m:
+                clean_name = re.sub(r'\b(?:x\s*)?' + re.escape(dur_m.group(0)) + r'\b', '', clean_name, flags=re.IGNORECASE)
+
+            # Strip meal instructions from medicine name (route into frequency or notes)
+            clean_name = re.sub(r'\b(?:before|after)\s*(?:food|meals?|breakfast|lunch|dinner)\b', '', clean_name, flags=re.IGNORECASE)
+
+            # Strip trailing/leading symbols, circle notations
+            clean_name = re.sub(r'[\(\[\{]?\d+[\)\]\}]?$', '', clean_name)
+            clean_name = re.sub(r'[^\w\s\.\-]', ' ', clean_name)
+            clean_name = re.sub(r'\s+', ' ', clean_name).strip(' -.,:')
+
+            alpha_count = sum(1 for c in clean_name if c.isalpha())
+            if alpha_count >= 2 and len(clean_name) >= 3:
+                # Add default prefix if indicated in original line and not already present
+                if has_form_prefix and not clean_name.lower().startswith(("tab", "cap", "inj", "syp", "syrup", "oint", "gel", "drop")):
+                    form_m = re.search(r'\b(Tab(?:let)?|Cap(?:sule)?|Syrup|Syp|Inj(?:ection)?|Oint(?:ment)?|Drops?|Gel|Cream)\b', line, re.I)
+                    if form_m:
+                        prefix = form_m.group(1).capitalize()
+                        if prefix.lower() in ["tablet", "tab"]:
+                            prefix = "Tab."
+                        elif prefix.lower() in ["capsule", "cap"]:
+                            prefix = "Cap."
+                        clean_name = f"{prefix} {clean_name}"
+
+                med_list.append({
+                    "name": clean_name,
+                    "dosage": dosage,
+                    "frequency": frequency,
+                    "duration": duration,
+                    "conditionTag": "GENERAL CARE"
+                })
+                continue
+
+        # 6. Genuine Clinical Notes / Instructions
+        if any(w in l_lower for w in [
+            "diagnosis", "c/o", "complaint", "pain", "fever", "cough", "history", "rest", "diet",
+            "fasting", "sugar", "bp", "advice", "review", "follow up", "instructions", "take",
+            "avoid", "apply", "before", "after", "bed rest", "water", "warm", "physio", "exercise",
+            "weight", "age:", "female", "male", "allerg"
         ]):
-            found_clinic = "Manikanta Neuro Centre, Hanamkonda" if "manikanta" in l_lower or "veena" in l_lower or "kakaji" in l_lower or "hanamkonda" in l_lower else line
-            continue
+            alpha_count = sum(1 for c in line if c.isalpha())
+            clean_line = re.sub(r'[^\w\s\.\,\:\;\-\(\)\/]', '', line).strip()
+            if len(clean_line) > 5 and alpha_count >= 4:
+                valid_clinical_notes.append(clean_line)
 
-        # Patient name & vitals matching from header
-        if any(pt in l_lower for pt in ["likhitha", "pt. name", "age:", "wt:"]):
-            notes_lines.append("Patient: P. Likhitha (Age: 19, Female, Wt: 35 kg) — Warangal")
-            continue
+    first_med = med_list[0] if med_list else {
+        "name": "",
+        "dosage": "",
+        "frequency": "1-0-1",
+        "duration": "5 days",
+        "conditionTag": "GENERAL CARE"
+    }
 
-        # Clinical findings & diagnosis matching
-        if any(diag in l_lower for diag in ["lba", "radic", "tingling", "numbness", "unable to walk", "bed rest"]):
-            notes_lines.append("Clinical Diagnosis: LBA with Bilateral Lower Limb Radicular Pain, Tingling & Numbness (+). Advised bed rest for 3 days.")
-            continue
-
-        # Filter out contact info, appointments, dates, qualifications, registration, doctor titles
-        if any(skip in l_lower for skip in [
-            "appointment", "m:", "+91", "tel:", "phone:", "cell:", "road", "date", "patient", "regd", "m.s.", "m.ch.",
-            "emergen", "contrac", "surgeon", "specialist", "consultant", "neuro"
-        ]):
-            notes_lines.append(line)
-            continue
-
-        # Filter out medical diagnosis / symptom notes e.g. "LBA", "radicity", "pain", "ble", "ache", "fever"
-        if any(diag in l_lower for diag in ["lba", "radic", "ache", "pain", "fever", "cough", "vomit", "diarrhea", "diagnosis", "symptom", "history"]):
-            notes_lines.append(line)
-            continue
-            
-        # Filter out pure date/fraction/address lines e.g. 31/8/20, 2.1/9, 2,2/9, 8/8/29
-        if re.match(r'^\D*?\d+[\/\.,]\d+[\/\.,]?\d*\D*$', line):
-            notes_lines.append(line)
-            continue
-
-        # Medicine matching rules: line must start with number or contain drug keywords/dosages
-        is_med = bool(re.search(r'^(?:\d+[\.\)]|\b(?:tab|cap|syrup|inj|t\.|c\.)\b|\b\d+\s*(?:mg|g|ml|mcg)\b)', line, re.IGNORECASE)) or any(k in l_lower for k in [
-            "edushine", "m-ped", "mped", "gabapin", "benforce", "benfos", "rebote", "rebte",
-            "novelon", "paracetamol", "pan", "amox", "aspirin", "metformin", "atorvastatin",
-            "pantocid", "azithral", "cefixime", "tab", "cap", "qutab"
-        ])
-        
-        if is_med:
-            clean_name = re.sub(r'^\d+[\.\)]\s*', '', line).strip()
-            dos_match = re.search(r'\b(\d+\s*(?:mg|g|ml|mcg))\b', line, re.IGNORECASE)
-            dos = dos_match.group(1) if dos_match else ""
-            freq_match = re.search(r'\b(once daily|twice daily|thrice daily|1-0-1|1-0-0|0-0-1|bd|every \d+ hours|1 tab)\b', line, re.IGNORECASE)
-            freq = freq_match.group(1) if freq_match else "1-0-1"
-            dur_match = re.search(r'\b(\d+\s*(?:days|weeks|months))\b', line, re.IGNORECASE)
-            dur = dur_match.group(1) if dur_match else "5 days"
-
-            tag = "GENERAL CARE"
-            c_lower = clean_name.lower()
-            if "noveron" in c_lower or "novelon" in c_lower:
-                clean_name = "Novelon (Oral Contraceptive Pill)"
-                dos = "1 Tablet"
-                freq = "Once Daily (Night)"
-                dur = "21 days"
-                tag = "CONTRACEPTION & CYCLE CARE"
-            elif "edushine" in c_lower:
-                clean_name = "Tab. Edushine MX 6"
-                freq = "1-0-1"
-                dur = "5 days"
-                tag = "NEURO RECOVERY"
-            elif "m-ped" in c_lower or "mped" in c_lower:
-                clean_name = "Tab. M-ped 16mg"
-                dos = "16mg"
-                freq = "BD (Twice Daily)"
-                dur = "3 days"
-                tag = "ANTI-INFLAMMATORY"
-            elif "gabapin" in c_lower:
-                clean_name = "Tab. Gabapin NT 100mg"
-                dos = "100mg"
-                freq = "0-0-1 (Night)"
-                dur = "10 days"
-                tag = "NERVE PAIN CARE"
-            elif "benforce" in c_lower or "benfos" in c_lower:
-                clean_name = "Tab. Benforce CD"
-                freq = "1-0-0 (Morning)"
-                dur = "10 days"
-                tag = "NEUROPATHY CARE"
-            elif "rebote" in c_lower or "rebte" in c_lower:
-                clean_name = "Tab. Rebote"
-                freq = "1-0-1 (Before Meals)"
-                dur = "10 days"
-                tag = "GASTRIC PROTECTION"
-
-            med_list.append({
-                "name": clean_name,
-                "dosage": dos,
-                "frequency": freq,
-                "duration": dur,
-                "conditionTag": tag
-            })
-        else:
-            notes_lines.append(line)
-
-    if not med_list or (len(med_list) == 1 and not med_list[0].get("name")):
-        if any(k in raw_text.lower() for k in ["mithun", "neuro", "hanamkonda", "likhitha", "edushine", "manikanta"]):
-            med_list = [
-                {
-                    "name": "Tab. Edushine MX 6",
-                    "dosage": "1 Tablet",
-                    "frequency": "1-0-1 (Twice Daily)",
-                    "duration": "5 days",
-                    "conditionTag": "NEURO RECOVERY"
-                },
-                {
-                    "name": "Tab. M-ped 16mg",
-                    "dosage": "16mg",
-                    "frequency": "BD (Twice Daily)",
-                    "duration": "3 days",
-                    "conditionTag": "ANTI-INFLAMMATORY"
-                },
-                {
-                    "name": "Tab. Gabapin NT 100mg",
-                    "dosage": "100mg",
-                    "frequency": "0-0-1 (Night)",
-                    "duration": "10 days",
-                    "conditionTag": "NERVE PAIN CARE"
-                },
-                {
-                    "name": "Tab. Benforce CD",
-                    "dosage": "1 Tablet",
-                    "frequency": "1-0-0 (Morning)",
-                    "duration": "10 days",
-                    "conditionTag": "NEUROPATHY CARE"
-                },
-                {
-                    "name": "Tab. Rebote",
-                    "dosage": "1 Tablet",
-                    "frequency": "1-0-1 (Before Meals)",
-                    "duration": "10 days",
-                    "conditionTag": "GASTRIC PROTECTION"
-                }
-            ]
-        else:
-            med_list = [{
-                "name": "Prescribed Medication",
-                "dosage": "As Directed",
-                "frequency": "1-0-1",
-                "duration": "5 days",
-                "conditionTag": "GENERAL CARE"
-            }]
-
-    first_med = med_list[0]
-    doc_title = found_doctor or "Attending Physician / Staff Doctor"
-    clinic_title = found_clinic or "Scanned Prescription Intake"
+    doc_title = found_doctor or "Attending Physician"
+    clinic_title = found_clinic or ("Medical Clinic" if found_doctor else "Scanned Prescription Intake")
+    formatted_notes = " | ".join(valid_clinical_notes[:3]) if valid_clinical_notes else "Scanned physical prescription archived in Vault."
 
     return {
-        "title": f"Scanned Prescription — {clinic_title}",
+        "title": f"Scanned Prescription — {clinic_title}" if clinic_title != "Scanned Prescription Intake" else (f"Prescription — {doc_title}" if doc_title != "Attending Physician" else "Scanned Prescription"),
         "doctor_name": doc_title,
+        "facility_or_lab": clinic_title,
         "medicine_name": first_med.get("name", ""),
         "dosage": first_med.get("dosage", ""),
         "frequency": first_med.get("frequency", "1-0-1"),
         "duration": first_med.get("duration", "5 days"),
         "medicines": med_list,
         "conditionTag": first_med.get("conditionTag", "GENERAL CARE"),
-        "patient_notes": "Clinical Notes / Scan Details: " + " | ".join(notes_lines[:4]),
+        "patient_notes": formatted_notes,
         "status": "safe",
-        "message": f"Successfully extracted {len(med_list)} prescribed medication(s) from scan.",
+        "message": f"Successfully extracted {len(med_list)} prescribed medication(s) from document." if med_list else "No distinct medications parsed from image. Please verify physical document.",
     }
 
 
@@ -1033,17 +1030,17 @@ def analyze_medical_document_by_category(image_bytes: bytes, category: str) -> d
         lines = [l.strip() for l in raw_ocr_text.splitlines() if l.strip()]
         for line in lines:
             l_lower = line.lower()
-            # Match doctor names
-            if not extracted_doctor and ("dr." in l_lower or "dr " in l_lower or "doctor" in l_lower or "mithun" in l_lower):
+            # Match doctor names (generic)
+            if not extracted_doctor and ("dr." in l_lower or "dr " in l_lower or "doctor" in l_lower or "physician" in l_lower):
                 doc_m = re.search(r'(dr\.?\s+[a-zA-Z\.\s]{3,30})', line, re.IGNORECASE)
                 if doc_m:
                     extracted_doctor = doc_m.group(1).strip()
                 else:
                     extracted_doctor = line
-            # Match clinic/hospital/lab names
+            # Match clinic/hospital/lab names (generic)
             if not extracted_facility and any(k in l_lower for k in [
-                "hospital", "clinic", "centre", "center", "medicare", "pathlab", "diagnostic", "laboratory", "nursing", "colony", "hanamkonda"
-            ]):
+                "hospital", "clinic", "centre", "center", "medicare", "pathlab", "diagnostic", "laboratory", "nursing", "polyclinic", "health"
+            ]) and len(line) < 70:
                 extracted_facility = line
 
         # If it's a prescription or general document, parse medicines
