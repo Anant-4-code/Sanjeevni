@@ -1,0 +1,9 @@
+{
+  "name": "sanjeevani-project",
+  "version": "1.0.0",
+  "description": "Sanjeevani - AI Prescription Intelligence Platform",
+  "scripts": {
+    "dev": "run-all.bat",
+    "start": "run-all.bat"
+  }
+}

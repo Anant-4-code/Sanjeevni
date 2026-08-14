@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #F8F7F4;
+  --bg-elevated: #FFFFFF;
+  --bg-muted: #EFECE6;
+  --fg: #0F172A;
+  --fg-muted: #64748B;
+  --border: #E2E8F0;
+  --accent: #0F172A;
+  --accent-foreground: #FFFFFF;
+  --warn: #DC2626;
+  --warn-bg: #FEF2F2;
+  --warn-border: #FCA5A5;
+  --safe: #059669;
+  --safe-bg: #ECFDF5;
+  --safe-border: #6EE7B7;
+  --unverified: #D97706;
+  --unverified-bg: #FFFBEB;
+  --unverified-border: #FCD34D;
+}
+
+[data-theme="dark"] {
+  --bg: #090D16;
+  --bg-elevated: #111827;
+  --bg-muted: #1F2937;
+  --fg: #F9FAFB;
+  --fg-muted: #9CA3AF;
+  --border: #1F2937;
+  --accent: #F9FAFB;
+  --accent-foreground: #090D16;
+  --warn: #EF4444;
+  --warn-bg: #450A0A;
+  --warn-border: #991B1B;
+  --safe: #10B981;
+  --safe-bg: #064E3B;
+  --safe-border: #047857;
+  --unverified: #F59E0B;
+  --unverified-bg: #451A03;
+  --unverified-border: #B45309;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+}
+
+/* Glassmorphism & Modern Soft Card Utilities */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+[data-theme="dark"] .glass-panel {
+  background: rgba(17, 24, 39, 0.75);
+  border: 1px solid rgba(31, 41, 55, 0.8);
+}
+
+.glass-card {
+  background: var(--bg-elevated);
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+  transition: all 0.25s ease-in-out;
+}
+
+.glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.08);
+  border-color: rgba(15, 23, 42, 0.25);
+}
+
+[data-theme="dark"] .glass-card:hover {
+  border-color: rgba(249, 250, 251, 0.25);
+  box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.4);
+}
+
+/* Marquee animation */
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marquee 25s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Background grid texture */
+.bg-dot-grid {
+  background-image: radial-gradient(rgba(100, 116, 139, 0.15) 1px, transparent 1px);
+  background-size: 24px 24px;
+}

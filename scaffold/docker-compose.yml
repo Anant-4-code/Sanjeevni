@@ -1,0 +1,27 @@
+version: "3.9"
+services:
+  backend:
+    build: ./backend
+    ports: ["8000:8000"]
+    env_file: ./backend/.env
+    volumes:
+      - ./backend:/app
+  reception:
+    build: ./frontend/apps/reception
+    ports: ["5173:5173"]
+  doctor:
+    build: ./frontend/apps/doctor
+    ports: ["5174:5173"]
+  pharmacy:
+    build: ./frontend/apps/pharmacy
+    ports: ["5175:5173"]
+  lab:
+    build: ./frontend/apps/lab
+    ports: ["5176:5173"]
+  patient:
+    build: ./frontend/apps/patient
+    ports: ["3000:3000"]
+
+# NOTE: Postgres/Redis/Vector DB are NOT included here since the project now
+# uses Supabase (hosted Postgres + Auth + Storage) instead of a self-hosted DB.
+# Add a `redis` service back if you wire up Celery for async OCR/X-ray jobs.
