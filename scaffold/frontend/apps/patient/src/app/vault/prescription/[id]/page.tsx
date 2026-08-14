@@ -74,7 +74,15 @@ export default function PrescriptionDetailPage() {
         const docs = Array.isArray(data?.documents) ? data.documents : [];
         const found = docs.find((d: any) => d.id === rxId);
         if (found) {
-          setPrescription(found);
+          let cleanDoctor = found.doctor_name || "Attending Physician";
+          if ((cleanDoctor.toLowerCase().includes("diagnostic") || cleanDoctor.toLowerCase().includes("laboratory")) && found.patient_notes) {
+            const docMatch = found.patient_notes.match(/Dr\.?\s+[A-Za-z\.\s]{3,30}/i);
+            if (docMatch) {
+              cleanDoctor = docMatch[0].trim();
+            }
+          }
+          const updatedDoc = { ...found, doctor_name: cleanDoctor };
+          setPrescription(updatedDoc);
           if (found.medicines && found.medicines.length > 0) {
             setExpandedMed(found.medicines[0].name);
           }

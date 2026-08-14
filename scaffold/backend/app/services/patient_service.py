@@ -179,7 +179,7 @@ class PatientService:
             "patient_id": patient_id,
             "title": title or f"Scanned {category.replace('_', ' ').title()} Record",
             "category": mapped_cat,
-            "doctor_name": details.get("facility_or_lab") or details.get("doctor_name") or "Diagnostic Laboratory Desk",
+            "doctor_name": details.get("doctor_name") or details.get("facility_or_lab") or "Attending Physician",
             "status": "verified",
             "date": datetime.date.today().strftime("%b %d, %Y"),
             "summary": summary or f"Extracted {category.replace('_', ' ')} archived in Vault.",
