@@ -74,7 +74,7 @@ export function Navbar() {
   return (
     <>
       {/* DESKTOP TOP HEADER */}
-      <header className="hidden md:block sticky top-0 z-40 px-3 pt-2.5 pb-1">
+      <header className="hidden md:block sticky top-0 z-40 px-3 pt-2.5 pb-1" suppressHydrationWarning>
         <div className="max-w-7xl mx-auto glass-panel rounded-2xl px-4 h-14 flex items-center justify-between shadow-sm">
           {/* Brand Logo */}
           <Link href="/dashboard" className="flex items-center gap-2 font-display text-lg font-bold tracking-tight flex-shrink-0">
@@ -109,19 +109,20 @@ export function Navbar() {
             <button
               onClick={() => setProfileOpen(!profileOpen)}
               className="flex items-center gap-2 border border-[var(--border)] bg-[var(--bg-elevated)] hover:border-[var(--fg)] pl-1.5 pr-3 py-1 rounded-full text-xs font-bold transition-all shadow-sm"
+              suppressHydrationWarning
             >
-              {displayUser?.avatar_url ? (
+              {mounted && user?.avatar_url ? (
                 <img
-                  src={displayUser.avatar_url}
-                  alt={displayUser.full_name || "User Avatar"}
+                  src={user.avatar_url}
+                  alt={user.full_name || "User Avatar"}
                   className="w-5 h-5 rounded-full object-cover border border-[var(--border)]"
                 />
               ) : (
                 <div className="w-5 h-5 rounded-full bg-[var(--bg-muted)] flex items-center justify-center text-[10px] font-extrabold text-[var(--fg)]">
-                  {displayUser?.full_name ? displayUser.full_name[0].toUpperCase() : "P"}
+                  {mounted && user?.full_name ? user.full_name[0].toUpperCase() : "P"}
                 </div>
               )}
-              <span>{firstName}</span>
+              <span suppressHydrationWarning>{mounted && user?.full_name ? user.full_name.split(" ")[0] : "Patient"}</span>
               <ChevronDown className={`w-3.5 h-3.5 text-[var(--fg-muted)] transition-transform ${profileOpen ? "rotate-180" : ""}`} />
             </button>
 
