@@ -105,19 +105,51 @@ export function Navbar() {
           <div className="relative flex-shrink-0" ref={dropdownRef}>
             <button
               onClick={() => setProfileOpen(!profileOpen)}
-              className="flex items-center gap-1.5 border border-[var(--border)] bg-[var(--bg-elevated)] hover:border-[var(--fg)] px-3 py-1.5 rounded-full text-xs font-bold transition-all shadow-sm"
+              className="flex items-center gap-2 border border-[var(--border)] bg-[var(--bg-elevated)] hover:border-[var(--fg)] pl-1.5 pr-3 py-1 rounded-full text-xs font-bold transition-all shadow-sm"
             >
-              <Activity className="w-3.5 h-3.5 text-emerald-600" />
+              {user?.avatar_url ? (
+                <img
+                  src={user.avatar_url}
+                  alt={user.full_name || "User Avatar"}
+                  className="w-5 h-5 rounded-full object-cover border border-[var(--border)]"
+                />
+              ) : (
+                <div className="w-5 h-5 rounded-full bg-[var(--bg-muted)] flex items-center justify-center text-[10px] font-extrabold text-[var(--fg)]">
+                  {user?.full_name ? user.full_name[0].toUpperCase() : "P"}
+                </div>
+              )}
               <span>{firstName}</span>
               <ChevronDown className={`w-3.5 h-3.5 text-[var(--fg-muted)] transition-transform ${profileOpen ? "rotate-180" : ""}`} />
             </button>
 
             {/* Dropdown Menu */}
             {profileOpen && (
-              <div className="absolute right-0 mt-2 w-56 glass-card p-2 rounded-2xl shadow-xl z-50 border border-[var(--border)] space-y-1">
-                <div className="px-3 py-2 border-b border-[var(--border)]">
-                  <p className="font-bold text-xs">{user.full_name}</p>
-                  <p className="text-[10px] text-[var(--fg-muted)] font-mono truncate">{user.email}</p>
+              <div className="absolute right-0 mt-2 w-64 glass-card p-2 rounded-2xl shadow-xl z-50 border border-[var(--border)] space-y-1">
+                <div className="px-3 py-2.5 border-b border-[var(--border)] space-y-1">
+                  <div className="flex items-center gap-2.5">
+                    {user?.avatar_url ? (
+                      <img
+                        src={user.avatar_url}
+                        alt={user.full_name || "User"}
+                        className="w-8 h-8 rounded-full object-cover border border-[var(--border)]"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-[var(--bg-muted)] flex items-center justify-center font-bold text-xs">
+                        {user?.full_name ? user.full_name[0].toUpperCase() : "P"}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="font-bold text-xs truncate">{user?.full_name || "Patient"}</p>
+                      <p className="text-[10px] text-[var(--fg-muted)] font-mono truncate">{user?.email || ""}</p>
+                    </div>
+                  </div>
+
+                  {user?.primary_doctor && (
+                    <div className="pt-1.5 flex items-center gap-1.5 text-[10px] font-medium text-[var(--fg-muted)] bg-[var(--bg-muted)]/50 p-1.5 rounded-lg">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
+                      <span className="truncate">Dr: <strong>{user.primary_doctor.name}</strong></span>
+                    </div>
+                  )}
                 </div>
 
                 <Link

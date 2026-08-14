@@ -290,16 +290,61 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Right Sidebar (1 Column on Desktop) */}
+        {/* Right Column (1 Col on Desktop) */}
         <div className="space-y-6">
-          {/* Quick Action Tools */}
-          <div className="glass-card p-6 space-y-4">
-            <h3 className="text-xs uppercase tracking-[0.15em] text-[var(--fg-muted)] font-bold flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[var(--fg)]" />
-              Patient Tools & Shortcuts
-            </h3>
+          {/* Primary Doctor Care Team Card */}
+          {user?.primary_doctor && (
+            <div className="glass-card p-5 space-y-3.5 border-2 border-[var(--border)]">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono uppercase tracking-[0.15em] text-[var(--fg-muted)] font-bold flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  Primary Doctor
+                </span>
+                <Link
+                  href="/settings"
+                  className="text-[11px] font-bold text-[var(--fg)] hover:underline uppercase tracking-wider font-mono"
+                >
+                  Manage →
+                </Link>
+              </div>
 
-            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl overflow-hidden border border-[var(--border)] flex-shrink-0 bg-neutral-100 dark:bg-neutral-800 shadow-sm">
+                  {user.primary_doctor.avatar_url ? (
+                    <img
+                      src={user.primary_doctor.avatar_url}
+                      alt={user.primary_doctor.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center font-bold text-xs">
+                      {user.primary_doctor.name.slice(4, 6)}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-0.5 min-w-0">
+                  <h3 className="font-bold text-sm text-[var(--fg)] truncate">{user.primary_doctor.name}</h3>
+                  <p className="text-xs text-[var(--fg-muted)] truncate">{user.primary_doctor.specialty}</p>
+                  <p className="text-[10px] text-[var(--fg-muted)] font-mono truncate">{user.primary_doctor.hospital}</p>
+                </div>
+              </div>
+
+              {user.primary_doctor.phone && (
+                <div className="pt-2 border-t border-[var(--border)] flex items-center justify-between text-xs">
+                  <span className="text-[var(--fg-muted)] text-[11px]">Clinic Desk:</span>
+                  <span className="font-mono font-bold text-[var(--fg)]">{user.primary_doctor.phone}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Quick Actions */}
+          <div className="glass-card p-6 space-y-4">
+            <h3 className="text-xs uppercase tracking-[0.15em] text-[var(--fg-muted)] font-mono font-bold">
+              Patient Care Hub
+            </h3>
+            <div className="space-y-2">
               <Link
                 href="/vault"
                 className="flex items-center gap-3 glass-panel p-3.5 rounded-xl hover:border-[var(--fg)] transition-all group"

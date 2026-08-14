@@ -1057,8 +1057,8 @@ CREATE TABLE copilot_refused_queries (
 | | Persistent session via `@supabase/ssr` cookies | ✅ Built |
 | | Logout & session revoke | ✅ Built |
 | **Patient Profile Setup** | Name, age, language preference | ✅ Built |
-| | Profile photo / avatar | 📋 Planned |
-| | Primary doctor assignment | 📋 Planned |
+| | Profile photo / avatar (upload & preset selector) | ✅ Built |
+| | Primary doctor assignment & lead care team card | ✅ Built |
 
 ---
 
@@ -1351,7 +1351,7 @@ CREATE TABLE copilot_refused_queries (
 
 | Area | Built ✅ | Partial 🔧 | Planned 📋 | Total |
 |---|---|---|---|---|
-| Auth & Onboarding | 4 | 0 | 2 | 6 |
+| Auth & Onboarding | 6 | 0 | 0 | 6 |
 | Dashboard & Timeline | 8 | 0 | 5 | 13 |
 | Universal Doc Hub | 18 | 0 | 1 | 19 |
 | Digital Vault | 14 | 0 | 0 | 14 |
@@ -1368,6 +1368,6 @@ CREATE TABLE copilot_refused_queries (
 | Activity Logs | 9 | 0 | 0 | 9 |
 | Settings & Profile | 4 | 0 | 5 | 9 |
 | PWA & Offline | 6 | 0 | 2 | 8 |
-| **TOTAL** | **100** | **0** | **66** | **166** |
+| **TOTAL** | **102** | **0** | **64** | **166** |
 
 
