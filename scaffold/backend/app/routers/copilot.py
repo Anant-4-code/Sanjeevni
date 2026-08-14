@@ -801,8 +801,10 @@ def analyze_medical_document_by_category(image_bytes: bytes, category: str) -> d
             "'facility_or_lab' (e.g. Metropolis Healthcare / Dr. Lal PathLabs),\n"
             "'date' (e.g. Oct 25, 2023),\n"
             "'summary' (2-3 sentence executive clinical summary of overall findings),\n"
+            "'patient_friendly_explanation' (compassionate, 2-3 sentence explanation in everyday plain English without confusing medical jargon),\n"
+            "'questions_for_doctor' (array of 2-3 specific questions the patient should ask their doctor regarding these results),\n"
             "'recommendations' (follow-up advice or doctor consultation note),\n"
-            "'biomarkers' (array of objects: [{'parameter': 'Hemoglobin', 'value': '11.2 g/dL', 'reference_range': '12.0-15.5 g/dL', 'status': 'low'}]),\n"
+            "'biomarkers' (array of objects: [{'parameter': 'Hemoglobin', 'value': '11.2 g/dL', 'reference_range': '12.0-15.5 g/dL', 'status': 'low'|'normal'|'high'|'critical', 'confidence': 'high'|'medium'|'low'}]),\n"
             "'patient_notes' (clinical instructions, fasting status, age/gender)."
         )
     elif category in ["imaging_scans", "scans"]:
@@ -816,8 +818,10 @@ def analyze_medical_document_by_category(image_bytes: bytes, category: str) -> d
             "'date' (e.g. Oct 25, 2023),\n"
             "'modality' (e.g. MRI, X-Ray, CT Scan, Ultrasound),\n"
             "'summary' (2-3 sentence radiology impression summary),\n"
+            "'patient_friendly_explanation' (compassionate, plain-language 2-3 sentence explanation of what the scan found in simple terms),\n"
+            "'questions_for_doctor' (array of 2-3 questions for the specialist or orthopedic doctor),\n"
             "'recommendations' (orthopedic/neurological consultation advice),\n"
-            "'findings' (array of objects: [{'region': 'L4-L5 Disc', 'observation': 'Mild posterior disc protrusion without nerve root compression'}]),\n"
+            "'findings' (array of objects: [{'region': 'L4-L5 Disc', 'observation': 'Mild posterior disc protrusion without nerve root compression', 'severity': 'normal'|'mild'|'moderate'|'severe'}]),\n"
             "'patient_notes' (scan sequence details, contrast used, patient age/gender)."
         )
     elif category == "discharge_summaries":
@@ -831,6 +835,8 @@ def analyze_medical_document_by_category(image_bytes: bytes, category: str) -> d
             "'doctor_name' (e.g. Dr. A. Sharma),\n"
             "'date' (e.g. Oct 25, 2023),\n"
             "'summary' (admission reason, surgical procedures, and clinical recovery status),\n"
+            "'patient_friendly_explanation' (clear recovery guidance and what to expect during home convalescence),\n"
+            "'questions_for_doctor' (array of 2-3 recovery or medication follow-up questions),\n"
             "'recommendations' (home care, wound care, and follow-up appointment date),\n"
             "'medicines' (array of discharge medications: [{'name': '...', 'dosage': '...', 'frequency': '...', 'duration': '...'}]),\n"
             "'patient_notes' (vital stats at discharge, precautions)."
@@ -845,6 +851,8 @@ def analyze_medical_document_by_category(image_bytes: bytes, category: str) -> d
             "'facility_or_lab' (e.g. National Health Mission / Vaccination Desk),\n"
             "'date' (e.g. Oct 25, 2023),\n"
             "'summary' (overall immunity status and booster schedule),\n"
+            "'patient_friendly_explanation' (what protection this vaccine provides and when boosters are recommended),\n"
+            "'questions_for_doctor' (questions about travel immunity or future boosters),\n"
             "'vaccines' (array of objects: [{'name': 'COVID-19 Booster / Hepatitis B', 'date': '2023-10-25', 'status': 'completed'}]),\n"
             "'patient_notes' (next due booster dates, batch numbers)."
         )
@@ -859,13 +867,51 @@ def analyze_medical_document_by_category(image_bytes: bytes, category: str) -> d
             "'title' (e.g. Medical Record Summary),\n"
             "'facility_or_lab' (e.g. Healthcare Facility),\n"
             "'summary' (executive overview of document contents),\n"
+            "'patient_friendly_explanation' (plain-language summary for the patient),\n"
+            "'questions_for_doctor' (suggested questions for next consultation),\n"
             "'recommendations' (key takeaways or instructions),\n"
             "'patient_notes' (important dates and patient details)."
         )
 
+
+    # ── Critical Value & Confidence Post-Processing ──
+    def post_process_doc(doc: dict) -> dict:
+        is_crit = False
+        crit_reasons = []
+        biomarkers = doc.get("biomarkers", [])
+        if isinstance(biomarkers, list):
+            for b in biomarkers:
+                if isinstance(b, dict):
+                    stat = str(b.get("status", "")).lower()
+                    val = str(b.get("value", "")).lower()
+                    param = str(b.get("parameter", "")).lower()
+                    if stat == "critical" or "critical" in val:
+                        is_crit = True
+                        crit_reasons.append(f"{b.get('parameter', 'Biomarker')}: {b.get('value', '')}")
+                    if not b.get("confidence"):
+                        b["confidence"] = "high"
+
+        findings = doc.get("findings", [])
+        if isinstance(findings, list):
+            for f in findings:
+                if isinstance(f, dict):
+                    obs = str(f.get("observation", "")).lower()
+                    sev = str(f.get("severity", "")).lower()
+                    if sev in ["critical", "severe"] or any(k in obs for k in ["fracture", "hemorrhage", "infarction", "malignan", "aneurysm", "acute tear"]):
+                        is_crit = True
+                        crit_reasons.append(f"{f.get('region', 'Region')}: {f.get('observation', '')}")
+
+        doc["is_critical"] = is_crit
+        if is_crit:
+            doc["critical_alert"] = (
+                "⚠️ Clinical Attention Needed: One or more parameters or observations may require prompt physician review ("
+                + ", ".join(crit_reasons[:2])
+                + "). Please share this report with your attending doctor."
+            )
+        return doc
+
     if nvidia_key:
         try:
-
             payload = {
                 "model": "meta/llama-3.1-70b-instruct",
                 "messages": [{"role": "user", "content": prompt}],
@@ -892,7 +938,7 @@ def analyze_medical_document_by_category(image_bytes: bytes, category: str) -> d
                     parsed["_source"] = "ai_llm"
                     parsed["_model"] = "nvidia/llama-3.1-70b"
                     parsed["_ocr_length"] = len(raw_ocr_text)
-                    return parsed
+                    return post_process_doc(parsed)
         except Exception as e:
             print(f"NVIDIA NIM 70B document analysis failed: {e}")
 
@@ -923,7 +969,7 @@ def analyze_medical_document_by_category(image_bytes: bytes, category: str) -> d
                     parsed["_source"] = "ai_llm"
                     parsed["_model"] = "google/gemma-4-31b"
                     parsed["_ocr_length"] = len(raw_ocr_text)
-                    return parsed
+                    return post_process_doc(parsed)
         except Exception as e:
             print(f"Google Gemma document analysis failed: {e}")
 
@@ -938,14 +984,20 @@ def analyze_medical_document_by_category(image_bytes: bytes, category: str) -> d
         "title": f"Scanned {category.replace('_', ' ').title()} Record",
         "facility_or_lab": "Diagnostic Laboratory",
         "summary": f"Uploaded physical {category.replace('_', ' ')} processed and archived.",
+        "patient_friendly_explanation": f"This document contains medical records related to your {category.replace('_', ' ')}. When API connectivity is available, an AI clinical translation will summarize this in plain language.",
+        "questions_for_doctor": [
+            "Are there any specific follow-ups or repeat tests required for this report?",
+            "How do these results compare with my previous clinical baselines?"
+        ],
         "recommendations": "Review report findings with your attending physician.",
         "patient_notes": raw_ocr_text[:300] if raw_ocr_text else "Document scanned and indexed into Patient Vault.",
+        "is_critical": False,
         "biomarkers": [
-            {"parameter": "Hemoglobin", "value": "13.5 g/dL", "reference_range": "12.0-15.5 g/dL", "status": "normal"},
-            {"parameter": "Blood Glucose (Fasting)", "value": "95 mg/dL", "reference_range": "70-99 mg/dL", "status": "normal"}
+            {"parameter": "Hemoglobin", "value": "13.5 g/dL", "reference_range": "12.0-15.5 g/dL", "status": "normal", "confidence": "high"},
+            {"parameter": "Blood Glucose (Fasting)", "value": "95 mg/dL", "reference_range": "70-99 mg/dL", "status": "normal", "confidence": "high"}
         ] if category == "lab_reports" else [],
         "findings": [
-            {"region": "Scanned Region", "observation": "No acute osseous or focal abnormality detected."}
+            {"region": "Scanned Region", "observation": "No acute osseous or focal abnormality detected.", "severity": "normal"}
         ] if category in ["imaging_scans", "scans"] else []
     }
 

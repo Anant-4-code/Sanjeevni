@@ -26,6 +26,10 @@ import {
   Building2,
   Calendar,
   AlertTriangle,
+  AlertOctagon,
+  HelpCircle,
+  Flag,
+  HeartHandshake,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -119,6 +123,15 @@ export default function UniversalScannerHubPage() {
 
   // Source tracking — true when backend returned placeholder data (no API keys)
   const [isFallback, setIsFallback] = useState(false);
+
+  // Flagged for Doctor items (§6.7)
+  const [flaggedItems, setFlaggedItems] = useState<string[]>([]);
+
+  function toggleFlagItem(itemKey: string) {
+    setFlaggedItems((prev) =>
+      prev.includes(itemKey) ? prev.filter((k) => k !== itemKey) : [...prev, itemKey]
+    );
+  }
 
   // Form Fields for Digital Prescription
   const [rxTitle, setRxTitle] = useState("Scanned Prescription");
@@ -263,7 +276,7 @@ export default function UniversalScannerHubPage() {
           title: docAnalysis.title || `${selectedCategory} Report`,
           category: selectedCategory,
           summary: docAnalysis.summary || "Medical document archived in Vault.",
-          details: docAnalysis,
+          details: { ...docAnalysis, flagged_items: flaggedItems },
           file_url: capturedImage || "",
         }),
       });
@@ -467,6 +480,21 @@ export default function UniversalScannerHubPage() {
         <div className="space-y-6">
           {docAnalysis ? (
             <div className="glass-card p-6 space-y-6">
+            {/* Critical Value Escalation Banner (§6.6) */}
+            {docAnalysis.is_critical && (
+              <div className="flex items-start gap-3 p-4 rounded-2xl border-2 border-red-500 bg-red-50 dark:bg-red-950/40 dark:border-red-600 shadow-md animate-pulse">
+                <AlertOctagon className="w-6 h-6 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="text-xs font-bold text-red-800 dark:text-red-200 uppercase tracking-wider">
+                    CRITICAL CLINICAL ALERT — PROMPT PHYSICIAN REVIEW RECOMMENDED
+                  </p>
+                  <p className="text-xs text-red-700 dark:text-red-300 leading-relaxed font-medium">
+                    {docAnalysis.critical_alert || "One or more values in this report are outside standard reference parameters. Please contact your prescribing physician or medical center promptly."}
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Fallback Warning Banner — shown when no LLM keys are configured */}
             {isFallback && (
               <div className="flex items-start gap-3 p-4 rounded-xl border border-amber-400 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700">
@@ -486,10 +514,12 @@ export default function UniversalScannerHubPage() {
                 <span className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 mb-2 ${
                   isFallback
                     ? "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
+                    : docAnalysis.is_critical
+                    ? "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800"
                     : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800"
                 }`}>
-                  {isFallback ? <AlertTriangle className="w-3.5 h-3.5" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
-                  {isFallback ? "PLACEHOLDER DATA — AI UNAVAILABLE" : "AI REPORT ANALYSIS COMPLETE"}
+                  {isFallback ? <AlertTriangle className="w-3.5 h-3.5" /> : docAnalysis.is_critical ? <AlertOctagon className="w-3.5 h-3.5" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                  {isFallback ? "PLACEHOLDER DATA — AI UNAVAILABLE" : docAnalysis.is_critical ? "CLINICAL ATTENTION FLAGGED" : "AI REPORT ANALYSIS COMPLETE"}
                 </span>
                 <h2 className="font-display text-xl sm:text-2xl font-bold">{docAnalysis.title || "Scanned Medical Report"}</h2>
                 <p className="text-xs text-[var(--fg-muted)] mt-1">
@@ -504,6 +534,19 @@ export default function UniversalScannerHubPage() {
                 <RotateCcw className="w-3.5 h-3.5" /> Scan Another Document
               </button>
             </div>
+
+            {/* Plain-Language Patient Explanation (§6.3) */}
+            {docAnalysis.patient_friendly_explanation && (
+              <div className="glass-panel p-5 rounded-2xl space-y-2 border-indigo-300 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-950/20">
+                <h3 className="font-bold text-sm text-indigo-900 dark:text-indigo-200 flex items-center gap-2">
+                  <HeartHandshake className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  What Does This Mean For Me? (Patient Translation)
+                </h3>
+                <p className="text-xs sm:text-sm text-[var(--fg)] leading-relaxed">
+                  {docAnalysis.patient_friendly_explanation}
+                </p>
+              </div>
+            )}
 
             {/* AI Executive Summary */}
             <div className={`glass-panel p-5 rounded-2xl space-y-2 ${
@@ -525,9 +568,16 @@ export default function UniversalScannerHubPage() {
             {/* BIOMARKERS TABLE (For Lab Reports) */}
             {docAnalysis.biomarkers && Array.isArray(docAnalysis.biomarkers) && docAnalysis.biomarkers.length > 0 && (
               <div className="space-y-3">
-                <h3 className="text-xs font-mono uppercase tracking-wider font-bold text-[var(--fg-muted)]">
-                  Extracted Lab Biomarkers & Test Parameters ({docAnalysis.biomarkers.length})
-                </h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-mono uppercase tracking-wider font-bold text-[var(--fg-muted)]">
+                    Extracted Lab Biomarkers & Test Parameters ({docAnalysis.biomarkers.length})
+                  </h3>
+                  {flaggedItems.length > 0 && (
+                    <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                      ⭐ {flaggedItems.length} item(s) flagged for doctor
+                    </span>
+                  )}
+                </div>
                 <div className="overflow-x-auto rounded-xl border border-[var(--border)]">
                   <table className="w-full text-left text-xs">
                     <thead className="bg-[var(--bg-muted)] border-b border-[var(--border)] uppercase font-mono text-[10px] text-[var(--fg-muted)]">
@@ -536,6 +586,7 @@ export default function UniversalScannerHubPage() {
                         <th className="p-3">Result Value</th>
                         <th className="p-3">Reference Range</th>
                         <th className="p-3">Status</th>
+                        <th className="p-3 text-right">Flag for Doctor</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--border)]">
@@ -544,21 +595,43 @@ export default function UniversalScannerHubPage() {
                         const valStr = typeof b === "object" && b ? (b.value || b.result || "") : "";
                         const refStr = typeof b === "object" && b ? (b.reference_range || b.range || "Standard") : "";
                         const statStr = typeof b === "object" && b ? (b.status || "normal") : "normal";
+                        const isFlagged = flaggedItems.includes(paramName);
+                        const isLowConfidence = b?.confidence === "low";
                         return (
-                          <tr key={i} className="hover:bg-[var(--bg-muted)]/50">
-                            <td className="p-3 font-bold">{paramName}</td>
-                            <td className="p-3 font-mono">{valStr}</td>
+                          <tr key={i} className={`hover:bg-[var(--bg-muted)]/50 transition-colors ${isFlagged ? "bg-amber-50/40 dark:bg-amber-950/20" : ""}`}>
+                            <td className="p-3">
+                              <span className="font-bold">{paramName}</span>
+                              {isLowConfidence && (
+                                <span className="block text-[9px] text-amber-600 font-mono">⚠️ verify OCR value</span>
+                              )}
+                            </td>
+                            <td className="p-3 font-mono font-medium">{valStr}</td>
                             <td className="p-3 text-[var(--fg-muted)]">{refStr}</td>
                             <td className="p-3">
                               <span
                                 className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase ${
-                                  statStr === "high" || statStr === "low"
+                                  statStr === "critical"
+                                    ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 border border-red-400 font-extrabold"
+                                    : statStr === "high" || statStr === "low"
                                     ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300"
                                     : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300"
                                 }`}
                               >
                                 {statStr}
                               </span>
+                            </td>
+                            <td className="p-3 text-right">
+                              <button
+                                onClick={() => toggleFlagItem(paramName)}
+                                className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all inline-flex items-center gap-1 ${
+                                  isFlagged
+                                    ? "bg-amber-500 text-white shadow-sm"
+                                    : "border border-[var(--border)] text-[var(--fg-muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-muted)]"
+                                }`}
+                              >
+                                <Flag className={`w-3 h-3 ${isFlagged ? "fill-white" : ""}`} />
+                                {isFlagged ? "Flagged" : "Flag"}
+                              </button>
                             </td>
                           </tr>
                         );
@@ -572,21 +645,55 @@ export default function UniversalScannerHubPage() {
             {/* RADIOLOGY FINDINGS TABLE (For Imaging Scans) */}
             {docAnalysis.findings && Array.isArray(docAnalysis.findings) && docAnalysis.findings.length > 0 && (
               <div className="space-y-3">
-                <h3 className="text-xs font-mono uppercase tracking-wider font-bold text-[var(--fg-muted)]">
-                  Radiology Observations & Findings ({docAnalysis.findings.length})
-                </h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-mono uppercase tracking-wider font-bold text-[var(--fg-muted)]">
+                    Radiology Observations & Findings ({docAnalysis.findings.length})
+                  </h3>
+                </div>
                 <div className="space-y-2">
                   {docAnalysis.findings.map((f: any, i: number) => {
                     const regName = typeof f === "string" ? "Scanned Region" : (f?.region || f?.location || "Anatomical Region");
                     const obsText = typeof f === "string" ? f : (f?.observation || f?.description || f?.finding || "No acute focal abnormality.");
+                    const isFlagged = flaggedItems.includes(regName);
                     return (
-                      <div key={i} className="p-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] space-y-1">
-                        <div className="font-bold text-xs text-[var(--fg)]">{regName}</div>
+                      <div key={i} className={`p-3.5 rounded-xl border transition-colors ${isFlagged ? "border-amber-400 bg-amber-50/30 dark:bg-amber-950/20" : "border-[var(--border)] bg-[var(--bg-elevated)]"} space-y-1.5`}>
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-xs text-[var(--fg)]">{regName}</span>
+                          <button
+                            onClick={() => toggleFlagItem(regName)}
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition-all inline-flex items-center gap-1 ${
+                              isFlagged
+                                ? "bg-amber-500 text-white"
+                                : "border border-[var(--border)] text-[var(--fg-muted)] hover:text-[var(--fg)]"
+                            }`}
+                          >
+                            <Flag className={`w-2.5 h-2.5 ${isFlagged ? "fill-white" : ""}`} />
+                            {isFlagged ? "Flagged" : "Flag for Doctor"}
+                          </button>
+                        </div>
                         <div className="text-xs text-[var(--fg-muted)] leading-relaxed">{obsText}</div>
                       </div>
                     );
                   })}
                 </div>
+              </div>
+            )}
+
+            {/* Questions to Ask Your Doctor (§6.3) */}
+            {docAnalysis.questions_for_doctor && Array.isArray(docAnalysis.questions_for_doctor) && docAnalysis.questions_for_doctor.length > 0 && (
+              <div className="p-4 rounded-xl border border-sky-300 dark:border-sky-800 bg-sky-50/50 dark:bg-sky-950/20 space-y-2">
+                <h4 className="text-xs font-mono uppercase tracking-wider font-bold text-sky-900 dark:text-sky-200 flex items-center gap-1.5">
+                  <HelpCircle className="w-4 h-4 text-sky-600 dark:text-sky-400" />
+                  Questions to Ask Your Doctor at Next Visit
+                </h4>
+                <ul className="space-y-1.5 pl-1">
+                  {docAnalysis.questions_for_doctor.map((q: string, idx: number) => (
+                    <li key={idx} className="text-xs text-[var(--fg)] flex items-start gap-2">
+                      <span className="text-sky-600 font-bold font-mono">Q{idx + 1}:</span>
+                      <span>{q}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
 
