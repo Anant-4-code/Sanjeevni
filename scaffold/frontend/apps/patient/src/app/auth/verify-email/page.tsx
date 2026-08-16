@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 
-export default function VerifyEmail() {
+function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const email = searchParams?.get("email") || "your registered email address";
   const supabase = createClient();
@@ -41,7 +41,7 @@ export default function VerifyEmail() {
     <div className="min-h-screen flex flex-col justify-center items-center bg-[#F7F5F0] text-[#0A0A0A] px-4 py-12">
       <div className="w-full max-w-md border border-[#D8D5CC] bg-white p-8 space-y-6">
         
-        {/* Eyebrow eyebrow index label */}
+        {/* Eyebrow index label */}
         <div className="text-[10px] font-mono tracking-[0.2em] text-[#64748B] uppercase">
           03 // VERIFICATION INSTRUCTIONS
         </div>
@@ -87,5 +87,13 @@ export default function VerifyEmail() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function VerifyEmail() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-xs font-mono">Loading...</div>}>
+      <VerifyEmailContent />
+    </Suspense>
   );
 }
