@@ -28,10 +28,25 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)]">
-      <header className="border-b border-[var(--border)] px-6 md:px-12 py-6 flex items-center justify-between">
-        <span className="font-display text-lg font-bold tracking-tight">SANJEEVANI · RECEPTION</span>
-        <span className="text-xs uppercase tracking-widest text-[var(--fg-muted)]">Front Desk Console</span>
+      <header className="border-b border-[var(--border)] px-6 md:px-12 py-4 flex items-center justify-between bg-[var(--bg-elevated)]">
+        <div className="flex items-center gap-3">
+          <span className="font-display text-lg font-bold tracking-tight">SANJEEVANI · RECEPTION</span>
+          <span className="text-[10px] uppercase tracking-widest text-amber-500 font-mono border border-amber-500/30 px-2 py-0.5 rounded">Front Desk Console</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <a
+            href="http://localhost:3000/doctor"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-500 transition-colors shadow-sm"
+          >
+            🩺 Open Doctor Workspace (Port 3000) &rarr;
+          </a>
+          <a
+            href="http://localhost:3000"
+            className="text-xs font-bold text-[var(--fg-muted)] hover:text-[var(--fg)] px-3 py-1.5 rounded-lg border border-[var(--border)]"
+          >
+            Unified Portal &rarr;
+          </a>
+        </div>
       </header>
 
       <main className="max-w-3xl mx-auto px-6 md:px-12 py-16">
