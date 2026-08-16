@@ -1,3 +1,308 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ========== Clinical Dark Theme Overrides ========== */
+
+:root {
+  --doc-bg: #0a0b0d;
+  --doc-bg-elevated: #111318;
+  --doc-bg-card: #161920;
+  --doc-bg-hover: #1c1f28;
+  --doc-border: #252830;
+  --doc-border-focus: #3b3f4a;
+  --doc-fg: #e8eaed;
+  --doc-fg-muted: #7a7e8a;
+  --doc-fg-dim: #4a4e58;
+
+  /* Severity colors */
+  --severity-critical: #ff4444;
+  --severity-critical-bg: rgba(255, 68, 68, 0.08);
+  --severity-critical-border: rgba(255, 68, 68, 0.25);
+  --severity-warning: #ffaa22;
+  --severity-warning-bg: rgba(255, 170, 34, 0.08);
+  --severity-warning-border: rgba(255, 170, 34, 0.25);
+  --severity-safe: #44cc66;
+  --severity-safe-bg: rgba(68, 204, 102, 0.08);
+  --severity-safe-border: rgba(68, 204, 102, 0.25);
+  --severity-info: #4488ff;
+  --severity-info-bg: rgba(68, 136, 255, 0.08);
+  --severity-info-border: rgba(68, 136, 255, 0.25);
+
+  /* Accent */
+  --doc-accent: #6c8aff;
+  --doc-accent-hover: #8ba4ff;
+  --doc-accent-bg: rgba(108, 138, 255, 0.1);
+}
+
+/* ========== Base Resets ========== */
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--doc-bg);
+  color: var(--doc-fg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--doc-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--doc-border-focus);
+}
+
+/* ========== Typography ========== */
+
+.font-display {
+  font-family: 'Archivo', sans-serif;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ========== Animations ========== */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(255, 68, 68, 0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.35s ease-out;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.3s ease-out;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2s infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+.animate-breathe {
+  animation: breathe 3s ease-in-out infinite;
+}
+
+/* ========== Clinical Component Styles ========== */
+
+.card-clinical {
+  background: var(--doc-bg-card);
+  border: 1px solid var(--doc-border);
+  border-radius: 8px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-clinical:hover {
+  border-color: var(--doc-border-focus);
+}
+
+.severity-pill {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.severity-critical {
+  color: var(--severity-critical);
+  background: var(--severity-critical-bg);
+  border: 1px solid var(--severity-critical-border);
+}
+
+.severity-warning {
+  color: var(--severity-warning);
+  background: var(--severity-warning-bg);
+  border: 1px solid var(--severity-warning-border);
+}
+
+.severity-safe {
+  color: var(--severity-safe);
+  background: var(--severity-safe-bg);
+  border: 1px solid var(--severity-safe-border);
+}
+
+.severity-info {
+  color: var(--severity-info);
+  background: var(--severity-info-bg);
+  border: 1px solid var(--severity-info-border);
+}
+
+/* ========== Interactive Elements ========== */
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--doc-accent);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background: var(--doc-accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(108, 138, 255, 0.3);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--severity-critical);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-danger:hover {
+  background: #ff6666;
+  transform: translateY(-1px);
+}
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--doc-fg-muted);
+  font-weight: 500;
+  font-size: 0.8125rem;
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: 1px solid var(--doc-border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-outline:hover {
+  color: var(--doc-fg);
+  border-color: var(--doc-fg-muted);
+  background: var(--doc-bg-hover);
+}
+
+/* ========== Progress / Adherence Bar ========== */
+
+.adherence-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--doc-border);
+  overflow: hidden;
+}
+
+.adherence-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s ease-out;
+}
+
+/* ========== Alert Cards ========== */
+
+.alert-card-critical {
+  border-left: 3px solid var(--severity-critical);
+  background: var(--severity-critical-bg);
+}
+
+.alert-card-warning {
+  border-left: 3px solid var(--severity-warning);
+  background: var(--severity-warning-bg);
+}
+
+.alert-card-info {
+  border-left: 3px solid var(--severity-info);
+  background: var(--severity-info-bg);
+}
+
+.alert-card-safe {
+  border-left: 3px solid var(--severity-safe);
+  background: var(--severity-safe-bg);
+}
+
+/* ========== SOAP Note Sections ========== */
+
+.soap-section {
+  border-left: 3px solid var(--doc-accent);
+  padding-left: 12px;
+  margin-bottom: 12px;
+}
+
+.soap-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--doc-accent);
+  margin-bottom: 4px;
+}

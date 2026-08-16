@@ -1,107 +1,217 @@
-import { useEffect, useRef, useState } from "react";
-import { Eyebrow, SeverityBadge, PrimaryButton } from "@sanjeevani/ui";
+import { useEffect, useState, useCallback } from "react";
+import DoctorQueue from "./components/DoctorQueue";
+import PatientDashboard from "./components/PatientDashboard";
+import RefillQueue from "./components/RefillQueue";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000/api";
+const DOCTOR_ID = "demo-doctor";
 
-type Detection = { label: string; confidence: number; box: { x: number; y: number; w: number; h: number } };
-
-function XrayCanvas({ imageUrl, detections }: { imageUrl: string; detections: Detection[] }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d")!;
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
-      detections.forEach((d) => {
-        const color = d.label === "fracture" ? "#FF5A44" : "#FACC15";
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 3;
-        ctx.strokeRect(d.box.x, d.box.y, d.box.w, d.box.h);
-        ctx.fillStyle = color;
-        ctx.font = "16px Inter, sans-serif";
-        ctx.fillText(`${d.label} — ${Math.round(d.confidence * 100)}%`, d.box.x, Math.max(d.box.y - 6, 12));
-      });
-    };
-    img.src = imageUrl;
-  }, [imageUrl, detections]);
-
-  return <canvas ref={canvasRef} className="w-full border border-[var(--border)]" />;
-}
+type View = "queue" | "refills";
 
 export default function App() {
+  const [view, setView] = useState<View>("queue");
   const [queue, setQueue] = useState<any[]>([]);
-  const [selected, setSelected] = useState<any | null>(null);
+  const [queueLoading, setQueueLoading] = useState(true);
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
+  const [patientDash, setPatientDash] = useState<any>(null);
+  const [dashLoading, setDashLoading] = useState(false);
+  const [refillRequests, setRefillRequests] = useState<any[]>([]);
 
-  useEffect(() => {
-    // TODO: replace with WebSocket subscription to /ws/doctor/{doctor_id}
-    fetch(`${API_BASE}/doctor/queue?doctor_id=demo-doctor`)
-      .then((r) => r.json())
-      .then((d) => setQueue(d.queue || []))
-      .catch(() => setQueue([]));
+  // ── Load queue ──────────────────────────────────────────────────
+  const loadQueue = useCallback(async () => {
+    setQueueLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/doctor/queue?doctor_id=${DOCTOR_ID}`);
+      const data = await res.json();
+      setQueue(data.queue || []);
+    } catch (e) {
+      console.error("Queue load failed:", e);
+      setQueue([]);
+    } finally {
+      setQueueLoading(false);
+    }
   }, []);
 
+  // ── Load patient dashboard ──────────────────────────────────────
+  const loadPatient = useCallback(async (patientId: string) => {
+    setSelectedPatientId(patientId);
+    setDashLoading(true);
+    try {
+      const res = await fetch(
+        `${API_BASE}/doctor/patient/${patientId}?doctor_id=${DOCTOR_ID}`
+      );
+      const data = await res.json();
+      setPatientDash(data);
+    } catch (e) {
+      console.error("Patient load failed:", e);
+      setPatientDash(null);
+    } finally {
+      setDashLoading(false);
+    }
+  }, []);
+
+  // ── Load refill requests ────────────────────────────────────────
+  const loadRefills = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/doctor/refill-requests?doctor_id=${DOCTOR_ID}`);
+      const data = await res.json();
+      setRefillRequests(data.refill_requests || []);
+    } catch (e) {
+      console.error("Refills load failed:", e);
+      setRefillRequests([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadQueue();
+    loadRefills();
+  }, [loadQueue, loadRefills]);
+
+  const handleSelectPatient = (patientId: string) => {
+    setView("queue");
+    loadPatient(patientId);
+  };
+
+  const handleRefresh = () => {
+    if (selectedPatientId) loadPatient(selectedPatientId);
+    loadRefills();
+  };
+
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] grid grid-cols-1 md:grid-cols-[320px_1fr]">
-      <aside className="border-r border-[var(--border)] p-6">
-        <Eyebrow index="02" label="Consultation Queue" />
-        <h2 className="font-display text-2xl font-bold mb-6">Waiting Room</h2>
-        <div className="space-y-3">
-          {queue.length === 0 && <p className="text-sm text-[var(--fg-muted)]">No patients waiting.</p>}
-          {queue.map((row) => (
+    <div className="min-h-screen bg-doc-bg text-doc-fg flex flex-col">
+      {/* ── Top bar ── */}
+      <header className="h-14 border-b border-doc-border bg-doc-elevated flex items-center justify-between px-5 flex-shrink-0">
+        <div className="flex items-center gap-4">
+          <h1 className="font-display text-base font-bold tracking-tight text-doc-fg">
+            <span className="text-doc-accent">Sanjeevani</span> — Doctor Portal
+          </h1>
+          <div className="h-5 w-px bg-doc-border" />
+          <nav className="flex gap-1">
             <button
-              key={row.id}
-              onClick={() => setSelected(row)}
-              className="w-full text-left border border-[var(--border)] p-4 hover:border-[var(--fg)] transition-colors"
+              onClick={() => setView("queue")}
+              className={`px-3 py-1.5 text-xs font-semibold rounded transition-colors ${
+                view === "queue"
+                  ? "bg-doc-accent/10 text-doc-accent"
+                  : "text-doc-fg-muted hover:text-doc-fg"
+              }`}
             >
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-medium">{row.patients?.full_name}</span>
-                <SeverityBadge level={row.chief_complaints?.severity_level ?? 1} />
-              </div>
-              <p className="text-xs text-[var(--fg-muted)] truncate">{row.chief_complaints?.text}</p>
-              <p className="text-xs text-[var(--fg-muted)] mt-1">Token #{row.token_number}</p>
-            </button>
-          ))}
-        </div>
-      </aside>
-
-      <main className="p-8">
-        <Eyebrow index="03" label="Physician Workspace" />
-        {!selected ? (
-          <p className="text-[var(--fg-muted)]">Select a patient from the queue to begin.</p>
-        ) : (
-          <div className="space-y-8 max-w-4xl">
-            <h1 className="font-display text-3xl font-bold">{selected.patients?.full_name}</h1>
-
-            <section>
-              <h3 className="text-xs uppercase tracking-[0.15em] text-[var(--fg-muted)] mb-3">X-Ray Canvas Overlay</h3>
-              {selected.xray_url ? (
-                <XrayCanvas imageUrl={selected.xray_url} detections={selected.detections || []} />
-              ) : (
-                <p className="text-sm text-[var(--fg-muted)] border border-dashed border-[var(--border)] p-6">
-                  No X-ray uploaded for this patient yet. Once reception uploads one, results from the
-                  YOLOv7-p6 fracture-detection model will render here automatically.
-                </p>
+              Queue
+              {queue.length > 0 && (
+                <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 text-[0.55rem] rounded-full bg-doc-card font-bold">
+                  {queue.length}
+                </span>
               )}
-            </section>
+            </button>
+            <button
+              onClick={() => { setView("refills"); loadRefills(); }}
+              className={`px-3 py-1.5 text-xs font-semibold rounded transition-colors ${
+                view === "refills"
+                  ? "bg-doc-accent/10 text-doc-accent"
+                  : "text-doc-fg-muted hover:text-doc-fg"
+              }`}
+            >
+              Refill Requests
+              {refillRequests.length > 0 && (
+                <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 text-[0.55rem] rounded-full bg-severity-warning/20 text-severity-warning font-bold">
+                  {refillRequests.length}
+                </span>
+              )}
+            </button>
+          </nav>
+        </div>
 
-            <section>
-              <h3 className="text-xs uppercase tracking-[0.15em] text-[var(--fg-muted)] mb-3">Pharmacological Guardrails</h3>
-              <p className="text-sm text-[var(--fg-muted)]">
-                Every medication edit triggers <code>/api/doctor/guardrail-check</code> against this
-                patient's full cross-doctor medication history. Severe flags block sign-off.
-              </p>
-            </section>
-
-            <PrimaryButton>Verify &amp; Activate Protocol →</PrimaryButton>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-severity-safe animate-pulse" />
+            <span className="text-xs text-doc-fg-muted">Backend Connected</span>
           </div>
+          <div className="w-8 h-8 rounded-full bg-doc-accent/20 flex items-center justify-center text-xs text-doc-accent font-bold">
+            DR
+          </div>
+        </div>
+      </header>
+
+      {/* ── Main content ── */}
+      <div className="flex-1 flex overflow-hidden">
+        {view === "queue" && (
+          <>
+            {/* Queue sidebar */}
+            <div className="w-[340px] flex-shrink-0">
+              <DoctorQueue
+                queue={queue}
+                selectedPatientId={selectedPatientId}
+                onSelectPatient={handleSelectPatient}
+                loading={queueLoading}
+              />
+            </div>
+
+            {/* Patient workspace */}
+            <main className="flex-1 overflow-y-auto p-8">
+              {!selectedPatientId && !dashLoading && (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <svg className="w-16 h-16 text-doc-fg-dim mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <p className="text-lg text-doc-fg-muted font-medium mb-1">
+                    Select a patient from the queue
+                  </p>
+                  <p className="text-sm text-doc-fg-dim max-w-md">
+                    Click on any patient in the waiting room to load their full clinical context,
+                    medication history, symptom logs, and prescribing workspace.
+                  </p>
+                </div>
+              )}
+
+              {dashLoading && (
+                <div className="space-y-4 max-w-4xl animate-shimmer">
+                  <div className="h-8 w-64 bg-doc-border rounded" />
+                  <div className="h-4 w-48 bg-doc-border rounded" />
+                  <div className="grid grid-cols-4 gap-3 mt-6">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div key={i} className="card-clinical p-4">
+                        <div className="h-3 w-16 bg-doc-border rounded mb-2" />
+                        <div className="h-6 w-12 bg-doc-border rounded" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {!dashLoading && patientDash && !patientDash.error && (
+                <PatientDashboard data={patientDash} onRefresh={handleRefresh} />
+              )}
+
+              {!dashLoading && patientDash?.error && (
+                <div className="card-clinical p-6 alert-card-critical max-w-md">
+                  <p className="text-sm text-severity-critical font-semibold">
+                    Failed to load patient details
+                  </p>
+                  <p className="text-xs text-doc-fg-muted mt-1">{patientDash.error}</p>
+                </div>
+              )}
+            </main>
+          </>
         )}
-      </main>
+
+        {view === "refills" && (
+          <main className="flex-1 overflow-y-auto p-8">
+            <div className="max-w-3xl">
+              <div className="mb-6">
+                <span className="text-[0.6rem] uppercase tracking-[0.2em] text-doc-accent font-semibold">
+                  04 // Refill Management
+                </span>
+                <h2 className="font-display text-2xl font-bold text-doc-fg mt-1">
+                  Refill Requests
+                </h2>
+                <p className="text-sm text-doc-fg-muted mt-1">
+                  Review and approve pending medication refill requests from patients.
+                </p>
+              </div>
+              <RefillQueue refillRequests={refillRequests} onRefillAction={loadRefills} />
+            </div>
+          </main>
+        )}
+      </div>
     </div>
   );
 }
