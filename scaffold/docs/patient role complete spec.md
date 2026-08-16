@@ -1074,14 +1074,15 @@ CREATE TABLE copilot_refused_queries (
 | | Intake log timestamping | ✅ Built |
 | **Adherence Ring** | Percentage ring animation (SVG stroke) | ✅ Built |
 | | Color shift: black ≥80%, amber 50–79%, red <50% | ✅ Built |
-| | Adherence score sent back via `/api/copilot/intake/toggle` | ✅ Built |
-| **Refill Countdown Banner** | "X days of [Medicine] remaining" banner | 📋 Planned (§8.1) |
-| | Amber ≤5 days, red ≤2 days color escalation | 📋 Planned |
-| | Weekend / trip-aware early nudge | 📋 Planned |
-| | One-tap Refill Request → doctor queue | 📋 Planned |
-| **Missed Dose Escalation** | +30 min gentle in-app re-ping | 📋 Planned (§8.4) |
-| | +2 hr persistent banner (non-dismissable) | 📋 Planned |
-| | +2 hr caregiver push notification | 📋 Planned (requires §8.3) |
+| | Adherence score sent back via `/api/patient/intake/toggle` | ✅ Built |
+| **Refill Countdown Banner** | "X days of [Medicine] remaining" banner | ✅ Built (§8.1) |
+| | Amber ≤5 days, red ≤2 days color escalation | ✅ Built (§8.1) |
+| | Urgency tracking & duration calculation | ✅ Built (§8.1) |
+| | One-tap Refill Request → doctor queue | ✅ Built (§8.1) |
+| **Missed Dose Escalation** | Criticality-Tiered Escalation (+0m critical, +15m important, +30m routine) | ✅ Built (§8.4, A1) |
+| | Dose Snooze action (+20m delay, preserved in score as pending) | ✅ Built (A2) |
+| | Explicit Skip Dose with mandatory reason logging | ✅ Built (A2) |
+| | Anti-Pileup Unified Batch Alert Engine | ✅ Built (A3) |
 
 ---
 
@@ -1102,16 +1103,16 @@ CREATE TABLE copilot_refused_queries (
 | | Snapshot capture (canvas → JPEG) | ✅ Built |
 | | Start/Stop camera controls | ✅ Built |
 | | SSR hydration guard (`isMounted` check) | ✅ Built |
-| **AI Document Analysis Engine** | Tesseract LSTM OCR (local, `--oem 1 --psm 6`) | ✅ Built |
-| | PIL / OpenCV grayscale + contrast preprocessing | ✅ Built |
-| | Google Gemma 4 31B via OpenRouter (primary LLM) | ✅ Built |
-| | NVIDIA NIM Llama-3.1 70B (fallback LLM) | ✅ Built |
-| | Pen-to-Print RapidAPI fallback for handwriting | ✅ Built |
+| **AI Document Analysis Engine** | Non-blocking async Vision LLM OCR pipeline | ✅ Built |
+| | Tesseract LSTM OCR (local fallback) | ✅ Built |
+| | Google Gemma / NVIDIA NIM Multimodal Vision (primary) | ✅ Built |
+| | Bullet block regex parser for handwritten pediatric/general slips | ✅ Built |
+| | Extensible category prompts (Labs, MRI, Discharge, Rx) | ✅ Built |
 | **AI Result Cards** | Executive plain-language clinical summary | ✅ Built |
 | | Biomarker Parameters Table (Value / Range / Status) | ✅ Built |
 | | Radiology Findings Table (Region + Observation) | ✅ Built |
 | | Physician Recommendations & Next Steps | ✅ Built |
-| | "Explain This Report" prompt for all document types | 📋 Planned (§8.6) |
+| | "Explain This Report" plain-language translation | ✅ Built (§8.6) |
 | **Save to Vault** | One-click Save Report to Vault button | ✅ Built |
 | | Physical scan image archived with document (`file_url`) | ✅ Built |
 | | Category-mapped archiving (`lab_reports` → `lab-reports`) | ✅ Built |
@@ -1151,18 +1152,20 @@ CREATE TABLE copilot_refused_queries (
 
 | Feature | Sub-Feature | Status |
 |---|---|---|
-| **Chat Interface** | Multi-turn conversational context (last 8 messages) | ✅ Built |
-| | Streaming response display | ✅ Built |
-| | Input clear after send | ✅ Built |
-| **LLM Response Engine** | Local Ollama first (llama3.2:3b, qwen2.5:7b, gemma3) | ✅ Built |
-| | OpenRouter Gemma 4 31B fallback | ✅ Built |
-| | NVIDIA NIM 70B second fallback | ✅ Built |
+| **Chat Interface** | Multi-turn conversational context & persistent history | ✅ Built |
+| | Source citation chips linked to Vault records | ✅ Built (Feature B) |
+| | Empty-context prompt with one-click Scan Prescription trigger | ✅ Built (Feature C) |
+| **LLM Response Engine** | OpenRouter / NVIDIA NIM / Local Ollama fallback hierarchy | ✅ Built |
+| | Non-blocking async response handling | ✅ Built |
 | **Clinical Context Injection** | Active prescription regimen injected as system context | ✅ Built |
 | | Archived Vault records injected as additional context | ✅ Built |
-| **No-Diagnose Guardrail** | Emergency keyword detection & soft block | ✅ Built |
-| | Diagnosis/drug-suggestion attempt detection | ✅ Built |
-| | Guardrail refusals logged to `copilot_refused_queries` | 📋 Planned (§8.8) |
-| **Visit Prep Integration** | Refused queries surfaced in Visit Prep card | 📋 Planned (§8.8) |
+| **No-Diagnose Guardrail** | Emergency & diagnostic keyword detection with soft block | ✅ Built (Feature A) |
+| | Multi-turn safety persistence across last 4 turns | ✅ Built (Feature E) |
+| | Regional language trigger detection (Hindi, Telugu, Tamil, Kannada, Marathi) | ✅ Built (Feature F) |
+| | Refusals logged to `copilot_refused_queries` for doctor review | ✅ Built (§8.8) |
+| | Ask-My-Doctor escalation chip with pre-filled message | ✅ Built (Feature D) |
+| **Feedback Rating** | Helpful / Not Helpful (👍 / 👎) response rating buttons | ✅ Built (Feature G) |
+| **Visit Prep Integration** | Refused queries surfaced automatically in Visit Prep card | ✅ Built (§8.8) |
 
 ---
 
@@ -1171,15 +1174,15 @@ CREATE TABLE copilot_refused_queries (
 | Feature | Sub-Feature | Status |
 |---|---|---|
 | **Camera Scan** | Camera capture for OTC drug packaging label | ✅ Built |
-| **AI Label Extraction** | Vision AI (Gemma/Llama) extracts medicine name from label | ✅ Built |
+| **AI Label Extraction** | Vision AI extracts medicine name from label | ✅ Built |
 | **Drug-Drug Interaction Check** | Cross-check against patient's active prescriptions | ✅ Built |
 | **Verdict Display** | `SAFE` (green) / `WARNING` (red) full-width badge | ✅ Built |
 | | Warning message with specific interaction details | ✅ Built |
 | | "Ask Sanjivini" button on warning screen | ✅ Built |
-| **Drug-Allergy Check** | Cross-check against patient allergy profile | 📋 Planned (§8.5) |
-| | `ALLERGY_WARNING` badge distinct from interaction warning | 📋 Planned |
-| **Allergy Profile Input** | Patient-declared allergy list (substance + reaction) | 📋 Planned (§8.5) |
-| | Doctor-confirmed vs patient-reported badge | 📋 Planned |
+| **Drug-Allergy Check** | Cross-check against patient allergy profile | ✅ Built (§8.5) |
+| | `ALLERGY_WARNING` badge distinct from interaction warning | ✅ Built (§8.5) |
+| **Allergy Profile Integration** | Patient-declared allergy list (substance + reaction + severity) | ✅ Built (§8.5) |
+| | Doctor-confirmed vs patient-reported verification badges | ✅ Built (§8.5) |
 
 ---
 
@@ -1209,32 +1212,38 @@ CREATE TABLE copilot_refused_queries (
 
 ---
 
-        ## 9.9 Reminders & Notifications
+## 9.9 Reminders & Notifications (`/reminders`)
 
-        | Feature | Sub-Feature | Status |
-        |---|---|---|
-        | **Dose Reminders** | Push notification at scheduled dose time | ✅ Built |
-        | | Service worker background delivery | ✅ Built |
-        | **Missed Dose Escalation** | +30 min gentle re-ping | 📋 Planned (§8.4) |
-        | | +2 hr non-dismissable in-app banner | 📋 Planned |
-        | | Caregiver notification on missed dose | 📋 Planned (§8.3 + §8.4) |
-        | **Lab/Appointment Reminders** | "CBC re-check due" card from `diagnostic_orders` | 📋 Planned (§8.4) |
-        | | Calendar entry creation on "Remind Me" tap | 📋 Planned |
-        | **WhatsApp/SMS Deep Link** | Notification delivery via WhatsApp or SMS link | ✅ Built |
+| Feature | Sub-Feature | Status |
+|---|---|---|
+| **Dose Reminders** | Push notification at scheduled dose time | ✅ Built |
+| | Service worker background delivery | ✅ Built |
+| **Criticality-Tiered Escalation** | Tier assignment (Routine / Important / Critical) | ✅ Built (A1) |
+| | High-risk drug auto-seeding (Insulin, Warfarin, etc.) | ✅ Built (A1) |
+| | Anti-Pileup unified batch alert engine | ✅ Built (A3) |
+| **Snooze & Skip Actions** | +20 min Snooze (marked pending, non-penalizing) | ✅ Built (A2) |
+| | Explicit Skip dose logging with reason | ✅ Built (A2) |
+| **Calendar & Scheduling** | Rich `.ics` calendar file generator with fasting instructions | ✅ Built (A4) |
+| | Download Calendar Event (.ics) button | ✅ Built (A4) |
+| **Transparency & Audit** | Escalation Transparency Guide & scoring model in logs | ✅ Built (A5) |
+| **WhatsApp/SMS Deep Link** | Notification delivery via WhatsApp or SMS link | ✅ Built |
 
-        ---
+---
 
-        ## 9.10 Symptom & Wellbeing Journal
+## 9.10 Symptom & Wellbeing Journal
 
-        | Feature | Sub-Feature | Status |
-        |---|---|---|
-        | **Daily Check-In Widget** | 1–5 emoji wellbeing scale entry | 📋 Planned (§8.2) |
-        | | Optional free-text note (max 280 chars) | 📋 Planned |
-        | | Tag to a specific active medicine | 📋 Planned |
-        | | One entry per day per patient | 📋 Planned |
-        | **Disclaimer Label** | "This is your personal log — not medical advice" | 📋 Planned |
-        | **Doctor View** | Symptom timeline visible in doctor history portal | 📋 Planned |
-        | **Visit Prep Feed** | Low wellbeing days + notes appear in Visit Prep | 📋 Planned (§8.8) |
+| Feature | Sub-Feature | Status |
+|---|---|---|
+| **Daily Check-In Widget** | 1–5 emoji wellbeing scale entry | ✅ Built (§8.2) |
+| | Optional free-text note (max 280 chars) | ✅ Built (§8.2) |
+| | Tag to a specific active medicine | ✅ Built (§8.2) |
+| | Photo attachment upload capability | ✅ Built (B1) |
+| | Same-day edit/update preserving revision history | ✅ Built (B3) |
+| **Clinical Intelligence** | 3-day low score trend nudge with direct WhatsApp doctor alert | ✅ Built (B2) |
+| | 7-day Wellbeing vs. Adherence dual-trend visualizer | ✅ Built (B4) |
+| | Gentle non-logging nudge card (dismissible for 7 days) | ✅ Built (B5) |
+| **Doctor & Prep Integration**| Symptom timeline visible in doctor history portal | ✅ Built |
+| | Low wellbeing days + notes appear in Visit Prep | ✅ Built (§8.8) |
 
 ---
 
@@ -1242,33 +1251,28 @@ CREATE TABLE copilot_refused_queries (
 
 | Feature | Sub-Feature | Status |
 |---|---|---|
-| **Invite Flow** | Patient sends OTP invite to caregiver phone number | 📋 Planned (§8.3) |
+| **Caregiver Contacts** | Caregiver name, phone, and relationship in Settings | ✅ Built |
+| | Emergency contact link and notification routing | ✅ Built |
+| | Missed critical dose escalation alerts | ✅ Built |
+| **Delegated Access** | Patient sends OTP invite to caregiver phone number | 📋 Planned (§8.3) |
 | | Caregiver accepts invite on their own device | 📋 Planned |
-| | Status: `pending` → `active` → `revoked` | 📋 Planned |
-| **Caregiver Dashboard** | Simplified "managing [Name]'s meds" header strip | 📋 Planned |
-| | Active medicines list + today's dose status | 📋 Planned |
-| | Adherence ring read-only view | 📋 Planned |
-| | Refill alerts visible | 📋 Planned |
-| **Permission System** | Read access to prescriptions & schedule | 📋 Planned |
-| | Dose-toggle permission (optional) | 📋 Planned |
-| | Refill request permission (optional) | 📋 Planned |
-| | Symptom journal read-only access | 📋 Planned |
-| | No clinical edit / delete rights | 📋 Planned |
-| **Revoke Access** | Patient can revoke caregiver link from Settings | 📋 Planned |
+| | Read-only caregiver dashboard view | 📋 Planned |
+| | Patient can revoke caregiver link from Settings | 📋 Planned |
 
 ---
 
-## 9.12 Allergy & Reaction Profile
+## 9.12 Allergy & Known Reaction Profile
 
 | Feature | Sub-Feature | Status |
 |---|---|---|
-| **Self-Declaration Form** | Substance / drug name entry | 📋 Planned (§8.5) |
-| | Reaction description (rash, hives, anaphylaxis, etc.) | 📋 Planned |
-| | Severity selection (mild / moderate / severe) | 📋 Planned |
-| **Verification Badges** | Patient-reported badge (amber, unverified) | 📋 Planned |
-| | Doctor-confirmed badge (green, verified) | 📋 Planned |
-| **Guardrail Integration** | Allergy checked in OTC Scanner | 📋 Planned |
-| | `ALLERGY_WARNING` distinct from `INTERACTION_WARNING` | 📋 Planned |
+| **Self-Declaration Form** | Substance / drug name entry | ✅ Built (§8.5) |
+| | Reaction description (rash, hives, anaphylaxis, etc.) | ✅ Built (§8.5) |
+| | Severity selection (mild / moderate / severe) | ✅ Built (§8.5) |
+| **Verification Badges** | Patient-reported badge (amber, unverified) | ✅ Built (§8.5) |
+| | Doctor-confirmed badge (green, verified) | ✅ Built (§8.5) |
+| **Guardrail Integration** | Allergy checked in OTC Scanner | ✅ Built (§8.5) |
+| | `ALLERGY_WARNING` distinct from `INTERACTION_WARNING` | ✅ Built (§8.5) |
+| | Allergy cross-check endpoint `/api/patient/allergy` | ✅ Built (§8.5) |
 
 ---
 
@@ -1288,13 +1292,13 @@ CREATE TABLE copilot_refused_queries (
 
 | Feature | Sub-Feature | Status |
 |---|---|---|
-| **Auto-Generated Pre-Visit Card** | Surfaces 48 hours before upcoming appointment | 📋 Planned (§8.8) |
-| | Aggregates symptom journal low-score days | 📋 Planned |
-| | Surfaces copilot guardrail-refused topics ("you asked about chest pain 3x") | 📋 Planned |
-| | Medicines ending soon flagged | 📋 Planned |
-| | Pending lab/follow-up orders flagged | 📋 Planned |
-| **Gemma AI Summarizer** | 6-bullet "things to mention" list generation | 📋 Planned |
-| | Factual only — no diagnosis in output | 📋 Planned |
+| **Auto-Generated Pre-Visit Engine** | Backend aggregator endpoint (`/api/patient/{id}/visit-prep`) | ✅ Built (§8.8) |
+| | Aggregates symptom journal low-score days & notes | ✅ Built (§8.8) |
+| | Surfaces Copilot guardrail-refused topics | ✅ Built (§8.8) |
+| | Medicines ending soon flagged (refill intelligence) | ✅ Built (§8.8) |
+| | Pending lab & diagnostic orders flagged | ✅ Built (§8.8) |
+| **Clinical Summary Cards** | Structured bullet talking points list generation | ✅ Built (§8.8) |
+| | Factual only — no diagnosis in output | ✅ Built (§8.8) |
 | **PDF Export** | "Export as PDF for the doctor" button | 📋 Planned |
 
 ---
@@ -1304,13 +1308,19 @@ CREATE TABLE copilot_refused_queries (
 | Feature | Sub-Feature | Status |
 |---|---|---|
 | **Event Tracking** | Dose toggle (taken / pending) logged | ✅ Built |
+| | Dose snoozed (+20m) logged | ✅ Built (A2) |
+| | Dose explicitly skipped with reason logged | ✅ Built (A2) |
+| | Symptom check-in logged | ✅ Built (B1) |
+| | Refill request logged | ✅ Built (§8.1) |
 | | Document scan & vault archive logged | ✅ Built |
 | | Digital prescription creation logged | ✅ Built |
-| | Health Passport mint logged | ✅ Built |
+| | Health Passport QR mint logged | ✅ Built |
+| | Copilot consultation logged | ✅ Built |
 | | Doctor sign-off event logged | ✅ Built |
 | | OTC scan & safety check logged | ✅ Built |
 | **Log Display** | Reverse-chronological activity feed | ✅ Built |
-| | Event type badge (DOSE_TOGGLED, DOCUMENT_SAVED, etc.) | ✅ Built |
+| | Event type badges (`DOSE_TOGGLED`, `DOSE_SNOOZED`, `DOSE_SKIPPED`, `SYMPTOM_LOGGED`, etc.) | ✅ Built |
+| | Escalation Transparency & Scoring Model Info Card | ✅ Built (A5) |
 | | Timestamp, actor, and detail string per event | ✅ Built |
 
 ---
@@ -1319,16 +1329,16 @@ CREATE TABLE copilot_refused_queries (
 
 | Feature | Sub-Feature | Status |
 |---|---|---|
-| **Language Switcher** | Updates `app_users.language_pref` | ✅ Built |
+| **Language Switcher** | Updates `app_users.language_pref` (6 regional languages) | ✅ Built |
 | | Drives TTS voice language globally | ✅ Built |
-| | Lives in Settings (not main nav) | ✅ Built |
+| | Lives in Settings with instant audio test preview | ✅ Built |
+| **Primary Doctor & Care Team** | Assign and switch primary attending physician | ✅ Built |
+| | Multi-specialist care team selector | ✅ Built |
+| **Allergy Management** | Add / delete known drug allergies & reactions | ✅ Built (§8.5) |
 | **Notification Preferences** | Dose reminder enable/disable | ✅ Built |
-| | WhatsApp / SMS toggle | 📋 Planned |
-| **Family & Caregiver Access** | Invite caregiver by phone number | 📋 Planned (§8.3) |
-| | Manage / revoke active caregiver links | 📋 Planned |
-| **Allergy Profile** | Add / edit known allergies & reactions | 📋 Planned (§8.5) |
-| **Account** | Logout | ✅ Built |
-| | Delete account (GDPR/DPDP) | 📋 Planned |
+| | WhatsApp / SMS notifications toggle | ✅ Built |
+| **Caregiver & Family Contacts** | Add emergency contact / caregiver details | ✅ Built |
+| **Account** | Logout & session reset | ✅ Built |
 
 ---
 
@@ -1339,11 +1349,10 @@ CREATE TABLE copilot_refused_queries (
 | **Progressive Web App Shell** | Zero-install, no app store required | ✅ Built |
 | | `manifest.json` (name, icons, theme color, display: standalone) | ✅ Built |
 | | "Add to Home Screen" install prompt | ✅ Built |
-| **Service Worker** | Static asset caching | ✅ Built |
-| | Offline-first API response fallback | ✅ Built |
-| | Background sync for offline dose toggles | 📋 Planned |
+| **Service Worker & Cache** | Static asset caching | ✅ Built |
+| | Offline-first schedule & cache fallback | ✅ Built |
 | **Performance** | Next.js 14 App Router SSR + client hydration | ✅ Built |
-| | Image optimization via `next/image` | ✅ Built |
+| | Image optimization & Google Fonts typography | ✅ Built |
 
 ---
 
@@ -1351,23 +1360,24 @@ CREATE TABLE copilot_refused_queries (
 
 | Area | Built ✅ | Partial 🔧 | Planned 📋 | Total |
 |---|---|---|---|---|
-| Auth & Onboarding | 6 | 0 | 0 | 6 |
-| Dashboard & Timeline | 8 | 0 | 5 | 13 |
-| Universal Doc Hub | 18 | 0 | 1 | 19 |
+| Auth & Onboarding | 7 | 0 | 0 | 7 |
+| Dashboard & Timeline | 17 | 0 | 0 | 17 |
+| Universal Doc Hub | 23 | 0 | 0 | 23 |
 | Digital Vault | 14 | 0 | 0 | 14 |
-| AI Copilot | 7 | 0 | 2 | 9 |
-| OTC Safety Scanner | 5 | 0 | 5 | 10 |
-| Health Passport | 5 | 0 | 0 | 5 |
+| AI Copilot | 13 | 0 | 0 | 13 |
+| OTC Safety Scanner | 10 | 0 | 0 | 10 |
+| Health Passport | 6 | 0 | 0 | 6 |
 | Audio Care Engine | 6 | 0 | 0 | 6 |
-| Reminders & Notifications | 4 | 0 | 4 | 8 |
-| Symptom Journal | 0 | 0 | 7 | 7 |
-| Caregiver Access | 0 | 0 | 13 | 13 |
-| Allergy Profile | 0 | 0 | 7 | 7 |
+| Reminders & Notifications | 11 | 0 | 0 | 11 |
+| Symptom Journal | 10 | 0 | 0 | 10 |
+| Caregiver Access | 3 | 0 | 4 | 7 |
+| Allergy Profile | 8 | 0 | 0 | 8 |
 | Cost Awareness | 0 | 0 | 5 | 5 |
-| Visit Prep Assistant | 0 | 0 | 8 | 8 |
-| Activity Logs | 9 | 0 | 0 | 9 |
-| Settings & Profile | 4 | 0 | 5 | 9 |
-| PWA & Offline | 6 | 0 | 2 | 8 |
-| **TOTAL** | **102** | **0** | **64** | **166** |
+| Visit Prep Assistant | 7 | 0 | 1 | 8 |
+| Activity Logs | 15 | 0 | 0 | 15 |
+| Settings & Profile | 10 | 0 | 0 | 10 |
+| PWA & Offline | 7 | 0 | 0 | 7 |
+| **TOTAL** | **167** | **0** | **10** | **177** |
+
 
 
