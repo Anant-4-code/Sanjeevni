@@ -50,12 +50,12 @@ export default function LandingPage() {
           </Link>
 
           {/* Desktop Links */}
-          <nav className="hidden md:flex items-center gap-8 text-xs uppercase tracking-widest font-medium text-[var(--fg-muted)]">
+          <nav className="hidden md:flex items-center gap-6 text-xs uppercase tracking-widest font-medium text-[var(--fg-muted)]">
             <a href="#who-we-are" className="hover:text-[var(--fg)] transition-colors">Who We Are</a>
             <a href="#what-we-offer" className="hover:text-[var(--fg)] transition-colors">Capabilities</a>
-            <a href="#workspace" className="hover:text-[var(--fg)] transition-colors">Portals</a>
-            <a href="#why-sanjeevani" className="hover:text-[var(--fg)] transition-colors">Why Sanjeevani</a>
-            <a href="#contact" className="hover:text-[var(--fg)] transition-colors">Contact</a>
+            <Link href="/doctor" className="hover:text-[var(--fg)] text-emerald-600 font-bold transition-colors">Doctor Portal</Link>
+            <Link href="/dashboard" className="hover:text-[var(--fg)] transition-colors">Patient Portal</Link>
+            <Link href="/login" className="hover:text-[var(--fg)] transition-colors">Sign In</Link>
           </nav>
 
           {/* Controls */}
@@ -76,10 +76,17 @@ export default function LandingPage() {
             </button>
 
             <Link
-              href="/dashboard"
+              href="/login"
+              className="hidden sm:inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--fg)] px-4 py-2 text-xs font-bold uppercase tracking-wider hover:bg-[var(--bg-muted)] transition-colors"
+            >
+              Sign In
+            </Link>
+
+            <Link
+              href="/doctor"
               className="hidden sm:inline-flex items-center gap-2 rounded-full bg-[var(--accent)] text-[var(--accent-foreground)] px-5 py-2 text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-opacity"
             >
-              Get Started →
+              Doctor Workspace →
             </Link>
 
             <button
@@ -257,8 +264,8 @@ export default function LandingPage() {
                 ["X-Ray Support Canvas", "ONNX vision overlay flagging fractures for your review"],
                 ["Pharmacological Guardrails", "live interaction warnings across all prescribing doctors"],
               ],
-              cta: "Open Doctor Panel",
-              href: "http://localhost:5174",
+              cta: "Open Doctor Workspace",
+              href: "/doctor",
             },
             {
               icon: User,
@@ -270,10 +277,10 @@ export default function LandingPage() {
                 ["Smart Department Routing", "send patient files straight to the right physician queue"],
               ],
               cta: "Open Reception Desk",
-              href: "http://localhost:5173",
+              href: "/reception",
             },
           ].map((role) => (
-            <div key={role.title} className="border border-[var(--border)] bg-[var(--bg-elevated)] p-8 flex flex-col justify-between hover:border-[var(--fg)] transition-colors">
+            <div key={role.title} className="border border-[var(--border)] bg-[var(--bg-elevated)] p-8 flex flex-col justify-between hover:border-[var(--fg)] transition-colors rounded-2xl shadow-xs">
               <div>
                 <div className="w-10 h-10 rounded-full border border-[var(--border)] flex items-center justify-center mb-6">
                   <role.icon className="w-5 h-5 text-[var(--fg)]" />
@@ -289,12 +296,12 @@ export default function LandingPage() {
                 </ul>
               </div>
 
-              <a
+              <Link
                 href={role.href}
                 className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[var(--fg)] hover:opacity-75 transition-opacity"
               >
                 {role.cta} →
-              </a>
+              </Link>
             </div>
           ))}
         </div>

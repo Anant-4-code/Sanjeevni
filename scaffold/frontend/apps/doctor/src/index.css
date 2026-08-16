@@ -4,37 +4,37 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ========== Clinical Dark Theme Overrides ========== */
+/* ========== Clinical Warm Patient-Matched Theme ========== */
 
 :root {
-  --doc-bg: #0a0b0d;
-  --doc-bg-elevated: #111318;
-  --doc-bg-card: #161920;
-  --doc-bg-hover: #1c1f28;
-  --doc-border: #252830;
-  --doc-border-focus: #3b3f4a;
-  --doc-fg: #e8eaed;
-  --doc-fg-muted: #7a7e8a;
-  --doc-fg-dim: #4a4e58;
+  --doc-bg: #F8F7F4;
+  --doc-bg-elevated: #FFFFFF;
+  --doc-bg-card: #FFFFFF;
+  --doc-bg-hover: #F1EFE9;
+  --doc-border: #E2E8F0;
+  --doc-border-focus: #0F172A;
+  --doc-fg: #0F172A;
+  --doc-fg-muted: #64748B;
+  --doc-fg-dim: #94A3B8;
 
   /* Severity colors */
-  --severity-critical: #ff4444;
-  --severity-critical-bg: rgba(255, 68, 68, 0.08);
-  --severity-critical-border: rgba(255, 68, 68, 0.25);
-  --severity-warning: #ffaa22;
-  --severity-warning-bg: rgba(255, 170, 34, 0.08);
-  --severity-warning-border: rgba(255, 170, 34, 0.25);
-  --severity-safe: #44cc66;
-  --severity-safe-bg: rgba(68, 204, 102, 0.08);
-  --severity-safe-border: rgba(68, 204, 102, 0.25);
-  --severity-info: #4488ff;
-  --severity-info-bg: rgba(68, 136, 255, 0.08);
-  --severity-info-border: rgba(68, 136, 255, 0.25);
+  --severity-critical: #DC2626;
+  --severity-critical-bg: #FEF2F2;
+  --severity-critical-border: #FCA5A5;
+  --severity-warning: #D97706;
+  --severity-warning-bg: #FFFBEB;
+  --severity-warning-border: #FCD34D;
+  --severity-safe: #059669;
+  --severity-safe-bg: #ECFDF5;
+  --severity-safe-border: #6EE7B7;
+  --severity-info: #0284C7;
+  --severity-info-bg: #F0F9FF;
+  --severity-info-border: #BAE6FD;
 
   /* Accent */
-  --doc-accent: #6c8aff;
-  --doc-accent-hover: #8ba4ff;
-  --doc-accent-bg: rgba(108, 138, 255, 0.1);
+  --doc-accent: #0F172A;
+  --doc-accent-hover: #1E293B;
+  --doc-accent-bg: rgba(15, 23, 42, 0.06);
 }
 
 /* ========== Base Resets ========== */

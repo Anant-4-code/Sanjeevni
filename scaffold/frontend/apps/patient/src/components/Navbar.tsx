@@ -19,6 +19,7 @@ import {
   ChevronDown,
   Activity,
   User,
+  Stethoscope,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -173,6 +174,15 @@ export function Navbar() {
                 >
                   <FileText className="w-4 h-4 text-[var(--fg-muted)]" />
                   <span>Records Export</span>
+                </Link>
+
+                <Link
+                  href="/doctor"
+                  onClick={() => setProfileOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-emerald-600 rounded-xl hover:bg-emerald-50 transition-colors"
+                >
+                  <Stethoscope className="w-4 h-4 text-emerald-600" />
+                  <span>Doctor Workspace</span>
                 </Link>
 
                 <Link
