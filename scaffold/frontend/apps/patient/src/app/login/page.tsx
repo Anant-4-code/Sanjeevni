@@ -58,22 +58,22 @@ export default function Login() {
         is_verified: true,
       });
 
-      // Role-based routing as specified in guidelines
+      // Role-based routing to respective operations portals
       switch (userRole) {
         case "doctor":
-          router.push("/doctor");
+          window.location.href = "http://localhost:5174";
           break;
         case "receptionist":
-          router.push("/reception");
+          window.location.href = "http://localhost:5173";
           break;
         case "pharmacist":
-          router.push("/pharmacy");
+          window.location.href = "http://localhost:5175";
           break;
         case "lab_tech":
-          router.push("/lab");
+          window.location.href = "http://localhost:5176";
           break;
         case "admin":
-          router.push("/admin");
+          window.location.href = "http://localhost:5173";
           break;
         case "patient":
         default:
