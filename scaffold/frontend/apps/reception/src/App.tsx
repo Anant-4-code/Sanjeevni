@@ -28,6 +28,7 @@ export default function App() {
   }
 
   return (
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)]">
       <header className="border-b border-[var(--border)] px-6 md:px-12 py-4 flex items-center justify-between bg-[var(--bg-elevated)]">
         <div className="flex items-center gap-3">
           <span className="font-display text-lg font-bold tracking-tight">SANJEEVANI · RECEPTION</span>
