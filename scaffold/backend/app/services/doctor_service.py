@@ -447,6 +447,235 @@ class DoctorService:
             },
         }
 
+        # ── Comprehensive Multi-Category Medical Records & Documents ────────
+        self.medical_records = {
+            "patient-ramesh": [
+                {
+                    "id": "doc-rx-mithun",
+                    "title": "Neurology Consultation & Previous Rx",
+                    "category": "Prescription",
+                    "doctor_name": "Dr. G. Mithun",
+                    "doctor_specialty": "Consultant Neuro Surgeon",
+                    "clinic": "Manikanta Neuro Centre, Kakaji Colony",
+                    "date": _days_ago(14),
+                    "badge": "Prior Specialist Rx",
+                    "file_type": "Handwritten & Digital Rx",
+                    "summary": "Evaluation of peripheral neuropathic burning in feet and occasional postural dizziness. Prescribed Gabapin NT 100mg and Neurobion Forte.",
+                    "findings": [
+                        {"label": "Chief Complaint", "value": "Bilateral burning feet sensation, occasional postural instability"},
+                        {"label": "Reflexes", "value": "Ankle jerks diminished, plantar flexor bilaterally"},
+                        {"label": "Prescribed Rx", "value": "Gabapin NT (Gabapentin 100mg + Nortriptyline 10mg) 0-0-1 x 10d"},
+                        {"label": "Neurobion", "value": "Neurobion Forte 1 tab daily with water x 30d"},
+                    ],
+                    "plain_language": "Neurologist evaluated nerve tingling/burning in feet and prescribed nerve pain relief medication for 10 days.",
+                    "status": "active"
+                },
+                {
+                    "id": "doc-rx-rai",
+                    "title": "Cardiology Workup & Anticoagulation Protocol",
+                    "category": "Prescription",
+                    "doctor_name": "Dr. V. K. Rai",
+                    "doctor_specialty": "Senior Interventional Cardiologist",
+                    "clinic": "City Heart & Vascular Institute",
+                    "date": _days_ago(45),
+                    "badge": "Active Anticoagulation",
+                    "file_type": "Digital Clinical Rx",
+                    "summary": "Post-angioplasty 6-month review. Stable hemodynamics. Maintained on Warfarin 5mg and Aspirin 100mg with regular INR titration.",
+                    "findings": [
+                        {"label": "ECG", "value": "Sinus rhythm, HR 72 bpm, no acute ST-T changes"},
+                        {"label": "2D Echo", "value": "LVEF 58%, concentric LVH, no regional wall motion abnormalities"},
+                        {"label": "Target INR", "value": "2.0 - 2.5 (Current INR 2.2 on 5mg)"},
+                    ],
+                    "plain_language": "Heart specialist confirmed stable recovery and healthy blood flow with ongoing blood thinner medication.",
+                    "status": "active"
+                },
+                {
+                    "id": "doc-lab-cbc",
+                    "title": "Comprehensive Blood Panel (CBC + Differential)",
+                    "category": "Lab Report",
+                    "doctor_name": "Dr. S. K. Patel",
+                    "doctor_specialty": "Pathology & Diagnostics",
+                    "clinic": "Apex Diagnostic Labs",
+                    "date": _days_ago(12),
+                    "badge": "Recent Labs",
+                    "file_type": "Diagnostic Report PDF",
+                    "summary": "Complete hemogram in healthy normal ranges. Normal platelet count, normal WBC, no active infection.",
+                    "findings": [
+                        {"label": "Hemoglobin (Hb)", "value": "13.5 g/dL", "normal_range": "13.5 - 17.5 g/dL", "status": "normal"},
+                        {"label": "WBC Count", "value": "7,200 /µL", "normal_range": "4,500 - 11,000 /µL", "status": "normal"},
+                        {"label": "Platelet Count", "value": "240,000 /µL", "normal_range": "150,000 - 450,000 /µL", "status": "normal"},
+                        {"label": "ESR", "value": "12 mm/hr", "normal_range": "0 - 15 mm/hr", "status": "normal"},
+                    ],
+                    "plain_language": "Blood counts, oxygen capacity, and immune cells are in a completely healthy normal range.",
+                    "status": "normal"
+                },
+                {
+                    "id": "doc-lab-hba1c",
+                    "title": "Glycated Hemoglobin (HbA1c) & Fasting Glucose",
+                    "category": "Lab Report",
+                    "doctor_name": "Dr. S. K. Patel",
+                    "doctor_specialty": "Apex Diabetes Centre",
+                    "clinic": "Apex Diagnostic Labs",
+                    "date": _days_ago(90),
+                    "badge": "Overdue for Recheck",
+                    "file_type": "Biochemistry Report",
+                    "summary": "HbA1c 7.8% indicates moderate diabetic control. Down from 8.4% 6 months prior. 3-month recheck recommended today.",
+                    "findings": [
+                        {"label": "HbA1c", "value": "7.8 %", "normal_range": "< 5.7% (Diabetic target < 7.0%)", "status": "warning"},
+                        {"label": "Fasting Plasma Glucose", "value": "148 mg/dL", "normal_range": "70 - 100 mg/dL", "status": "warning"},
+                        {"label": "Estimated Avg Glucose (eAG)", "value": "177 mg/dL", "normal_range": "< 140 mg/dL", "status": "warning"},
+                    ],
+                    "plain_language": "3-month blood sugar average was 7.8%. Progressing well, but due for quarterly re-testing today.",
+                    "status": "warning"
+                },
+                {
+                    "id": "doc-img-xray",
+                    "title": "Right Wrist & Distal Radius Digital X-Ray",
+                    "category": "Imaging & Radiology",
+                    "doctor_name": "Dr. A. Mehra",
+                    "doctor_specialty": "Consultant Radiologist",
+                    "clinic": "Central Imaging & MRI Centre",
+                    "date": _days_ago(5),
+                    "badge": "AI Fracture Detected",
+                    "file_type": "DICOM / Digital X-Ray",
+                    "summary": "AP and Lateral views of right wrist. Non-displaced cortical hairline fissure at distal radius metaphysis.",
+                    "findings": [
+                        {"label": "Cortical Margin", "value": "Faint radiolucent cortical line at distal radial aspect (YOLOv7 92%)"},
+                        {"label": "Joint Space", "value": "Radiocarpal joint space preserved, no subluxation"},
+                        {"label": "Soft Tissue", "value": "Mild dorsal soft tissue edema without radio-opaque foreign body"},
+                    ],
+                    "plain_language": "Minor hairline crack in wrist bone without displacement. Recommend immobilization splint.",
+                    "status": "alert"
+                },
+                {
+                    "id": "doc-img-mri",
+                    "title": "Brain MRI with Diffusion & Contrast",
+                    "category": "Imaging & Radiology",
+                    "doctor_name": "Dr. G. Mithun",
+                    "doctor_specialty": "Manikanta Neuro Centre",
+                    "clinic": "Advanced MRI & Neuro Imaging",
+                    "date": _days_ago(20),
+                    "badge": "Normal Neuro Scan",
+                    "file_type": "DICOM / High-Res MRI",
+                    "summary": "1.5T Brain MRI showing normal intracranial parenchyma, no acute infarct, mass lesion or hemorrhage.",
+                    "findings": [
+                        {"label": "DWI / ADC", "value": "No restricted diffusion to suggest acute ischemic stroke"},
+                        {"label": "Ventricles", "value": "Age-appropriate mild cortical prominence, normal ventricles"},
+                        {"label": "Vascular Flow", "value": "Major intracranial arterial flow voids preserved"},
+                    ],
+                    "plain_language": "Brain scan is completely clear with no signs of stroke, bleeding, or vascular blockages.",
+                    "status": "normal"
+                },
+                {
+                    "id": "doc-hosp-discharge",
+                    "title": "Hospital Discharge Summary & Cath Report",
+                    "category": "Discharge Summary",
+                    "doctor_name": "Dr. V. K. Rai",
+                    "doctor_specialty": "Apollo Heart Institute",
+                    "clinic": "Apollo Hospital, Bannerghatta",
+                    "date": _days_ago(180),
+                    "badge": "Hospital Record",
+                    "file_type": "Clinical Discharge PDF",
+                    "summary": "Planned observational admission for coronary evaluation. Uneventful 48h stay. Discharged hemodynamically stable.",
+                    "findings": [
+                        {"label": "Admission Diagnosis", "value": "Unstable Angina — Rule out NSTEMI (Troponin I Negative x 2)"},
+                        {"label": "Coronary Angiography", "value": "Prior LAD stent widely patent with TIMI-3 distal flow"},
+                        {"label": "Discharge Medication", "value": "Warfarin 5mg, Metformin 500mg, Atorvastatin 40mg, Pantoprazole 40mg"},
+                    ],
+                    "plain_language": "Hospital discharge report confirming healthy heart stent function and stable discharge status.",
+                    "status": "verified"
+                }
+            ],
+            "patient-priya": [
+                {
+                    "id": "doc-priya-1",
+                    "title": "General Health Checkup & CBC",
+                    "category": "Lab Report",
+                    "doctor_name": "Dr. R. Sharma",
+                    "doctor_specialty": "Internal Medicine",
+                    "clinic": "City Care Clinic",
+                    "date": _days_ago(14),
+                    "badge": "Mild Anemia",
+                    "file_type": "Lab Report",
+                    "summary": "Hemoglobin 11.2 g/dL indicates mild iron deficiency anemia. Vitamin D3 18 ng/mL (insufficient).",
+                    "findings": [
+                        {"label": "Hemoglobin", "value": "11.2 g/dL", "normal_range": "12.0 - 15.5 g/dL", "status": "warning"},
+                        {"label": "Vitamin D3", "value": "18 ng/mL", "normal_range": "30 - 100 ng/mL", "status": "warning"},
+                    ],
+                    "plain_language": "Mild iron and Vitamin D insufficiency. Supplements recommended.",
+                    "status": "warning"
+                }
+            ]
+        }
+
+        # ── Scans & OCR Data ──────────────────────────────────────────────
+        self.scans = {
+            "patient-ramesh": {
+                "prescription_scan": {
+                    "scan_id": "scan-ramesh-1",
+                    "image_url": "/api/scans/prescription-ramesh.jpg",
+                    "raw_text": "Metformin 500mg BID [DIABETES]\nNoveron 500mg BD [HEART CARE]\nTab Gabapin NT 100mg HS x 10d",
+                    "ocr_fields": [
+                        {"name": "Metformin", "dosage": "500mg", "frequency": "2-0-2", "duration_days": 30, "condition_tag": "DIABETES", "confidence": 0.96},
+                        {"name": "Noveron", "dosage": "500mg", "frequency": "1-0-1", "duration_days": 10, "condition_tag": "HEART CARE", "confidence": 0.94},
+                        {"name": "Gabapin NT", "dosage": "100mg", "frequency": "0-0-1", "duration_days": 10, "condition_tag": "NERVE CARE", "confidence": 0.91},
+                    ]
+                },
+                "xray_scan": {
+                    "scan_id": "scan-ramesh-xray",
+                    "image_url": "/api/scans/xray-wrist.jpg",
+                    "anatomical_region": "Right Wrist / Distal Radius",
+                    "model": "YOLOv7-p6-BoneFracture-ONNX",
+                    "detections": [
+                        {"label": "fracture", "confidence": 0.92, "box": {"x": 120, "y": 85, "w": 130, "h": 75}, "description": "Hairline distal radial fracture fissure"},
+                        {"label": "boneanomaly", "confidence": 0.74, "box": {"x": 170, "y": 180, "w": 65, "h": 50}, "description": "Mild styloid osteopenia"}
+                    ]
+                }
+            }
+        }
+
+        # ── Diagnostic Orders ─────────────────────────────────────────────
+        self.diagnostic_orders = {
+            "patient-ramesh": [
+                {
+                    "id": "order-lab-1",
+                    "patient_id": "patient-ramesh",
+                    "test_name": "HbA1c (Glycated Hemoglobin)",
+                    "category": "Diabetic Profile",
+                    "status": "pending_draw",
+                    "ordered_at": _days_ago(1),
+                    "ordered_by": "Dr. Nitin Sharma",
+                    "notes": "Quarterly diabetic control recheck; compare against 7.8% baseline",
+                    "doctor_summary": "Quarterly monitoring for Metformin efficacy",
+                    "patient_summary": "Routine 3-month sugar test to see how well diabetes is controlled."
+                },
+                {
+                    "id": "order-lab-2",
+                    "patient_id": "patient-ramesh",
+                    "test_name": "Complete Blood Count (CBC)",
+                    "category": "Hematology",
+                    "status": "results_ready",
+                    "ordered_at": _days_ago(12),
+                    "ordered_by": "Dr. S. K. Patel",
+                    "notes": "Fasting blood sample, routine annual screening",
+                    "doctor_summary": "Hemoglobin 13.5 g/dL, WBC 7.2 x10^9/L, Platelets 240,000 /uL (All Normal)",
+                    "patient_summary": "Your blood count, red cells, and white cells are completely healthy."
+                },
+                {
+                    "id": "order-lab-3",
+                    "patient_id": "patient-ramesh",
+                    "test_name": "Fasting Lipid Profile",
+                    "category": "Biochemistry",
+                    "status": "results_ready",
+                    "ordered_at": _days_ago(45),
+                    "ordered_by": "Dr. V. K. Rai",
+                    "notes": "12-hour fasting sample; post-stent cardiac evaluation",
+                    "doctor_summary": "Total Cholesterol 185 mg/dL, HDL 42 mg/dL, LDL 112 mg/dL, Triglycerides 155 mg/dL",
+                    "patient_summary": "Cholesterol levels are in a safe range. Continue heart-healthy diet."
+                }
+            ]
+        }
+
         # ── Verification log (append-only) ────────────────────────────────
         self.verification_logs = []
 
@@ -526,6 +755,7 @@ class DoctorService:
             "pending_refills": refills,
             "visit_prep": visit,
             "scans": self.get_scans(patient_id),
+            "medical_records": self.get_medical_records(patient_id),
             "diagnostic_orders": self.get_diagnostic_orders(patient_id),
         }
 
@@ -838,6 +1068,10 @@ class DoctorService:
             "symptom_patterns": [],
             "suggested_topics": [],
         })
+
+    def get_medical_records(self, patient_id: str) -> list[dict]:
+        """Get multi-category medical records, past doctor notes, lab reports, and imaging docs."""
+        return self.medical_records.get(patient_id, [])
 
     def get_scans(self, patient_id: str) -> dict:
         """Get raw prescription scan and X-ray analysis for a patient."""
