@@ -525,6 +525,8 @@ class DoctorService:
             "smart_alerts": alerts,
             "pending_refills": refills,
             "visit_prep": visit,
+            "scans": self.get_scans(patient_id),
+            "diagnostic_orders": self.get_diagnostic_orders(patient_id),
         }
 
     # =====================================================================
@@ -647,6 +649,177 @@ class DoctorService:
 
     def get_caregiver_audit(self, patient_id: str) -> dict:
         """Get caregiver dose-marking audit for a patient."""
+        # ── Scans & X-Ray Analysis (Side-by-Side OCR & X-ray Canvas) ──────
+        self.scans = {
+            "patient-ramesh": {
+                "prescription_scan": {
+                    "scan_id": "scan-rx-ramesh-101",
+                    "uploaded_at": _days_ago(1),
+                    "image_url": "/api/placeholder/scan/rx-ramesh.jpg",
+                    "ocr_fields": [
+                        {
+                            "medication_id": "med-metformin",
+                            "name": "Metformin",
+                            "dosage": "500mg",
+                            "frequency": "2-0-2",
+                            "duration_days": 30,
+                            "confidence": 0.94,
+                            "condition_tag": "DIABETES",
+                            "doctor_edited": False,
+                        },
+                        {
+                            "medication_id": "med-noveron",
+                            "name": "Noveron",
+                            "dosage": "500mg",
+                            "frequency": "1-0-1",
+                            "duration_days": 10,
+                            "confidence": 0.88,
+                            "condition_tag": "HEART CARE",
+                            "doctor_edited": False,
+                        },
+                    ],
+                },
+                "xray_scan": {
+                    "scan_id": "scan-xray-ramesh-201",
+                    "uploaded_at": _days_ago(2),
+                    "anatomical_region": "Left Wrist / Forearm AP & Lateral",
+                    "image_url": "/api/placeholder/scan/xray-wrist.jpg",
+                    "detections": [
+                        {
+                            "label": "fracture",
+                            "confidence": 0.92,
+                            "box": {"x": 140, "y": 95, "w": 75, "h": 50},
+                            "anatomical_site": "Left distal radius fracture (non-displaced)",
+                        },
+                        {
+                            "label": "boneanomaly",
+                            "confidence": 0.78,
+                            "box": {"x": 210, "y": 160, "w": 45, "h": 40},
+                            "anatomical_site": "Mild localized osteopenia",
+                        },
+                    ],
+                },
+            },
+            "patient-vikram": {
+                "prescription_scan": {
+                    "scan_id": "scan-rx-vikram-102",
+                    "uploaded_at": _days_ago(0),
+                    "image_url": "/api/placeholder/scan/rx-vikram.jpg",
+                    "ocr_fields": [
+                        {
+                            "medication_id": "med-atenolol",
+                            "name": "Atenolol",
+                            "dosage": "50mg",
+                            "frequency": "1-0-0",
+                            "duration_days": 30,
+                            "confidence": 0.96,
+                            "condition_tag": "HYPERTENSION",
+                            "doctor_edited": False,
+                        },
+                    ],
+                },
+                "xray_scan": {
+                    "scan_id": "scan-xray-vikram-202",
+                    "uploaded_at": _days_ago(0),
+                    "anatomical_region": "Chest PA View",
+                    "image_url": "/api/placeholder/scan/xray-chest.jpg",
+                    "detections": [
+                        {
+                            "label": "cardiomegaly",
+                            "confidence": 0.89,
+                            "box": {"x": 110, "y": 120, "w": 180, "h": 140},
+                            "anatomical_site": "Enlarged cardiac silhouette (CTR > 0.55)",
+                        },
+                    ],
+                },
+            },
+            "patient-sita": {
+                "prescription_scan": {
+                    "scan_id": "scan-rx-sita-103",
+                    "uploaded_at": _days_ago(2),
+                    "image_url": "/api/placeholder/scan/rx-sita.jpg",
+                    "ocr_fields": [
+                        {
+                            "medication_id": "med-pcm",
+                            "name": "Paracetamol",
+                            "dosage": "500mg",
+                            "frequency": "1-1-1",
+                            "duration_days": 5,
+                            "confidence": 0.92,
+                            "condition_tag": "FEVER",
+                            "doctor_edited": False,
+                        },
+                    ],
+                },
+                "xray_scan": {
+                    "scan_id": "scan-xray-sita-203",
+                    "uploaded_at": _days_ago(1),
+                    "anatomical_region": "Chest PA View",
+                    "image_url": "/api/placeholder/scan/xray-chest-sita.jpg",
+                    "detections": [
+                        {
+                            "label": "consolidation",
+                            "confidence": 0.84,
+                            "box": {"x": 160, "y": 140, "w": 90, "h": 80},
+                            "anatomical_site": "Right middle lobe patchy consolidation (consistent with pneumonia)",
+                        },
+                    ],
+                },
+            },
+        }
+
+        # ── Diagnostic Orders (Lab Tests) ──────────────────────────────────
+        self.diagnostic_orders = {
+            "patient-ramesh": [
+                {
+                    "id": "order-lab-1",
+                    "test_name": "Complete Blood Count (CBC)",
+                    "category": "Hematology",
+                    "status": "results_ready",
+                    "ordered_at": _days_ago(3),
+                    "ordered_by": "Dr. Nitin Sharma",
+                    "doctor_summary": "Hb 13.8 g/dL (Normal), WBC 7,200 /mcL (Normal), Platelets 240,000 /mcL",
+                    "patient_summary": "Your blood counts and infection markers are completely within normal healthy range.",
+                },
+                {
+                    "id": "order-lab-2",
+                    "test_name": "HbA1c (Glycated Hemoglobin)",
+                    "category": "Diabetic Profile",
+                    "status": "pending_draw",
+                    "ordered_at": _days_ago(0),
+                    "ordered_by": "Dr. Nitin Sharma",
+                    "notes": "Fast for 8 hours prior to morning sample draw.",
+                },
+                {
+                    "id": "order-lab-3",
+                    "test_name": "Fasting Lipid Profile",
+                    "category": "Biochemistry",
+                    "status": "analyzing",
+                    "ordered_at": _days_ago(1),
+                    "ordered_by": "Dr. Nitin Sharma",
+                    "notes": "Lipid panel sent to pathology lab.",
+                },
+            ],
+            "patient-vikram": [
+                {
+                    "id": "order-lab-4",
+                    "test_name": "Serum Troponin I & CK-MB",
+                    "category": "Cardiac Biomarkers",
+                    "status": "results_ready",
+                    "ordered_at": _days_ago(0),
+                    "ordered_by": "Dr. Nitin Sharma",
+                    "doctor_summary": "Troponin I: 0.08 ng/mL (Borderline Elevated), CK-MB: 24 U/L",
+                    "patient_summary": "Slightly elevated cardiac enzyme markers. Doctor is monitoring cardiac stability.",
+                },
+            ],
+        }
+
+        # ── Follow-ups & Verification Logs ─────────────────────────────────
+        self.follow_ups = []
+        self.verification_logs = []
+
+    def get_caregiver_audit(self, patient_id: str) -> dict:
+        """Get caregiver dose-marking audit for a patient."""
         return self.caregiver_audit.get(patient_id, {
             "caregivers": [],
             "dose_audit_7d": [],
@@ -665,6 +838,41 @@ class DoctorService:
             "symptom_patterns": [],
             "suggested_topics": [],
         })
+
+    def get_scans(self, patient_id: str) -> dict:
+        """Get raw prescription scan and X-ray analysis for a patient."""
+        return self.scans.get(patient_id, {
+            "prescription_scan": None,
+            "xray_scan": None,
+        })
+
+    def get_diagnostic_orders(self, patient_id: str) -> list[dict]:
+        """Get diagnostic lab orders for a patient."""
+        return self.diagnostic_orders.get(patient_id, [])
+
+    def order_lab_test(
+        self,
+        patient_id: str,
+        doctor_id: str,
+        test_name: str,
+        category: str = "General Diagnostics",
+        clinical_notes: str = "",
+    ) -> dict:
+        """Place a new diagnostic lab order."""
+        new_order = {
+            "id": f"order-lab-{uuid.uuid4().hex[:8]}",
+            "patient_id": patient_id,
+            "test_name": test_name,
+            "category": category,
+            "status": "pending_draw",
+            "ordered_at": _now_iso(),
+            "ordered_by": "Dr. Nitin Sharma",
+            "notes": clinical_notes,
+        }
+        if patient_id not in self.diagnostic_orders:
+            self.diagnostic_orders[patient_id] = []
+        self.diagnostic_orders[patient_id].insert(0, new_order)
+        return {"status": "created", "order": new_order}
 
     # =====================================================================
     # DICTATION (mock SOAP)

@@ -224,6 +224,33 @@ async def create_follow_up(payload: FollowUpRequest):
 
 
 # =============================================================================
+# DIAGNOSTIC LAB ORDERS (Feature DR-8)
+# =============================================================================
+
+class LabOrderRequest(BaseModel):
+    patient_id: str
+    doctor_id: str = "demo-doctor"
+    test_name: str
+    category: str = "General Diagnostics"
+    clinical_notes: str = ""
+
+
+@router.post("/orders/lab")
+async def create_lab_order(payload: LabOrderRequest):
+    """
+    Place a new diagnostic lab order.
+    Dispatches to Lab Workbench and generates patient summary.
+    """
+    return doctor_service.order_lab_test(
+        patient_id=payload.patient_id,
+        doctor_id=payload.doctor_id,
+        test_name=payload.test_name,
+        category=payload.category,
+        clinical_notes=payload.clinical_notes,
+    )
+
+
+# =============================================================================
 # ALERT ACKNOWLEDGMENT
 # =============================================================================
 
