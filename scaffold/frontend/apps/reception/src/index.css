@@ -1,49 +1,57 @@
-@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ========== Clinical Warm Patient-Matched Theme ========== */
-
 :root {
-  --doc-bg: #F8F7F4;
-  --doc-bg-elevated: #FFFFFF;
-  --doc-bg-card: #FFFFFF;
-  --doc-bg-hover: #F1EFE9;
-  --doc-border: #E2E8F0;
-  --doc-border-focus: #0F172A;
-  --doc-fg: #0F172A;
-  --doc-fg-muted: #64748B;
-  --doc-fg-dim: #94A3B8;
+  --bg: #F8F7F4;
+  --bg-elevated: #FFFFFF;
+  --bg-muted: #EFECE6;
+  --fg: #0F172A;
+  --fg-muted: #64748B;
+  --border: #E2E8F0;
+  --accent: #0F172A;
+  --accent-foreground: #FFFFFF;
+  --warn: #DC2626;
+  --warn-bg: #FEF2F2;
+  --warn-border: #FCA5A5;
+  --safe: #059669;
+  --safe-bg: #ECFDF5;
+  --safe-border: #6EE7B7;
+  --unverified: #D97706;
+  --unverified-bg: #FFFBEB;
+  --unverified-border: #FCD34D;
+}
 
-  /* Severity colors */
-  --severity-critical: #DC2626;
-  --severity-critical-bg: #FEF2F2;
-  --severity-critical-border: #FCA5A5;
-  --severity-warning: #D97706;
-  --severity-warning-bg: #FFFBEB;
-  --severity-warning-border: #FCD34D;
-  --severity-safe: #059669;
-  --severity-safe-bg: #ECFDF5;
-  --severity-safe-border: #6EE7B7;
-  --severity-info: #0284C7;
-  --severity-info-bg: #F0F9FF;
-  --severity-info-border: #BAE6FD;
-
-  /* Accent */
-  --doc-accent: #0F172A;
-  --doc-accent-hover: #1E293B;
-  --doc-accent-bg: rgba(15, 23, 42, 0.06);
+[data-theme="dark"] {
+  --bg: #090D16;
+  --bg-elevated: #111827;
+  --bg-muted: #1F2937;
+  --fg: #F9FAFB;
+  --fg-muted: #9CA3AF;
+  --border: #1F2937;
+  --accent: #F9FAFB;
+  --accent-foreground: #090D16;
+  --warn: #EF4444;
+  --warn-bg: #450A0A;
+  --warn-border: #991B1B;
+  --safe: #10B981;
+  --safe-bg: #064E3B;
+  --safe-border: #047857;
+  --unverified: #F59E0B;
+  --unverified-bg: #451A03;
+  --unverified-border: #B45309;
 }
 
 body {
+  background: var(--bg);
+  color: var(--fg);
   font-family: 'Inter', sans-serif;
-  background: var(--doc-bg);
-  color: var(--doc-fg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 * {
@@ -58,136 +66,34 @@ body {
   font-family: 'JetBrains Mono', monospace;
 }
 
-.card-clinical {
-  background: var(--doc-bg-card);
-  border: 1px solid var(--doc-border);
-  border-radius: 12px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+/* Glassmorphism & Modern Soft Card Utilities */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
-.card-clinical:hover {
-  border-color: var(--doc-border-focus);
+[data-theme="dark"] .glass-panel {
+  background: rgba(17, 24, 39, 0.85);
+  border: 1px solid rgba(31, 41, 55, 0.8);
 }
 
-.severity-pill {
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 2px 8px;
-  border-radius: 4px;
+.glass-card {
+  background: var(--bg-elevated);
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+  transition: all 0.25s ease-in-out;
 }
 
-.severity-critical {
-  color: var(--severity-critical);
-  background: var(--severity-critical-bg);
-  border: 1px solid var(--severity-critical-border);
+.glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.08);
+  border-color: rgba(15, 23, 42, 0.25);
 }
 
-.severity-warning {
-  color: var(--severity-warning);
-  background: var(--severity-warning-bg);
-  border: 1px solid var(--severity-warning-border);
-}
-
-.severity-safe {
-  color: var(--severity-safe);
-  background: var(--severity-safe-bg);
-  border: 1px solid var(--severity-safe-border);
-}
-
-.severity-info {
-  color: var(--severity-info);
-  background: var(--severity-info-bg);
-  border: 1px solid var(--severity-info-border);
-}
-
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--doc-accent);
-  color: #fff;
-  font-weight: 600;
-  font-size: 0.8125rem;
-  padding: 10px 20px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-primary:hover {
-  background: var(--doc-accent-hover);
-  transform: translateY(-1px);
-}
-
-.btn-outline {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: transparent;
-  color: var(--doc-fg-muted);
-  font-weight: 500;
-  font-size: 0.8125rem;
-  padding: 10px 20px;
-  border-radius: 8px;
-  border: 1px solid var(--doc-border);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-outline:hover {
-  color: var(--doc-fg);
-  border-color: var(--doc-fg-muted);
-  background: var(--doc-bg-hover);
-}
-
-.adherence-bar {
-  height: 6px;
-  border-radius: 3px;
-  background: var(--doc-border);
-  overflow: hidden;
-}
-
-.adherence-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 0.6s ease-out;
-}
-
-.alert-card-critical {
-  border-left: 3px solid var(--severity-critical);
-  background: var(--severity-critical-bg);
-}
-
-.alert-card-warning {
-  border-left: 3px solid var(--severity-warning);
-  background: var(--severity-warning-bg);
-}
-
-.alert-card-info {
-  border-left: 3px solid var(--severity-info);
-  background: var(--severity-info-bg);
-}
-
-.alert-card-safe {
-  border-left: 3px solid var(--severity-safe);
-  background: var(--severity-safe-bg);
-}
-
-.soap-section {
-  border-left: 3px solid var(--doc-accent);
-  padding-left: 12px;
-  margin-bottom: 12px;
-}
-
-.soap-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--doc-accent);
-  margin-bottom: 4px;
+[data-theme="dark"] .glass-card:hover {
+  border-color: rgba(249, 250, 251, 0.25);
+  box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.4);
 }
