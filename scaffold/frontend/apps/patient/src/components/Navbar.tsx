@@ -20,6 +20,8 @@ import {
   Activity,
   User,
   Stethoscope,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -48,10 +50,14 @@ export function Navbar() {
   const { user, logout } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
+    const current = (document.documentElement.getAttribute("data-theme") as "light" | "dark") || "light";
+    setTheme(current);
+
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setProfileOpen(false);
@@ -61,10 +67,15 @@ export function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  function toggleTheme() {
+    const nextTheme = theme === "light" ? "dark" : "light";
+    setTheme(nextTheme);
+    document.documentElement.setAttribute("data-theme", nextTheme);
+  }
+
   if (pathname === "/login" || pathname === "/register" || pathname === "/" || pathname?.startsWith("/auth/")) return null;
 
   const displayUser = mounted ? user : null;
-  const firstName = displayUser?.full_name ? displayUser.full_name.split(" ")[0] : "Patient";
 
   function handleSignOut() {
     logout();
@@ -105,106 +116,117 @@ export function Navbar() {
             })}
           </nav>
 
-          <div className="relative" ref={dropdownRef}>
-            {mounted ? (
-              <button
-                onClick={() => setProfileOpen(!profileOpen)}
-                className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-full hover:bg-[var(--bg-muted)] transition-colors"
-              >
-                {user?.avatar_url ? (
-                  <img
-                    src={user.avatar_url}
-                    alt={user.full_name || "User"}
-                    className="w-7 h-7 rounded-full object-cover border border-[var(--border)]"
-                  />
-                ) : (
-                  <div className="w-7 h-7 rounded-full bg-[var(--bg-muted)] flex items-center justify-center font-bold text-[10px]">
-                    {user?.full_name ? user.full_name[0].toUpperCase() : "P"}
-                  </div>
-                )}
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${profileOpen ? "rotate-180" : ""}`} />
-              </button>
-            ) : (
-              <div className="w-9 h-7 rounded-full bg-[var(--bg-muted)] animate-pulse" />
-            )}
+          <div className="flex items-center gap-2">
+            {/* Theme Switcher Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-1.5 rounded-full hover:bg-[var(--bg-muted)] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors"
+              title="Toggle Dark / Light Mode"
+            >
+              {theme === "dark" ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-700" />}
+            </button>
 
-            {/* Dropdown Menu */}
-            {profileOpen && (
-              <div className="absolute right-0 mt-2 w-64 glass-card p-2 rounded-2xl shadow-xl z-50 border border-[var(--border)] space-y-1">
-                <div className="px-3 py-2.5 border-b border-[var(--border)] space-y-1">
-                  <div className="flex items-center gap-2.5">
-                    {displayUser?.avatar_url ? (
-                      <img
-                        src={displayUser.avatar_url}
-                        alt={displayUser.full_name || "User"}
-                        className="w-8 h-8 rounded-full object-cover border border-[var(--border)]"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-[var(--bg-muted)] flex items-center justify-center font-bold text-xs">
-                        {displayUser?.full_name ? displayUser.full_name[0].toUpperCase() : "P"}
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <p className="font-bold text-xs truncate">{displayUser?.full_name || "Patient"}</p>
-                      <p className="text-[10px] text-[var(--fg-muted)] font-mono truncate">{displayUser?.email || ""}</p>
-                    </div>
-                  </div>
-
-                  {displayUser?.primary_doctor && (
-                    <div className="pt-1.5 flex items-center gap-1.5 text-[10px] font-medium text-[var(--fg-muted)] bg-[var(--bg-muted)]/50 p-1.5 rounded-lg">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
-                      <span className="truncate">Dr: <strong>{displayUser.primary_doctor.name}</strong></span>
+            <div className="relative" ref={dropdownRef}>
+              {mounted ? (
+                <button
+                  onClick={() => setProfileOpen(!profileOpen)}
+                  className="flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-full hover:bg-[var(--bg-muted)] transition-colors"
+                >
+                  {user?.avatar_url ? (
+                    <img
+                      src={user.avatar_url}
+                      alt={user.full_name || "User"}
+                      className="w-7 h-7 rounded-full object-cover border border-[var(--border)]"
+                    />
+                  ) : (
+                    <div className="w-7 h-7 rounded-full bg-[var(--bg-muted)] flex items-center justify-center font-bold text-[10px]">
+                      {user?.full_name ? user.full_name[0].toUpperCase() : "P"}
                     </div>
                   )}
-                </div>
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${profileOpen ? "rotate-180" : ""}`} />
+                </button>
+              ) : (
+                <div className="w-9 h-7 rounded-full bg-[var(--bg-muted)] animate-pulse" />
+              )}
 
-                <Link
-                  href="/labs"
-                  onClick={() => setProfileOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-xl hover:bg-[var(--bg-muted)] transition-colors"
-                >
-                  <FlaskConical className="w-4 h-4 text-[var(--fg-muted)]" />
-                  <span>Lab Results</span>
-                </Link>
+              {/* Dropdown Menu */}
+              {profileOpen && (
+                <div className="absolute right-0 mt-2 w-64 glass-card p-2 rounded-2xl shadow-xl z-50 border border-[var(--border)] space-y-1">
+                  <div className="px-3 py-2.5 border-b border-[var(--border)] space-y-1">
+                    <div className="flex items-center gap-2.5">
+                      {displayUser?.avatar_url ? (
+                        <img
+                          src={displayUser.avatar_url}
+                          alt={displayUser.full_name || "User"}
+                          className="w-8 h-8 rounded-full object-cover border border-[var(--border)]"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-[var(--bg-muted)] flex items-center justify-center font-bold text-xs">
+                          {displayUser?.full_name ? displayUser.full_name[0].toUpperCase() : "P"}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="font-bold text-xs truncate">{displayUser?.full_name || "Patient"}</p>
+                        <p className="text-[10px] text-[var(--fg-muted)] font-mono truncate">{displayUser?.email || ""}</p>
+                      </div>
+                    </div>
 
-                <Link
-                  href="/records"
-                  onClick={() => setProfileOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-xl hover:bg-[var(--bg-muted)] transition-colors"
-                >
-                  <FileText className="w-4 h-4 text-[var(--fg-muted)]" />
-                  <span>Records Export</span>
-                </Link>
+                    {displayUser?.primary_doctor && (
+                      <div className="pt-1.5 flex items-center gap-1.5 text-[10px] font-medium text-[var(--fg-muted)] bg-[var(--bg-muted)]/50 p-1.5 rounded-lg">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
+                        <span className="truncate">Dr: <strong>{displayUser.primary_doctor.name}</strong></span>
+                      </div>
+                    )}
+                  </div>
 
-                <Link
-                  href="/doctor"
-                  onClick={() => setProfileOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-emerald-600 rounded-xl hover:bg-emerald-50 transition-colors"
-                >
-                  <Stethoscope className="w-4 h-4 text-emerald-600" />
-                  <span>Doctor Workspace</span>
-                </Link>
-
-                <Link
-                  href="/settings"
-                  onClick={() => setProfileOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-xl hover:bg-[var(--bg-muted)] transition-colors"
-                >
-                  <Settings className="w-4 h-4 text-[var(--fg-muted)]" />
-                  <span>Account Settings</span>
-                </Link>
-
-                <div className="pt-1 border-t border-[var(--border)]">
-                  <button
-                    onClick={handleSignOut}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-red-600 dark:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors text-left"
+                  <Link
+                    href="/labs"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-xl hover:bg-[var(--bg-muted)] transition-colors"
                   >
-                    <LogOut className="w-4 h-4" />
-                    <span>Sign Out</span>
-                  </button>
+                    <FlaskConical className="w-4 h-4 text-[var(--fg-muted)]" />
+                    <span>Lab Results</span>
+                  </Link>
+
+                  <Link
+                    href="/records"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-xl hover:bg-[var(--bg-muted)] transition-colors"
+                  >
+                    <FileText className="w-4 h-4 text-[var(--fg-muted)]" />
+                    <span>Records Export</span>
+                  </Link>
+
+                  <Link
+                    href="/doctor"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-emerald-600 rounded-xl hover:bg-emerald-50 transition-colors"
+                  >
+                    <Stethoscope className="w-4 h-4 text-emerald-600" />
+                    <span>Doctor Workspace</span>
+                  </Link>
+
+                  <Link
+                    href="/settings"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-xl hover:bg-[var(--bg-muted)] transition-colors"
+                  >
+                    <Settings className="w-4 h-4 text-[var(--fg-muted)]" />
+                    <span>Account Settings</span>
+                  </Link>
+
+                  <div className="pt-1 border-t border-[var(--border)]">
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-red-600 dark:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors text-left"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </header>
