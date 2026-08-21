@@ -4,6 +4,7 @@ import DictationControl from "./DictationControl";
 import RefillQueue from "./RefillQueue";
 import FollowUpScheduler from "./FollowUpScheduler";
 import XrayCanvas from "./XrayCanvas";
+import FullRecord from "./FullRecord";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000/api";
 
@@ -13,7 +14,7 @@ interface PatientDashboardProps {
 }
 
 export default function PatientDashboard({ data, onRefresh }: PatientDashboardProps) {
-  const [activeTab, setActiveTab] = useState<"overview" | "medications" | "dictation">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "medications" | "dictation" | "full-record">("overview");
   const [guardrailSafe, setGuardrailSafe] = useState(true);
   const [verifying, setVerifying] = useState(false);
   const [verified, setVerified] = useState(false);
@@ -97,7 +98,7 @@ export default function PatientDashboard({ data, onRefresh }: PatientDashboardPr
 
       {/* Tab navigation */}
       <div className="flex gap-1 mb-6 border-b border-doc-border pb-px">
-        {(["overview", "medications", "dictation"] as const).map((tab) => (
+        {(["overview", "medications", "dictation", "full-record"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -107,7 +108,7 @@ export default function PatientDashboard({ data, onRefresh }: PatientDashboardPr
                 : "border-transparent text-doc-fg-muted hover:text-doc-fg"
             }`}
           >
-            {tab === "overview" ? "Overview" : tab === "medications" ? "Prescribe" : "Dictation"}
+            {tab === "overview" ? "Overview" : tab === "medications" ? "Prescribe" : tab === "dictation" ? "Dictation" : "Full Record"}
           </button>
         ))}
       </div>

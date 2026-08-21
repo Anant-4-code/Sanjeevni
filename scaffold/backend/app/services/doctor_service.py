@@ -1,5 +1,5 @@
-"""
-Sanjeevani — Doctor Service (In-Memory Demo Data)
+﻿"""
+Sanjeevani â€” Doctor Service (In-Memory Demo Data)
 ===================================================
 Provides all doctor-facing business logic with seeded demo data.
 Mirrors the PatientService pattern for consistency.
@@ -33,7 +33,7 @@ def _days_ago(n: int) -> str:
 
 class DoctorService:
     def __init__(self):
-        # ── Demo patients ──────────────────────────────────────────────
+        # â”€â”€ Demo patients â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         self.patients = {
             "patient-ramesh": {
                 "id": "patient-ramesh",
@@ -77,7 +77,7 @@ class DoctorService:
             },
         }
 
-        # ── Doctor queue (acuity-sorted) ────────────────────────────────
+        # â”€â”€ Doctor queue (acuity-sorted) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         self.queue = [
             {
                 "id": "q-1",
@@ -104,7 +104,7 @@ class DoctorService:
                 "patients": self.patients["patient-sita"],
                 "chief_complaints": {
                     "id": "cc-2",
-                    "text": "High fever (102°F) for 3 days, persistent cough with yellow sputum",
+                    "text": "High fever (102Â°F) for 3 days, persistent cough with yellow sputum",
                     "severity_level": 2,
                     "severity_source": "nlp_model",
                 },
@@ -156,7 +156,7 @@ class DoctorService:
             },
         ]
 
-        # ── Active prescriptions (this doctor) ──────────────────────────
+        # â”€â”€ Active prescriptions (this doctor) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         self.my_prescriptions = {
             "patient-ramesh": [
                 {
@@ -197,7 +197,7 @@ class DoctorService:
             ],
         }
 
-        # ── Active prescriptions (other doctors → cross-doctor view) ─────
+        # â”€â”€ Active prescriptions (other doctors â†’ cross-doctor view) â”€â”€â”€â”€â”€
         self.other_prescriptions = {
             "patient-ramesh": [
                 {
@@ -249,7 +249,7 @@ class DoctorService:
             ],
         }
 
-        # ── Allergy profiles ──────────────────────────────────────────────
+        # â”€â”€ Allergy profiles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         self.allergies = {
             "patient-ramesh": [
                 {
@@ -281,12 +281,12 @@ class DoctorService:
                     "reported_by_patient": True,
                     "confirmed_by_doctor": True,
                     "confirmed_by_doctor_name": "Dr. Gupta",
-                    "notes": "Severe reaction to Bactrim — anaphylactic risk",
+                    "notes": "Severe reaction to Bactrim â€” anaphylactic risk",
                 },
             ],
         }
 
-        # ── Symptom logs (30-day window) ──────────────────────────────────
+        # â”€â”€ Symptom logs (30-day window) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         self.symptom_logs = {
             "patient-ramesh": [
                 {"date": _days_ago(1), "feeling_score": 3, "energy": 2, "mood": 3, "sleep": 4,
@@ -316,15 +316,15 @@ class DoctorService:
             ],
         }
 
-        # ── Smart alerts ──────────────────────────────────────────────────
+        # â”€â”€ Smart alerts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         self.smart_alerts = {
             "patient-ramesh": [
                 {
                     "id": "alert-1",
                     "type": "missed_dose_escalation",
                     "severity": "warning",
-                    "title": "Missed Dose Escalation — Metformin",
-                    "message": "Patient missed Metformin evening dose on Aug 13 (2 hrs past due). Caregiver Priya was notified; son called patient → dose eventually taken.",
+                    "title": "Missed Dose Escalation â€” Metformin",
+                    "message": "Patient missed Metformin evening dose on Aug 13 (2 hrs past due). Caregiver Priya was notified; son called patient â†’ dose eventually taken.",
                     "created_at": _days_ago(3),
                     "acknowledged": False,
                 },
@@ -332,7 +332,7 @@ class DoctorService:
                     "id": "alert-2",
                     "type": "lab_due",
                     "severity": "info",
-                    "title": "Lab Re-Check Due — HbA1c",
+                    "title": "Lab Re-Check Due â€” HbA1c",
                     "message": "Last HbA1c test was 3 months ago (Aug 10). Patient hasn't scheduled re-check yet. Consider reminding during this visit.",
                     "created_at": _days_ago(0),
                     "acknowledged": False,
@@ -341,8 +341,8 @@ class DoctorService:
                     "id": "alert-3",
                     "type": "symptom_streak",
                     "severity": "warning",
-                    "title": "Low Energy Streak — 6 of 30 Days",
-                    "message": "Patient reported low energy (≤2) on 6 of the last 30 days, mostly after Noveron evening dose. Consider dosage adjustment.",
+                    "title": "Low Energy Streak â€” 6 of 30 Days",
+                    "message": "Patient reported low energy (â‰¤2) on 6 of the last 30 days, mostly after Noveron evening dose. Consider dosage adjustment.",
                     "created_at": _days_ago(1),
                     "acknowledged": False,
                 },
@@ -352,15 +352,15 @@ class DoctorService:
                     "id": "alert-4",
                     "type": "symptom_streak",
                     "severity": "critical",
-                    "title": "Persistent Fever — 3 Consecutive Days",
-                    "message": "Patient has reported feeling score ≤2 for 3 consecutive days with persistent fever. Requires clinical evaluation.",
+                    "title": "Persistent Fever â€” 3 Consecutive Days",
+                    "message": "Patient has reported feeling score â‰¤2 for 3 consecutive days with persistent fever. Requires clinical evaluation.",
                     "created_at": _days_ago(0),
                     "acknowledged": False,
                 },
             ],
         }
 
-        # ── Caregiver audit (who marked doses) ───────────────────────────
+        # â”€â”€ Caregiver audit (who marked doses) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         self.caregiver_audit = {
             "patient-ramesh": {
                 "caregivers": [
@@ -384,7 +384,7 @@ class DoctorService:
             },
         }
 
-        # ── Refill requests (pending for this doctor) ─────────────────────
+        # â”€â”€ Refill requests (pending for this doctor) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         self.refill_requests = [
             {
                 "id": "refill-1",
@@ -398,7 +398,7 @@ class DoctorService:
                 "refill_quantity": 10,
                 "refills_available": 2,
                 "max_refills": 3,
-                "request_notes": "Running low, going on trip next week — need sooner",
+                "request_notes": "Running low, going on trip next week â€” need sooner",
                 "requested_at": _days_ago(1),
                 "requested_by_role": "patient",
                 "status": "pending",
@@ -424,7 +424,7 @@ class DoctorService:
             },
         ]
 
-        # ── Visit prep insights (copilot refusals + patterns) ─────────────
+        # â”€â”€ Visit prep insights (copilot refusals + patterns) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         self.visit_prep = {
             "patient-ramesh": {
                 "copilot_refusals": [
@@ -439,15 +439,15 @@ class DoctorService:
                     {"pattern": "Low energy correlated with skipped morning doses", "frequency": "3 of 7 skip days had low energy", "suggestion": "Adherence improvement may reduce fatigue."},
                 ],
                 "suggested_topics": [
-                    "Address dizziness — patient asked Copilot about seriousness",
-                    "Reinforce Metformin adherence — patient asked about stopping",
+                    "Address dizziness â€” patient asked Copilot about seriousness",
+                    "Reinforce Metformin adherence â€” patient asked about stopping",
                     "Schedule HbA1c re-check (3 months overdue)",
                     "Discuss Noveron refill timing (3 days remaining)",
                 ],
             },
         }
 
-        # ── Comprehensive Multi-Category Medical Records & Documents ────────
+        # â”€â”€ Comprehensive Multi-Category Medical Records & Documents â”€â”€â”€â”€â”€â”€â”€â”€
         self.medical_records = {
             "patient-ramesh": [
                 {
@@ -502,8 +502,8 @@ class DoctorService:
                     "summary": "Complete hemogram in healthy normal ranges. Normal platelet count, normal WBC, no active infection.",
                     "findings": [
                         {"label": "Hemoglobin (Hb)", "value": "13.5 g/dL", "normal_range": "13.5 - 17.5 g/dL", "status": "normal"},
-                        {"label": "WBC Count", "value": "7,200 /µL", "normal_range": "4,500 - 11,000 /µL", "status": "normal"},
-                        {"label": "Platelet Count", "value": "240,000 /µL", "normal_range": "150,000 - 450,000 /µL", "status": "normal"},
+                        {"label": "WBC Count", "value": "7,200 /ÂµL", "normal_range": "4,500 - 11,000 /ÂµL", "status": "normal"},
+                        {"label": "Platelet Count", "value": "240,000 /ÂµL", "normal_range": "150,000 - 450,000 /ÂµL", "status": "normal"},
                         {"label": "ESR", "value": "12 mm/hr", "normal_range": "0 - 15 mm/hr", "status": "normal"},
                     ],
                     "plain_language": "Blood counts, oxygen capacity, and immune cells are in a completely healthy normal range.",
@@ -578,7 +578,7 @@ class DoctorService:
                     "file_type": "Clinical Discharge PDF",
                     "summary": "Planned observational admission for coronary evaluation. Uneventful 48h stay. Discharged hemodynamically stable.",
                     "findings": [
-                        {"label": "Admission Diagnosis", "value": "Unstable Angina — Rule out NSTEMI (Troponin I Negative x 2)"},
+                        {"label": "Admission Diagnosis", "value": "Unstable Angina â€” Rule out NSTEMI (Troponin I Negative x 2)"},
                         {"label": "Coronary Angiography", "value": "Prior LAD stent widely patent with TIMI-3 distal flow"},
                         {"label": "Discharge Medication", "value": "Warfarin 5mg, Metformin 500mg, Atorvastatin 40mg, Pantoprazole 40mg"},
                     ],
@@ -608,7 +608,7 @@ class DoctorService:
             ]
         }
 
-        # ── Scans & OCR Data ──────────────────────────────────────────────
+        # â”€â”€ Scans & OCR Data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         self.scans = {
             "patient-ramesh": {
                 "prescription_scan": {
@@ -634,7 +634,7 @@ class DoctorService:
             }
         }
 
-        # ── Diagnostic Orders ─────────────────────────────────────────────
+        # â”€â”€ Diagnostic Orders â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         self.diagnostic_orders = {
             "patient-ramesh": [
                 {
@@ -676,13 +676,234 @@ class DoctorService:
             ]
         }
 
-        # ── Verification log (append-only) ────────────────────────────────
+        # â”€â”€ Verification log (append-only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         self.verification_logs = []
 
-        # ── Follow-up appointments ────────────────────────────────────────
+        # â”€â”€ Follow-up appointments â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         self.follow_ups = []
 
-        # ── Draft prescriptions ───────────────────────────────────────────
+        # â”€â”€ Draft prescriptions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+        # ?? Patient Documents (Multi-Document Store, Spec 12) ????????????????
+        self.patient_documents = [
+            # --- Ramesh Kumar (patient-ramesh) ---
+            {
+                "id": "doc-001", "patient_id": "patient-ramesh",
+                "category": "lab_report", "source": "clinic_verified",
+                "title": "CBC — Complete Blood Count",
+                "file_url": None, "file_type": "pdf",
+                "uploaded_by_role": "lab", "document_date": _days_ago(180),
+                "uploaded_at": _days_ago(180), "is_current_version": True,
+            },
+            {
+                "id": "doc-002", "patient_id": "patient-ramesh",
+                "category": "lab_report", "source": "clinic_verified",
+                "title": "HbA1c — Feb 2025",
+                "file_url": None, "file_type": "pdf",
+                "uploaded_by_role": "lab", "document_date": _days_ago(540),
+                "uploaded_at": _days_ago(540), "is_current_version": True,
+            },
+            {
+                "id": "doc-003", "patient_id": "patient-ramesh",
+                "category": "lab_report", "source": "clinic_verified",
+                "title": "HbA1c — May 2025",
+                "file_url": None, "file_type": "pdf",
+                "uploaded_by_role": "lab", "document_date": _days_ago(450),
+                "uploaded_at": _days_ago(450), "is_current_version": True,
+            },
+            {
+                "id": "doc-004", "patient_id": "patient-ramesh",
+                "category": "lab_report", "source": "clinic_verified",
+                "title": "HbA1c — Aug 2025",
+                "file_url": None, "file_type": "pdf",
+                "uploaded_by_role": "lab", "document_date": _days_ago(365),
+                "uploaded_at": _days_ago(365), "is_current_version": True,
+            },
+            {
+                "id": "doc-005", "patient_id": "patient-ramesh",
+                "category": "lab_report", "source": "clinic_verified",
+                "title": "HbA1c — Feb 2026",
+                "file_url": None, "file_type": "pdf",
+                "uploaded_by_role": "lab", "document_date": _days_ago(180),
+                "uploaded_at": _days_ago(180), "is_current_version": True,
+            },
+            {
+                "id": "doc-006", "patient_id": "patient-ramesh",
+                "category": "lab_report", "source": "clinic_verified",
+                "title": "CBC — Aug 2026",
+                "file_url": None, "file_type": "pdf",
+                "uploaded_by_role": "lab", "document_date": _days_ago(9),
+                "uploaded_at": _days_ago(9), "is_current_version": True,
+            },
+            {
+                "id": "doc-007", "patient_id": "patient-ramesh",
+                "category": "xray_scan", "source": "clinic_verified",
+                "title": "Chest X-Ray — Dr. Rai",
+                "file_url": None, "file_type": "jpg",
+                "uploaded_by_role": "doctor", "document_date": _days_ago(60),
+                "uploaded_at": _days_ago(60), "is_current_version": True,
+            },
+            {
+                "id": "doc-008", "patient_id": "patient-ramesh",
+                "category": "xray_scan", "source": "clinic_verified",
+                "title": "Lumbar MRI — Jul 2026",
+                "file_url": None, "file_type": "dicom",
+                "uploaded_by_role": "doctor", "document_date": _days_ago(50),
+                "uploaded_at": _days_ago(50), "is_current_version": True,
+            },
+            {
+                "id": "doc-009", "patient_id": "patient-ramesh",
+                "category": "discharge_summary", "source": "patient_uploaded",
+                "title": "Discharge Summary (City Hospital)",
+                "file_url": None, "file_type": "pdf",
+                "uploaded_by_role": "patient", "document_date": _days_ago(200),
+                "uploaded_at": _days_ago(30), "is_current_version": True,
+            },
+            {
+                "id": "doc-010", "patient_id": "patient-ramesh",
+                "category": "prescription", "source": "clinic_verified",
+                "title": "Rx — Metformin 500mg — Dr. Sharma",
+                "file_url": None, "file_type": "pdf",
+                "uploaded_by_role": "doctor", "document_date": _days_ago(90),
+                "uploaded_at": _days_ago(90), "is_current_version": True,
+            },
+            {
+                "id": "doc-011", "patient_id": "patient-ramesh",
+                "category": "prescription", "source": "clinic_verified",
+                "title": "Rx — Warfarin 5mg — Dr. Rai",
+                "file_url": None, "file_type": "pdf",
+                "uploaded_by_role": "doctor", "document_date": _days_ago(150),
+                "uploaded_at": _days_ago(150), "is_current_version": True,
+            },
+            {
+                "id": "doc-012", "patient_id": "patient-ramesh",
+                "category": "prescription", "source": "clinic_verified",
+                "title": "Rx — Gabapin NT 100mg — Dr. Rai",
+                "file_url": None, "file_type": "pdf",
+                "uploaded_by_role": "doctor", "document_date": _days_ago(5),
+                "uploaded_at": _days_ago(5), "is_current_version": True,
+            },
+            {
+                "id": "doc-013", "patient_id": "patient-ramesh",
+                "category": "vaccination", "source": "clinic_verified",
+                "title": "Influenza Vaccine — 2025",
+                "file_url": None, "file_type": "pdf",
+                "uploaded_by_role": "reception", "document_date": _days_ago(300),
+                "uploaded_at": _days_ago(300), "is_current_version": True,
+            },
+            {
+                "id": "doc-014", "patient_id": "patient-ramesh",
+                "category": "other", "source": "patient_uploaded",
+                "title": "Insurance Pre-Auth Letter",
+                "file_url": None, "file_type": "pdf",
+                "uploaded_by_role": "patient", "document_date": _days_ago(20),
+                "uploaded_at": _days_ago(15), "is_current_version": True,
+            },
+            # --- Vikram Singh (patient-vikram) ---
+            {
+                "id": "doc-101", "patient_id": "patient-vikram",
+                "category": "lab_report", "source": "clinic_verified",
+                "title": "Serum Troponin I & CK-MB",
+                "file_url": None, "file_type": "pdf",
+                "uploaded_by_role": "lab", "document_date": _days_ago(1),
+                "uploaded_at": _days_ago(1), "is_current_version": True,
+            },
+            {
+                "id": "doc-102", "patient_id": "patient-vikram",
+                "category": "xray_scan", "source": "clinic_verified",
+                "title": "Chest X-Ray — Cardiac Eval",
+                "file_url": None, "file_type": "jpg",
+                "uploaded_by_role": "doctor", "document_date": _days_ago(2),
+                "uploaded_at": _days_ago(2), "is_current_version": True,
+            },
+            {
+                "id": "doc-103", "patient_id": "patient-vikram",
+                "category": "prescription", "source": "clinic_verified",
+                "title": "Rx — Aspirin 150mg — Dr. Sharma",
+                "file_url": None, "file_type": "pdf",
+                "uploaded_by_role": "doctor", "document_date": _days_ago(3),
+                "uploaded_at": _days_ago(3), "is_current_version": True,
+            },
+            # --- Sita Devi (patient-sita) ---
+            {
+                "id": "doc-201", "patient_id": "patient-sita",
+                "category": "lab_report", "source": "clinic_verified",
+                "title": "CBC with ESR",
+                "file_url": None, "file_type": "pdf",
+                "uploaded_by_role": "lab", "document_date": _days_ago(4),
+                "uploaded_at": _days_ago(4), "is_current_version": True,
+            },
+            {
+                "id": "doc-202", "patient_id": "patient-sita",
+                "category": "discharge_summary", "source": "patient_uploaded",
+                "title": "Previous Hospital Discharge — Dengue 2024",
+                "file_url": None, "file_type": "pdf",
+                "uploaded_by_role": "patient", "document_date": _days_ago(400),
+                "uploaded_at": _days_ago(10), "is_current_version": True,
+            },
+        ]
+
+        # ?? Cross-Doctor Prescription Timeline ???????????????????????????????
+        self.prescriptions_timeline = {
+            "patient-ramesh": [
+                {"id": "rx-timeline-1", "doctor_name": "Dr. Rai", "doctor_specialty": "General Medicine", "medicine_name": "Gabapin NT 100mg", "dosage": "1-0-1", "status": "verified", "verified_at": _days_ago(5)},
+                {"id": "rx-timeline-2", "doctor_name": "Dr. Sharma", "doctor_specialty": "Endocrinology", "medicine_name": "Noveron 500mg", "dosage": "1-0-1", "status": "verified", "verified_at": _days_ago(10)},
+                {"id": "rx-timeline-3", "doctor_name": "Dr. Patel", "doctor_specialty": "Endocrinology", "medicine_name": "Insulin Detemir 10U", "dosage": "0-0-1", "status": "verified", "verified_at": _days_ago(60)},
+                {"id": "rx-timeline-4", "doctor_name": "Dr. Rai", "doctor_specialty": "General Medicine", "medicine_name": "Warfarin 5mg", "dosage": "0-0-1", "status": "verified", "verified_at": _days_ago(150)},
+                {"id": "rx-timeline-5", "doctor_name": "Dr. Sharma", "doctor_specialty": "Endocrinology", "medicine_name": "Metformin 500mg", "dosage": "1-0-1", "status": "verified", "verified_at": _days_ago(200)},
+            ],
+            "patient-vikram": [
+                {"id": "rx-timeline-v1", "doctor_name": "Dr. Sharma", "doctor_specialty": "Cardiology", "medicine_name": "Aspirin 150mg", "dosage": "1-0-0", "status": "verified", "verified_at": _days_ago(3)},
+                {"id": "rx-timeline-v2", "doctor_name": "Dr. Rai", "doctor_specialty": "General Medicine", "medicine_name": "Atenolol 50mg", "dosage": "1-0-0", "status": "verified", "verified_at": _days_ago(30)},
+            ],
+            "patient-sita": [
+                {"id": "rx-timeline-s1", "doctor_name": "Dr. Sharma", "doctor_specialty": "Internal Medicine", "medicine_name": "Amoxicillin 500mg", "dosage": "1-1-1", "status": "verified", "verified_at": _days_ago(4)},
+            ],
+        }
+
+        # ?? Lab Trends (chartable series) ????????????????????????????????????
+        self.lab_trends = {
+            "patient-ramesh": [
+                {
+                    "test_name": "HbA1c",
+                    "unit": "%",
+                    "reference_range": "4.0 - 5.6",
+                    "points": [
+                        {"date": _days_ago(540), "value": 7.8},
+                        {"date": _days_ago(450), "value": 7.2},
+                        {"date": _days_ago(365), "value": 6.9},
+                        {"date": _days_ago(180), "value": 6.5},
+                    ],
+                },
+                {
+                    "test_name": "Fasting Glucose",
+                    "unit": "mg/dL",
+                    "reference_range": "70 - 100",
+                    "points": [
+                        {"date": _days_ago(540), "value": 168},
+                        {"date": _days_ago(450), "value": 155},
+                        {"date": _days_ago(365), "value": 148},
+                        {"date": _days_ago(180), "value": 142},
+                    ],
+                },
+            ],
+            "patient-vikram": [
+                {
+                    "test_name": "Troponin I",
+                    "unit": "ng/mL",
+                    "reference_range": "< 0.04",
+                    "points": [
+                        {"date": _days_ago(90), "value": 0.02},
+                        {"date": _days_ago(30), "value": 0.05},
+                        {"date": _days_ago(1), "value": 0.08},
+                    ],
+                },
+            ],
+        }
+
+        # ?? Document Access Log (audit trail) ?????????????????????????????????
+        self.document_access_log = []
+
         self.draft_prescriptions = {}
 
     # =====================================================================
@@ -853,7 +1074,7 @@ class DoctorService:
         return {"error": f"Refill {refill_id} not found"}
 
     # =====================================================================
-    # PATIENT CONTEXT — Symptoms, Caregivers, Allergies, Visit Prep
+    # PATIENT CONTEXT â€” Symptoms, Caregivers, Allergies, Visit Prep
     # =====================================================================
 
     def get_symptoms(self, patient_id: str, days: int = 30) -> dict:
@@ -879,7 +1100,7 @@ class DoctorService:
 
     def get_caregiver_audit(self, patient_id: str) -> dict:
         """Get caregiver dose-marking audit for a patient."""
-        # ── Scans & X-Ray Analysis (Side-by-Side OCR & X-ray Canvas) ──────
+        # â”€â”€ Scans & X-Ray Analysis (Side-by-Side OCR & X-ray Canvas) â”€â”€â”€â”€â”€â”€
         self.scans = {
             "patient-ramesh": {
                 "prescription_scan": {
@@ -998,7 +1219,7 @@ class DoctorService:
             },
         }
 
-        # ── Diagnostic Orders (Lab Tests) ──────────────────────────────────
+        # â”€â”€ Diagnostic Orders (Lab Tests) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         self.diagnostic_orders = {
             "patient-ramesh": [
                 {
@@ -1044,7 +1265,7 @@ class DoctorService:
             ],
         }
 
-        # ── Follow-ups & Verification Logs ─────────────────────────────────
+        # â”€â”€ Follow-ups & Verification Logs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         self.follow_ups = []
         self.verification_logs = []
 
@@ -1129,7 +1350,7 @@ class DoctorService:
             "soap_note": {
                 "S": "58M presenting for diabetes follow-up. C/O occasional dizziness, especially after evening Noveron dose. Blood sugars stable 140-160mg/dL fasting. No chest pain, no SOB, no polyuria.",
                 "O": "BP 130/85 mmHg, HR 78 bpm regular, RR 16, SpO2 98% RA. General appearance: well-nourished, no acute distress. CVS: S1S2 normal, no murmur. Lungs: clear bilateral. Abdomen: soft, non-tender.",
-                "A": "1. Type 2 Diabetes Mellitus — controlled on current regimen\n2. Dizziness — possibly medication-related (Noveron evening dose)\n3. Cardiovascular risk — on anticoagulation via cardiology",
+                "A": "1. Type 2 Diabetes Mellitus â€” controlled on current regimen\n2. Dizziness â€” possibly medication-related (Noveron evening dose)\n3. Cardiovascular risk â€” on anticoagulation via cardiology",
                 "P": "1. Continue Metformin 500mg 2-0-2\n2. Consider reducing Noveron to 500mg 1-0-0 (morning only) if dizziness persists beyond 1 week\n3. Order HbA1c, fasting lipid panel, serum creatinine\n4. Follow-up in 2 weeks\n5. Patient counseled on medication adherence importance",
             },
         }
@@ -1179,6 +1400,143 @@ class DoctorService:
                     alert["acknowledged_by"] = doctor_id
                     return {"status": "acknowledged", "alert_id": alert_id}
         return {"error": f"Alert {alert_id} not found"}
+
+
+
+    # =====================================================================
+    # FULL PATIENT RECORD (Spec 12 — Multi-Document Access)
+    # =====================================================================
+
+    def get_full_record(
+        self,
+        patient_id: str,
+        from_date: str | None = None,
+        to_date: str | None = None,
+        category: str = "all",
+        doctor_filter: str = "all",
+    ) -> dict:
+        """
+        Returns a patient's COMPLETE medical record — every prescription from
+        every doctor, every lab result, every scan, every symptom log, every
+        allergy — in one call. Per Spec 12 section B.3.
+        """
+        patient = self.patients.get(patient_id)
+        if not patient:
+            return {"error": f"Patient {patient_id} not found"}
+
+        # Cross-doctor prescription timeline
+        timeline = self.prescriptions_timeline.get(patient_id, [])
+        if doctor_filter != "all":
+            timeline = [rx for rx in timeline if rx["doctor_name"] == doctor_filter]
+
+        # Documents grouped by category
+        docs = [d for d in self.patient_documents if d["patient_id"] == patient_id]
+        if category != "all":
+            docs = [d for d in docs if d["category"] == category]
+        if from_date:
+            docs = [d for d in docs if d["document_date"] >= from_date]
+        if to_date:
+            docs = [d for d in docs if d["document_date"] <= to_date]
+
+        documents_grouped = {}
+        for d in docs:
+            cat = d["category"]
+            if cat not in documents_grouped:
+                documents_grouped[cat] = []
+            documents_grouped[cat].append(d)
+
+        # Lab trends
+        trends = self.lab_trends.get(patient_id, [])
+
+        # Audit log: record this access
+        self.document_access_log.append({
+            "id": str(uuid.uuid4()),
+            "patient_id": patient_id,
+            "accessed_by_role": "doctor",
+            "accessed_at": _now_iso(),
+            "documents_returned": len(docs),
+        })
+
+        # Assemble existing data
+        allergy_list = self.allergies.get(patient_id, [])
+        symptoms = self.symptom_logs.get(patient_id, [])
+        caregiver = self.caregiver_audit.get(patient_id, {})
+        alerts = self.smart_alerts.get(patient_id, [])
+        refills = [r for r in self.refill_requests if r["patient_id"] == patient_id]
+
+        return {
+            "patient": patient,
+            "prescriptions_timeline": timeline,
+            "documents": documents_grouped,
+            "lab_trends": trends,
+            "allergy_profile": allergy_list,
+            "symptom_summary": {
+                "logs": symptoms[-7:] if symptoms else [],
+                "trend": "stable",
+            },
+            "caregiver_audit": caregiver,
+            "adherence_score": self._compute_adherence(patient_id),
+            "refill_history": refills,
+            "smart_alerts": alerts,
+        }
+
+    def _compute_adherence(self, patient_id: str) -> int:
+        """Compute adherence score (demo: lookup from known values)."""
+        scores = {
+            "patient-ramesh": 78,
+            "patient-vikram": 85,
+            "patient-sita": 92,
+            "patient-anil": 65,
+            "patient-priya": 88,
+        }
+        return scores.get(patient_id, 75)
+
+    def get_patient_documents(
+        self, patient_id: str, category: str | None = None
+    ) -> list[dict]:
+        """Get all documents for a patient, optionally filtered by category."""
+        docs = [d for d in self.patient_documents if d["patient_id"] == patient_id]
+        if category:
+            docs = [d for d in docs if d["category"] == category]
+        return sorted(docs, key=lambda d: d["document_date"], reverse=True)
+
+    def upload_patient_document(
+        self,
+        patient_id: str,
+        title: str,
+        category: str,
+        document_date: str,
+        file_type: str = "pdf",
+        file_url: str | None = None,
+    ) -> dict:
+        """Patient self-uploads a document. Always marked source=patient_uploaded."""
+        doc = {
+            "id": f"doc-{uuid.uuid4().hex[:8]}",
+            "patient_id": patient_id,
+            "category": category,
+            "source": "patient_uploaded",
+            "title": title,
+            "file_url": file_url,
+            "file_type": file_type,
+            "uploaded_by_role": "patient",
+            "document_date": document_date,
+            "uploaded_at": _now_iso(),
+            "is_current_version": True,
+        }
+        self.patient_documents.append(doc)
+        return {"status": "uploaded", "document": doc}
+
+    def verify_patient_document(self, document_id: str, doctor_id: str) -> dict:
+        """Doctor marks a patient-uploaded document as clinic_verified."""
+        for doc in self.patient_documents:
+            if doc["id"] == document_id:
+                if doc["source"] != "patient_uploaded":
+                    return {"error": "Document is already clinic-verified"}
+                doc["source"] = "clinic_verified"
+                doc["verified_by"] = doctor_id
+                doc["verified_at"] = _now_iso()
+                return {"status": "verified", "document": doc}
+        return {"error": f"Document {document_id} not found"}
 
 
 # Singleton

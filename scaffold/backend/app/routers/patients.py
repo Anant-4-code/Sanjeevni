@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+﻿from fastapi import APIRouter
 from pydantic import BaseModel
 
 from app.core.supabase_client import get_supabase
@@ -75,3 +75,42 @@ async def search_patients(q: str):
         .execute()
     )
     return {"results": res.data}
+
+
+# =============================================================================
+# PATIENT DOCUMENT UPLOAD (Spec 12 — Patient Self-Upload)
+# =============================================================================
+
+from app.services.doctor_service import doctor_service
+
+
+class DocumentUploadRequest(BaseModel):
+    patient_id: str
+    title: str
+    category: str  # 'lab_report' | 'discharge_summary' | 'vaccination' | 'other' etc.
+    document_date: str  # ISO date string
+    file_type: str = "pdf"
+    file_url: str | None = None
+
+
+@router.post("/documents/upload")
+async def upload_patient_document(payload: DocumentUploadRequest):
+    """
+    Patient self-uploads a document to their vault.
+    Always tagged source='patient_uploaded' and flagged as not clinically verified.
+    """
+    result = doctor_service.upload_patient_document(
+        patient_id=payload.patient_id,
+        title=payload.title,
+        category=payload.category,
+        document_date=payload.document_date,
+        file_type=payload.file_type,
+        file_url=payload.file_url,
+    )
+    return result
+
+
+@router.get("/{patient_id}/documents")
+async def get_patient_documents(patient_id: str, category: str | None = None):
+    """Get all documents for a patient (patient-facing)."""
+    return doctor_service.get_patient_documents(patient_id, category)

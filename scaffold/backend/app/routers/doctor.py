@@ -1,5 +1,5 @@
-"""
-Sanjeevani — Doctor Router (Complete)
+﻿"""
+Sanjeevani â€” Doctor Router (Complete)
 ======================================
 16 REST endpoints for the Doctor Portal.
 All business logic delegated to DoctorService + GuardrailService.
@@ -194,7 +194,7 @@ async def deny_refill(refill_id: str, payload: RefillDenyRequest):
 async def dictation_upload(prescription_id: str = "rx-ramesh-1"):
     """
     Ambient voice documentation stub.
-    In production: receives audio file → Whisper transcription → LLM SOAP note.
+    In production: receives audio file â†’ Whisper transcription â†’ LLM SOAP note.
     Currently returns mock SOAP for demo.
     """
     return doctor_service.process_dictation(prescription_id)
@@ -267,8 +267,61 @@ async def acknowledge_alert(alert_id: str, payload: AcknowledgeRequest):
     return result
 
 
+
+
 # =============================================================================
-# X-RAY ANALYSIS (Existing — Preserved)
+# FULL PATIENT RECORD (Spec 12 — Multi-Document Access)
+# =============================================================================
+
+@router.get("/patient/{patient_id}/full-record")
+async def get_full_record(
+    patient_id: str,
+    from_date: str | None = Query(None, alias="from"),
+    to_date: str | None = Query(None, alias="to"),
+    category: str = "all",
+    doctor_id: str = "all",
+):
+    """
+    Full Patient Record endpoint — returns the patient's ENTIRE medical history
+    across ALL doctors in one call. Per Spec 12 section B.3.
+
+    Query params:
+      - from/to: date range filter (ISO dates)
+      - category: filter by document category (or 'all')
+      - doctor_id: filter prescriptions by doctor (or 'all')
+    """
+    result = doctor_service.get_full_record(
+        patient_id=patient_id,
+        from_date=from_date,
+        to_date=to_date,
+        category=category,
+        doctor_filter=doctor_id,
+    )
+    if "error" in result:
+        raise HTTPException(status_code=404, detail=result["error"])
+    return result
+
+
+@router.get("/patient/{patient_id}/documents")
+async def get_patient_documents(patient_id: str, category: str | None = None):
+    """Get all documents for a patient, optionally filtered by category."""
+    return doctor_service.get_patient_documents(patient_id, category)
+
+
+class VerifyDocumentRequest(BaseModel):
+    doctor_id: str = "demo-doctor"
+
+
+@router.patch("/documents/{document_id}/verify")
+async def verify_document(document_id: str, payload: VerifyDocumentRequest):
+    """Doctor marks a patient-uploaded document as clinic-verified."""
+    result = doctor_service.verify_patient_document(document_id, payload.doctor_id)
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+# =============================================================================
+# X-RAY ANALYSIS (Existing â€” Preserved)
 # =============================================================================
 
 @router.get("/patients/{patient_id}/xray/{scan_id}")
