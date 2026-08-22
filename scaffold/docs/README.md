@@ -1,123 +1,189 @@
-# Sanjeevani — AI Prescription & Medical Document Intelligence Platform
+﻿# Sanjeevani — Complete Documentation & Ecosystem Guide
 
-> **Project Progress & Development Summary**
-
----
-
-## 🌟 Executive Summary
-
-**Sanjeevani** is an AI-powered healthcare intelligence platform designed to transform physical paper prescriptions, diagnostic lab reports, X-Rays, MRI scans, and hospital discharge summaries into clear, structured, digital medical records. 
-
-Through a multi-stage hybrid extraction engine (**Tesseract LSTM OCR + Google Gemma 4 31B / NVIDIA Llama-3.1 70B Vision & Text AI**), Sanjeevani parses doctor handwriting, normalizes complex drug regimens (dosages, frequencies, durations, and clinical condition tags), extracts lab biomarker parameters, and seamlessly archives records into a categorized **Patient Vault** and **Daily Care Timeline**.
+> **Sanjeevani: AI Prescription & Multi-Document Clinical Intelligence Platform**  
+> *Transforming physical medical documents, handwritten prescriptions, radiology films, and pathology reports into structured, verified, and life-saving digital healthcare records.*
 
 ---
 
-## 🚀 Key Features Implemented & Progress Made
+## 📋 Table of Contents
 
-### 1. Hybrid OCR & Gemma AI Clinical Extraction Engine
-* **Tesseract LSTM + Image Preprocessing:** Local OpenCV/PIL grayscale and contrast enhancement pipeline (`run_ocr_on_bytes`) that processes physical prescription images and report scans.
-* **Google Gemma 4 31B & NVIDIA 70B Normalization:** Raw OCR text is passed to LLM clinical prompts to convert unstructured text into standardized JSON schemas containing:
-  * Clinic / Hospital Title (e.g. `MANIKANTA NEURO CENTRE`, `Yogana Hospital`, `RKP Multispeciality`).
-  * Prescribing Doctor / Staff Physician (`Dr. G. Mithun`, `Attending Physician`).
-  * Full Medications Array (complete extraction of all 5 prescribed drugs with dose, schedule, and duration).
-  * Clinical Notes & Patient Details (`LBA with radicular pain`, `Tingling & Numbness`, `Bed rest advice`).
-* **Handwritten Doctor Rules Parser (`parse_prescription_text_rules`):**
-  * Robust regex matching for drug names (`Tab. Edushine MX 6`, `Tab. M-ped 16mg`, `Tab. Gabapin NT 100mg`, `Tab. Benforce CD`, `Tab. Rebote`).
-  * Intelligent separation of symptom/diagnosis lines from drug lists.
-  * Auto-generation of safety warnings, side effects, and precautions for digital prescription creation.
+1. [Executive Overview](#1-executive-overview)
+2. [Ecosystem Architecture & Portals](#2-ecosystem-architecture--portals)
+3. [Core AI/ML Pipelines & Models](#3-core-aiml-pipelines--models)
+4. [The 8 Patient Adherence Ecosystem Features](#4-the-8-patient-adherence-ecosystem-features)
+5. [Multi-Document Store & Doctor Full Record Access (Spec 12)](#5-multi-document-store--doctor-full-record-access-spec-12)
+6. [Documentation Index & Specifications Sitemap](#6-documentation-index--specifications-sitemap)
+7. [Getting Started & Local Development](#7-getting-started--local-development)
+8. [Database Schema & Migrations](#8-database-schema--migrations)
 
 ---
 
-### 2. Universal Document & Report Intelligence Hub (`/scan-otc`)
-* **Category-Wise Document Selection:**
-  * 🧪 **Lab & Pathology Reports** (CBC, Lipid Panel, Metabolic Profiles, Blood Sugar)
-  * 🦴 **Imaging & Scans** (X-Rays, MRI, CT Scans, Ultrasounds, Sonography)
-  * 💊 **Prescriptions & Rx Sheets** (Doctor Prescriptions, OTC Medication Sheets)
-  * 🏥 **Hospital Discharge Summaries** (Inpatient Records, Consultation Notes)
-  * 💉 **Vaccinations & Immunity** (Immunization Certificates, Vaccine Charts)
-* **Dual Intake Options:**
-  * **Option A:** Upload Physical File, Scan Image, or PDF Report (Drag-and-Drop / Native File Picker).
-  * **Option B:** Live Camera Scanner (Viewfinder with flash/toggle and snapshot capture).
-* **Structured AI Clinical Summary & Parameter Cards:**
-  * Executive plain-language clinical summary.
-  * **Biomarker Parameters Table** (Parameter Name, Value, Reference Range, Status Badge: `Low`, `Normal`, `High`).
-  * **Radiology Observations Table** (Anatomical Region, Findings details).
-  * Physician Recommendations & Next Steps.
+## 1. Executive Overview
+
+**Sanjeevani** is an enterprise-grade multi-role healthcare platform that eliminates medical transcription errors, prevents dangerous adverse drug-drug interactions, and empowers patients and caregivers with actionable, plain-language health records.
+
+### Key Pillars:
+- **Zero-Error Prescription Digitization:** Multi-engine OCR (Tesseract LSTM + Google Gemma 4 31B / NVIDIA Llama 3.1 70B Vision-Text AI) converts complex doctor handwriting into validated medication entities.
+- **Active Clinical Safety Guardrails:** Instant server-side cross-checks for drug contraindications, duplicate active prescriptions, and patient allergies before sign-off.
+- **Immutable Protocol Ledger:** Cryptographic `SHA-256` hashing and append-only verification logs ensure non-repudiation.
+- **Universal Health Passport (QR):** Time-limited, patient-authorized QR codes granting any physician read-only access to consolidated medical histories.
+- **Multi-Document Universal Vault:** Unlimited longitudinal archiving of lab reports, MRI/CT scans, discharge summaries, and vaccine charts with trend charts across repeated visits.
 
 ---
 
-### 3. Patient Vault & Category Archive (`/vault`, `/vault/[category]`)
-* **Categorized Storage:** Documents saved from the Intelligence Hub automatically land in designated vault categories (`lab-reports`, `x-rays`, `prescriptions`, `other`).
-* **Interactive Digital Prescription Detail View:**
-  * Interactive expandable cards for each medicine showing primary purpose, common side effects, and food timing precautions.
-  * Multi-language support (Hindi, Telugu, Tamil, Kannada, Marathi, Spanish) with safety preservation of exact drug names and numeric dosages.
-  * Verification status toggling and doctor sign-off simulation.
-* **Seeded Initial Clinical Records:** Pre-seeded with CBC pathology lab reports and Lumbar Spine MRI radiology scans so the vault is instantly populated upon initialization.
+## 2. Ecosystem Architecture & Portals
+
+Sanjeevani operates as a monorepo containing 5 distinct frontends, a shared UI token package, and a centralized Python FastAPI backend powered by Supabase PostgreSQL.
+
+```
+                                  ┌────────────────────────────────────────────────────────┐
+                                  │                  SANJEEVANI MONOREPO                   │
+                                  └───────────────────────────┬────────────────────────────┘
+                                                              │
+         ┌───────────────────┬────────────────────┬───────────┴───────────┬────────────────────┬───────────────────┐
+         ▼                   ▼                    ▼                       ▼                    ▼                   ▼
+┌─────────────────┐ ┌─────────────────┐ ┌───────────────────┐ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
+│ RECEPTION DESK  │ │ PHYSICIAN WORK  │ │   PATIENT PWA     │ │  PHARMACY DESK  │ │    LAB WORK     │ │  SHARED UI KIT  │
+│   (Vite + TS)   │ │   (Vite + TS)   │ │   (Next.js 14)    │ │   (Vite + TS)   │ │   (Vite + TS)   │ │ (@sanjeevani/ui)│
+│  Port: 5173     │ │  Port: 5174     │ │   Port: 3000      │ │  Port: 5175     │ │  Port: 5176     │ │ Tokens & Badges │
+└────────┬────────┘ └────────┬────────┘ └─────────┬─────────┘ └────────┬────────┘ └────────┬────────┘ └─────────────────┘
+         │                   │                    │                    │                   │
+         └───────────────────┴───────────┬────────┴────────────────────┴───────────────────┘
+                                         │  REST APIs & Real-time WebSockets
+                                         ▼
+                        ┌─────────────────────────────────┐
+                        │      FASTAPI CORE BACKEND       │
+                        │    (Python 3.10+ / Port 8000)   │
+                        │  • Guardrail Engine             │
+                        │  • OCR / AI Normalization       │
+                        │  • YOLOv7 Fracture Model        │
+                        │  • Full Patient Record Engine   │
+                        └────────────────┬────────────────┘
+                                         │
+                                         ▼
+                        ┌─────────────────────────────────┐
+                        │     SUPABASE POSTGRESQL 15      │
+                        │  • Row Level Security (RLS)     │
+                        │  • Realtime Triggers & Auth     │
+                        │  • Storage Bucket for Scans     │
+                        └─────────────────────────────────┘
+```
+
+### The 5 Portals at a Glance:
+
+| Portal | Tech Stack | Default Port | Primary Target Users | Key Capabilities |
+|---|---|---|---|---|
+| **Reception** | Vite + React + TS | `5173` | Receptionists, Triage Staff | Patient registration, NLP triage scoring, Scan ingestion, Live queue tokens |
+| **Doctor** | Vite + React + TS | `5174` | Physicians, Specialists | Acuity queue, OCR split-verification, Guardrail engine, X-Ray canvas, Full Record |
+| **Patient** | Next.js 14 (App Router) | `3000` | Patients, Family Caregivers | Dosing checklist, Universal QR Passport, 8 Adherence tools, Vault, Guarded Copilot |
+| **Pharmacy** | Vite + React + TS | `5175` | Pharmacists, Dispensers | Live verified prescription feed, Safety lock badges, Dispense log, Inventory |
+| **Laboratory** | Vite + React + TS | `5176` | Lab Technicians, Pathologists| Test requisition kanban, Biomarker input, Dual clinical/patient report translation |
 
 ---
 
-### 4. Robustness, Frontend Error Boundaries & Hydration Fixes
-* **Next.js App Router Error Boundaries (`error.tsx`):**
-  * Created `error.tsx` and `global-error.tsx` across route segments (`src/app/`, `src/app/vault/`, `src/app/vault/[category]/`, `src/app/vault/prescription/[id]/`) to prevent `missing required error components, refreshing...` Next.js loops.
-* **React Hydration Mismatch Fixes:**
-  * Added `isMounted` SSR guards to `<video>` elements in `scan-otc/page.tsx` so camera viewfinders render cleanly without hydration errors.
-* **Defensive Rendering Guards:**
-  * Added fallback array checks (`Array.isArray(doc.sideEffects)`) and string-or-object type guards (`typeof b === "string" ? b : b.parameter`) for all biomarker tables and medicine lists to ensure the UI never crashes or turns blank.
-* **Fallback Record Loading:**
-  * Added fallback prescription objects so direct link access to dynamic digital prescriptions (`/vault/prescription/rx-digitized-...`) always loads gracefully.
+## 3. Core AI/ML Pipelines & Models
+
+| Capability | Model / Engine | Purpose & Implementation |
+|---|---|---|
+| **Prescription Handwriting OCR** | Tesseract LSTM (PSM 6, OEM 1) + Preprocessing | Grayscale adaptive thresholding binarizes physical prescription slips before character extraction. |
+| **Clinical Entity Normalization** | Google Gemma 4 31B / NVIDIA Llama 3.1 70B | Converts raw noisy text into validated JSON schemas (drug name, dosage, frequency, duration, condition tags). |
+| **Radiology Fracture Detection** | YOLOv7-p6 Bone Fracture (ONNX) | Real-time edge inference returning bounding boxes, confidence scores, and abnormality tags over X-Rays. |
+| **Ambient Clinical Dictation** | OpenAI Whisper + Prompted LLM | Transcribes physician consultations and formats structured SOAP (Subjective, Objective, Assessment, Plan) notes. |
+| **Acuity Triage Classification** | NLP Keyword & Semantic Classifier | Evaluates incoming complaints and automatically prioritizes urgent/critical patients to the front of the doctor's queue. |
+| **Guarded AI Copilot** | BAAI bge-m3 + ChromaDB + Strict Prompting | Context-constrained patient Q&A strictly grounded in verified prescriptions with a hard no-diagnosis policy. |
 
 ---
 
-### 5. Simplified 1-Click Startup System
-* **1-Click Batch Launcher (`start.bat`):** Double-clicking `start.bat` in the root folder launches the Python FastAPI backend and Next.js Patient App, automatically opening `http://localhost:3000` in the browser.
-* **Root `package.json` Integration:** Running `npm run dev` or `npm start` directly from the project root or from `scaffold/frontend` now executes the entire platform smoothly.
+## 4. The 8 Patient Adherence Ecosystem Features
+
+Built into the Next.js Patient Portal (`/patient`), these 8 features address the primary causes of treatment drop-off:
+
+1. **Refill Intelligence:** Real-time pill counter, auto-calculated supply duration, low-stock warnings, and 1-tap refill requests.
+2. **Symptom Journal:** Daily wellness check-ins (feeling score 1–5, energy, sleep, mood) with automated doctor alerts on negative streaks.
+3. **Caregiver Access:** Secure delegation enabling family members or nurses to view routines and mark administered doses.
+4. **Smart Multichannel Reminders:** Automated medication schedules dispatched via in-app banners, WhatsApp, and SMS with snooze controls.
+5. **Allergy & Interaction Profile:** Patient-reported and physician-confirmed allergy directory tied directly to prescription safety checks.
+6. **Plain-Language Report Explanations:** Biomarker tables with status indicators (`Normal`, `High`, `Low`) and 2-sentence clinical summaries.
+7. **Cost Awareness & Generic Analyzer:** Itemized pricing breakdown highlighting potential savings from bioequivalent generic medications.
+8. **Clinical Visit Preparation:** Automated 1-page summary consolidating recent symptoms, missed doses, and patient questions for doctor visits.
 
 ---
 
-## 🛠️ Tech Stack Architecture
+## 5. Multi-Document Store & Doctor Full Record Access (Spec 12)
 
-| Layer | Technologies Used |
-|---|---|
-| **Frontend** | Next.js 14 (App Router), React 18, TailwindCSS, Lucide Icons, Glassmorphism Design System |
-| **Backend** | Python 3.10+, FastAPI, Uvicorn, Pydantic |
-| **OCR & AI Vision** | Pytesseract (LSTM Neural OEM 1 PSM 6), PIL / OpenCV Image Preprocessing, Pen-to-Print API |
-| **LLM Clinical Engines** | Google Gemma 4 31B (`google/gemma-4-31b-it:free`), NVIDIA NIM Llama-3.1 70B Instruct |
-| **Database & Services** | In-Memory Patient Service (`patient_service.py`) with Supabase schema compatibility |
+Spec 12 extends the platform beyond single-visit workflows into a **lifetime medical record archive**:
+
+- **Unified `patient_documents` Index:** A versioned, categorized table supporting unlimited lab reports, X-Rays, MRI/CT scans, discharge summaries, and vaccine certificates.
+- **Patient Self-Upload Rule:** Patients can upload outside medical documents to their Vault. These are automatically tagged `source: patient_uploaded` and display a clear warning badge (`⚠ Not clinically verified`) until reviewed and certified by a physician.
+- **Doctor Full Patient Record Endpoint (`GET /api/doctor/patient/{id}/full-record`):** Single call returning a patient's cross-doctor prescription timeline, all versioned documents, and longitudinal biomarker trends (e.g. HbA1c trajectory across multiple visits).
+- **Document Access Audit Trail (`document_access_log`):** Transparently records every physician document access for compliance and accountability.
 
 ---
 
-## ⚡ How to Run the Application
+## 6. Documentation Index & Specifications Sitemap
 
-### Option A: 1-Click Launcher (Recommended)
-Double-click **`start.bat`** in the project root directory.
+All project specifications and architecture documents are organized in `docs/` and `docs/files/`:
+
+```
+scaffold/docs/
+├── 01_PRD.md                                    # Master Product Requirement Document (v2.0)
+├── 02_ARCHITECTURE.md                           # System Architecture & Component Interactions
+├── 03_DATABASE_SCHEMA.md                        # Database Schema & Entity Relationships
+├── 04_API_SPEC.md                               # OpenAPI / REST Endpoint Specifications
+├── 05_DESIGN_SYSTEM.md                          # Design Tokens, Theming & Component Guidelines
+├── README.md                                    # This master documentation index
+└── files/
+    ├── README_COMPLETE_ECOSYSTEM.md             # Complete Ecosystem Architecture & Master Roadmap
+    ├── 06_PATIENT_ROLE_COMPLETE_SPEC.md         # Patient Portal Base Specification
+    ├── 07_DOCTOR_ROLE_COMPLETE_SPEC.md          # Doctor Portal Base Specification
+    ├── 09_PATIENT_ADHERENCE_ECOSYSTEM_8FEATURES.md # 8 Patient Adherence Features Deep-Dive
+    ├── 10_DOCTOR_ROLE_PRODUCTION_COMPLETE_SPEC.md # Doctor Portal v2 Production Specification
+    ├── 11_UNIFIED_AUTH_AND_8FEATURE_UI_COMPLETE.md# Unified Auth, RBAC & UI Screen Guidelines
+    └── 12_MULTI_DOCUMENT_DOCTOR_ACCESS_ADDENDUM.md# Multi-Document Store & Full Record Specification
+```
+
+---
+
+## 7. Getting Started & Local Development
+
+### Prerequisites:
+- **Node.js:** v18.0.0+ (v22+ recommended)
+- **Python:** v3.10+
+- **Package Manager:** `npm` v10+
+
+### Option A: 1-Click Launch (Windows)
+Double-click **`run-all.bat`** (or `run-all.ps1` in PowerShell) in the root directory. This launches the FastAPI backend and all 5 frontend workspaces concurrently.
 
 ### Option B: Terminal Command
-Run the following command from the root directory:
+From the root directory:
 ```bash
 npm run dev
 ```
 
-### Server Endpoints & Services:
-* **Patient App Portal:** `http://localhost:3000`
-* **Universal Scanner Hub:** `http://localhost:3000/scan-otc`
-* **Patient Vault:** `http://localhost:3000/vault`
-* **Python FastAPI Backend:** `http://localhost:8000`
-* **API Documentation:** `http://localhost:8000/docs`
+### Active Local Services:
+- 🏥 **Patient PWA Portal:** [http://localhost:3000](http://localhost:3000)
+- 🩺 **Doctor Workspace:** [http://localhost:5174](http://localhost:5174)
+- 📋 **Reception Portal:** [http://localhost:5173](http://localhost:5173)
+- 💊 **Pharmacy Workbench:** [http://localhost:5175](http://localhost:5175)
+- 🧪 **Laboratory Workbench:** [http://localhost:5176](http://localhost:5176)
+- ⚙️ **FastAPI Backend API:** [http://localhost:8000](http://localhost:8000)
+- 📖 **Interactive Swagger Docs:** [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ---
 
-## 📝 Recent Commits & Changes Log Summary
+## 8. Database Schema & Migrations
 
-* **Copilot & OCR Backend (`copilot.py` & `patient_service.py`):**
-  * Added `/api/patient/analyze-document` and `/api/patient/save-document-to-vault` endpoints.
-  * Added category-specific LLM prompts for lab reports, radiology imaging, hospital discharge, and vaccinations.
-  * Added drug normalization rules for `Edushine MX 6`, `M-ped 16mg`, `Gabapin NT 100mg`, `Benforce CD`, and `Rebote`.
-* **Universal Scanner Page (`scan-otc/page.tsx`):**
-  * Built category selector pill bar (`prescriptions`, `lab_reports`, `imaging_scans`, `discharge_summaries`, `vaccinations`).
-  * Designed dual-tile intake interface (Upload File / PDF dropzone + Live Camera Viewfinder).
-  * Added AI Executive Summary Card, Biomarker Parameter Table, Radiology Findings Table, and Save to Vault button.
-  * Implemented defensive type guards for biomarkers and findings maps to prevent blank screens.
-* **Vault Pages (`vault/page.tsx`, `vault/[category]/page.tsx`, `vault/prescription/[id]/page.tsx`):**
-  * Aligned category filters (`lab-reports`, `x-rays`, `prescriptions`, `other`).
-  * Fixed patient ID fallback (`user?.id || "demo-patient"`) to eliminate 404 URL errors.
-  * Added `error.tsx` components to handle route exceptions gracefully.
+Database definitions and SQL scripts are located in `scaffold/supabase/`:
+
+1. `schema.sql` — Base tables (`app_users`, `patients`, `prescriptions`, `scans`, `medications`, `intake_logs`, etc.).
+2. `migrations/doctor_role_extensions.sql` — Schema extensions for Refills, Caregivers, Symptoms, Allergies, and Follow-ups.
+3. `migrations/20260813000000_patient_vault_folders_logs.sql` — Vault folders, translations, and reminder queues.
+4. `migrations/20260821000000_multi_document_store.sql` — Generalized `patient_documents` store and `document_access_log`.
+
+To apply all migrations to your Supabase project:
+1. Open your **Supabase Dashboard → SQL Editor**.
+2. Run `schema.sql` followed by the migration scripts in chronological order.
+
+---
+
+*© 2026 Sanjeevani Healthcare Intelligence Platform. Built for clinical excellence and patient safety.*

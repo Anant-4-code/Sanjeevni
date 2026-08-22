@@ -53,7 +53,7 @@ export default function LandingPage() {
           <nav className="hidden md:flex items-center gap-6 text-xs uppercase tracking-widest font-medium text-[var(--fg-muted)]">
             <a href="#who-we-are" className="hover:text-[var(--fg)] transition-colors">Who We Are</a>
             <a href="#what-we-offer" className="hover:text-[var(--fg)] transition-colors">Capabilities</a>
-            <Link href="/doctor" className="hover:text-[var(--fg)] text-emerald-600 font-bold transition-colors">Doctor Portal</Link>
+            <Link href="http://localhost:5174" className="hover:text-[var(--fg)] text-emerald-600 font-bold transition-colors">Doctor Portal</Link>
             <Link href="/dashboard" className="hover:text-[var(--fg)] transition-colors">Patient Portal</Link>
             <Link href="/login" className="hover:text-[var(--fg)] transition-colors">Sign In</Link>
           </nav>
@@ -83,7 +83,7 @@ export default function LandingPage() {
             </Link>
 
             <Link
-              href="/doctor"
+              href="http://localhost:5174"
               className="hidden sm:inline-flex items-center gap-2 rounded-full bg-[var(--accent)] text-[var(--accent-foreground)] px-5 py-2 text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-opacity"
             >
               Doctor Workspace →

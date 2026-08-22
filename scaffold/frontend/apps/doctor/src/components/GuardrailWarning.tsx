@@ -1,4 +1,4 @@
-interface GuardrailFlag {
+﻿interface GuardrailFlag {
   medication_id: string;
   medication_name: string;
   conflicting_with: string;

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
 import {
@@ -41,11 +41,11 @@ type RefillItem = {
 };
 
 const WELLBEING_EMOJIS = [
-  { score: 1, emoji: "😫", label: "Very Bad" },
-  { score: 2, emoji: "😔", label: "Bad" },
-  { score: 3, emoji: "😐", label: "Okay" },
-  { score: 4, emoji: "🙂", label: "Good" },
-  { score: 5, emoji: "😄", label: "Great" },
+  { score: 1, emoji: "ðŸ˜«", label: "Very Bad" },
+  { score: 2, emoji: "ðŸ˜”", label: "Bad" },
+  { score: 3, emoji: "ðŸ˜", label: "Okay" },
+  { score: 4, emoji: "ðŸ™‚", label: "Good" },
+  { score: 5, emoji: "ðŸ˜„", label: "Great" },
 ];
 
 type ScheduleItem = {
@@ -69,7 +69,7 @@ type CorrelationPoint = {
   has_real_log: boolean;
 };
 
-/* ── Adherence Ring (SVG stroke-only) ────────────────────────────── */
+/* â”€â”€ Adherence Ring (SVG stroke-only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function AdherenceRing({ score, size = 110 }: { score: number; size?: number }) {
   const r = size * 0.4;
   const circumference = 2 * Math.PI * r;
@@ -126,7 +126,7 @@ function AdherenceRing({ score, size = 110 }: { score: number; size?: number }) 
   );
 }
 
-/* ── Dose Card with Criticality & Snooze/Skip ─────────────────────── */
+/* â”€â”€ Dose Card with Criticality & Snooze/Skip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function DoseCard({
   item,
   onToggle,
@@ -184,7 +184,7 @@ function DoseCard({
 
             {isSnoozed && (
               <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-700 flex items-center gap-1">
-                <Timer className="w-3 h-3" /> Snoozed (+20m · Pending)
+                <Timer className="w-3 h-3" /> Snoozed (+20m Â· Pending)
               </span>
             )}
 
@@ -244,7 +244,7 @@ function DoseCard({
           >
             {isTaken ? (
               <>
-                <CheckCircle2 className="w-4 h-4" /> Taken ✓
+                <CheckCircle2 className="w-4 h-4" /> Taken âœ“
               </>
             ) : (
               "Mark Taken"
@@ -256,14 +256,14 @@ function DoseCard({
   );
 }
 
-/* ── Main Dashboard ──────────────────────────────────────────────── */
+/* â”€â”€ Main Dashboard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export default function Dashboard() {
   const { user } = useAuth();
   const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
   const [adherence, setAdherence] = useState(0);
   const [loaded, setLoaded] = useState(false);
 
-  // §1 Refill Intelligence state
+  // Â§1 Refill Intelligence state
   const [refillItems, setRefillItems] = useState<RefillItem[]>([]);
   const [refillRequested, setRefillRequested] = useState<Set<string>>(new Set());
 
@@ -278,7 +278,7 @@ export default function Dashboard() {
   const [skipModalItem, setSkipModalItem] = useState<ScheduleItem | null>(null);
   const [skipReason, setSkipReason] = useState("Ran out");
 
-  // §2 & B1-B3 Symptom Journal state
+  // Â§2 & B1-B3 Symptom Journal state
   const [symptomOpen, setSymptomOpen] = useState(false);
   const [wellbeingScore, setWellbeingScore] = useState(0);
   const [symptomNote, setSymptomNote] = useState("");
@@ -297,7 +297,7 @@ export default function Dashboard() {
   const [correlationData, setCorrelationData] = useState<CorrelationPoint[]>([]);
 
   function fetchTimeline() {
-    const pid = user?.id || "demo-patient";
+    const pid = (user?.role === "patient" && user?.id) ? user.id : "patient-ramesh";
     fetch(`${API_BASE}/patient/${pid}/timeline`)
       .then((r) => r.json())
       .then((d) => {
@@ -311,7 +311,7 @@ export default function Dashboard() {
   }
 
   function fetchRefillStatus() {
-    const pid = user?.id || "demo-patient";
+    const pid = (user?.role === "patient" && user?.id) ? user.id : "patient-ramesh";
     fetch(`${API_BASE}/patient/${pid}/refill-status`)
       .then((r) => r.json())
       .then((d) => setRefillItems(d.items || []))
@@ -319,7 +319,7 @@ export default function Dashboard() {
   }
 
   function fetchEscalationStatus() {
-    const pid = user?.id || "demo-patient";
+    const pid = (user?.role === "patient" && user?.id) ? user.id : "patient-ramesh";
     fetch(`${API_BASE}/patient/${pid}/escalation-status`)
       .then((r) => r.json())
       .then((d) => setEscalationBatch(d))
@@ -327,7 +327,7 @@ export default function Dashboard() {
   }
 
   function fetchCorrelation() {
-    const pid = user?.id || "demo-patient";
+    const pid = (user?.role === "patient" && user?.id) ? user.id : "patient-ramesh";
     fetch(`${API_BASE}/patient/${pid}/correlation?days=7`)
       .then((r) => r.json())
       .then((d) => {
@@ -448,7 +448,7 @@ export default function Dashboard() {
     }
   }
 
-  // §2 & B1-B3 Symptom Submit
+  // Â§2 & B1-B3 Symptom Submit
   async function handleSymptomSubmit() {
     if (wellbeingScore < 1) return;
     try {
@@ -511,14 +511,30 @@ export default function Dashboard() {
   const takenCount = schedule.filter((s) => s.taken || s.acknowledgment_state === "taken").length;
 
   return (
-    <div className="w-full space-y-8">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+      {user?.role && user.role !== "patient" && (
+        <div className="bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 text-blue-900 dark:text-blue-200 font-medium">
+            <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse flex-shrink-0" />
+            <span>
+              Signed in as <strong>{user.full_name} ({user.role.toUpperCase()})</strong> — currently previewing the Patient Care Portal.
+            </span>
+          </div>
+          <Link
+            href={user.role === "doctor" ? "/doctor" : user.role === "receptionist" ? "/reception" : user.role === "pharmacist" ? "/pharmacy" : "/lab"}
+            className="px-3.5 py-1.5 bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] rounded-xl font-bold text-[11px] whitespace-nowrap hover:opacity-90 transition-opacity self-start sm:self-auto shadow-xs"
+          >
+            Switch to {user.role === "doctor" ? "Doctor Workspace" : "Operations Portal"} &rarr;
+          </Link>
+        </div>
+      )}
       {/* Glass Welcome Header */}
       <div className="glass-card p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
         <div className="space-y-2 z-10">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping" />
             <span className="text-xs font-mono uppercase tracking-[0.2em] text-[var(--fg-muted)]">
-              LIVE CLINICAL PROTOCOL · {user?.full_name ? user.full_name.toUpperCase() : "PATIENT"}
+              LIVE CLINICAL PROTOCOL Â· {user?.full_name ? user.full_name.toUpperCase() : "PATIENT"}
             </span>
           </div>
           <h1 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight">
@@ -539,7 +555,7 @@ export default function Dashboard() {
               {takenCount} of {schedule.length} doses logged
             </p>
             <span className="inline-flex items-center gap-1 text-[10px] font-mono text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800 font-bold">
-              ● Active Guard
+              â— Active Guard
             </span>
           </div>
         </div>
@@ -586,13 +602,13 @@ export default function Dashboard() {
               rel="noreferrer"
               className="px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition-all flex items-center gap-1.5 shadow-sm"
             >
-              <Send className="w-3.5 h-3.5" /> Flag for My Doctor (WhatsApp) →
+              <Send className="w-3.5 h-3.5" /> Flag for My Doctor (WhatsApp) â†’
             </a>
             <button
               onClick={() => setTrendAlert(null)}
               className="px-3 py-2 text-xs font-semibold text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors"
             >
-              I'm okay, just tracking →
+              I'm okay, just tracking â†’
             </button>
           </div>
         </div>
@@ -604,7 +620,7 @@ export default function Dashboard() {
           <div className="flex items-center gap-3">
             <Sparkles className="w-4 h-4 text-[var(--fg)]" />
             <p className="text-xs text-[var(--fg)]">
-              Haven't checked in for a few days — no pressure, but logging how you're feeling helps your doctor spot patterns.
+              Haven't checked in for a few days â€” no pressure, but logging how you're feeling helps your doctor spot patterns.
             </p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -625,7 +641,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* §1 Refill Intelligence Banners */}
+      {/* Â§1 Refill Intelligence Banners */}
       {refillAlerts.length > 0 && (
         <div className="space-y-2">
           {refillAlerts.map((item) => (
@@ -645,15 +661,15 @@ export default function Dashboard() {
                 />
                 <div>
                   <p className="text-sm font-bold text-[var(--fg)]">
-                    {item.medicine} —{" "}
+                    {item.medicine} â€”{" "}
                     {item.days_remaining === 0
                       ? "Course Complete"
                       : `${item.days_remaining} day${item.days_remaining === 1 ? "" : "s"} remaining`}
                   </p>
                   <p className="text-xs text-[var(--fg-muted)]">
                     {item.urgency === "critical"
-                      ? "Running out — request a refill now"
-                      : "Running low — consider requesting a refill"}
+                      ? "Running out â€” request a refill now"
+                      : "Running low â€” consider requesting a refill"}
                   </p>
                 </div>
               </div>
@@ -678,7 +694,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* §2 & B1-B3 Symptom Journal Widget with Photo Attachment & Same-Day Edit */}
+      {/* Â§2 & B1-B3 Symptom Journal Widget with Photo Attachment & Same-Day Edit */}
       <div className="glass-card overflow-hidden">
         <button
           onClick={() => {
@@ -758,7 +774,7 @@ export default function Dashboard() {
                     <p className="text-xs font-mono uppercase tracking-wider text-[var(--fg-muted)] flex items-center gap-1.5">
                       <Camera className="w-3.5 h-3.5" /> Attach Photo of Visible Symptom (Optional)
                     </p>
-                    <span className="text-[10px] text-[var(--fg-muted)]">Purely for doctor's review · No automated diagnosis</span>
+                    <span className="text-[10px] text-[var(--fg-muted)]">Purely for doctor's review Â· No automated diagnosis</span>
                   </div>
 
                   <input
@@ -919,7 +935,7 @@ export default function Dashboard() {
                     {/* Wellbeing Indicator */}
                     <div className="pt-1 border-t border-[var(--border)] w-full">
                       <span className="text-xs" title={`Wellbeing Score: ${pt.wellbeing_score}/5`}>
-                        {WELLBEING_EMOJIS.find((e) => e.score === pt.wellbeing_score)?.emoji || "😐"}
+                        {WELLBEING_EMOJIS.find((e) => e.score === pt.wellbeing_score)?.emoji || "ðŸ˜"}
                       </span>
                     </div>
                   </div>
@@ -943,7 +959,7 @@ export default function Dashboard() {
                   href="/settings"
                   className="text-[11px] font-bold text-[var(--fg)] hover:underline uppercase tracking-wider font-mono"
                 >
-                  Manage →
+                  Manage â†’
                 </Link>
               </div>
 

@@ -1,25 +1,25 @@
-import type { Metadata, Viewport } from "next";
+﻿import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Navbar } from "@/components/Navbar";
 import { AuthProvider } from "@/context/AuthContext";
 
 export const metadata: Metadata = {
-  title: "Sanjeevani — Prescriptions, Made Understandable.",
-  description: "Sanjeevani turns a doctor's handwriting into a clear, simple care plan.",
+  title: "Sanjeevani — AI Healthcare Intelligence Platform",
+  description: "Unified clinical intelligence ecosystem for patients, physicians, reception, pharmacy, and laboratory.",
   manifest: "/manifest.json",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#050505",
+  themeColor: "#0F172A",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="font-sans antialiased bg-[var(--bg)] text-[var(--fg)] min-h-screen flex flex-col" suppressHydrationWarning>
+      <body className="font-sans antialiased bg-[#F8F7F4] dark:bg-[#090D16] text-[#0F172A] dark:text-[#F9FAFB] min-h-screen flex flex-col" suppressHydrationWarning>
         <AuthProvider>
           <Navbar />
-          <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-12">
+          <main className="flex-1 w-full">
             {children}
           </main>
         </AuthProvider>

@@ -912,7 +912,11 @@ class DoctorService:
 
     def get_queue(self, doctor_id: str) -> dict:
         """Return acuity-sorted queue for a doctor."""
-        doc_queue = [q for q in self.queue if q["doctor_id"] == doctor_id and q["status"] == "waiting"]
+        if doctor_id in ("all", "demo-doctor", "doc-sharma-1", ""):
+            doc_queue = [q for q in self.queue if q["status"] == "waiting"]
+        else:
+            doc_queue = [q for q in self.queue if (q.get("doctor_id") == doctor_id or q.get("doctor_id") == "demo-doctor") and q["status"] == "waiting"]
+
         # Sort by severity DESC, then queued_at ASC
         doc_queue.sort(key=lambda q: (
             -(q.get("chief_complaints", {}).get("severity_level", 1)),

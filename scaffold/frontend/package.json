@@ -1,9 +1,13 @@
 {
   "name": "sanjeevani-frontend",
   "private": true,
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "npm run dev --workspace=@sanjeevani/patient",
-    "dev:all": "npx -y concurrently -k -n \"BACKEND,RECEPTION,DOCTOR,PHARMACY,LAB,PATIENT\" -c \"blue,green,magenta,yellow,cyan,red\" \"cd ..\\backend && .\\.venv\\Scripts\\python.exe -m uvicorn app.main:app --reload --port 8000\" \"npm run dev --workspace=@sanjeevani/reception\" \"npm run dev --workspace=@sanjeevani/doctor\" \"npm run dev --workspace=@sanjeevani/pharmacy\" \"npm run dev --workspace=@sanjeevani/lab\" \"npm run dev --workspace=@sanjeevani/patient\""
+    "build": "npm run build --workspace=@sanjeevani/patient",
+    "start": "npm run start --workspace=@sanjeevani/patient"
   }
 }

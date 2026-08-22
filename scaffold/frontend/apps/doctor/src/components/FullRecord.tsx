@@ -17,9 +17,10 @@ const CATEGORY_CONFIG: Record<string, { icon: string; label: string; color: stri
 interface FullRecordProps {
   patientId: string;
   patientName: string;
+  doctorId?: string;
 }
 
-export default function FullRecord({ patientId, patientName }: FullRecordProps) {
+export default function FullRecord({ patientId, patientName, doctorId = "doc-sharma-1" }: FullRecordProps) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -50,7 +51,7 @@ export default function FullRecord({ patientId, patientName }: FullRecordProps) 
       await fetch(`${API_BASE}/doctor/documents/${docId}/verify`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ doctor_id: "demo-doctor" }),
+        body: JSON.stringify({ doctor_id: doctorId }),
       });
       fetchRecord();
     } catch (err) {

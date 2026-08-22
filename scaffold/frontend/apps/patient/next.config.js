@@ -1,7 +1,6 @@
-/** @type {import(`next`).NextConfig} */
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Enable polling for file watching on Windows
   webpack: (config, { dev }) => {
     if (dev) {
       config.watchOptions = {
@@ -13,4 +12,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+module.exports = nextConfig;
