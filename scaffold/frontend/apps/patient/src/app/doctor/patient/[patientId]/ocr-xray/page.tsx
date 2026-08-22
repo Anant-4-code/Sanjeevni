@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
@@ -20,7 +20,7 @@ import { API_BASE } from "@/lib/api";
 export default function DoctorOCRAndXrayPage() {
   const params = useParams();
   const { user } = useAuth();
-  const doctorId = user?.id || "demo-doctor";
+  const doctorId = user?.id || "doc-sharma-1";
   const patientId = params.patientId as string;
 
   const [activeMode, setActiveMode] = useState<"ocr" | "xray">("ocr");

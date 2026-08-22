@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
@@ -15,6 +15,7 @@ import {
   Pill,
   ArrowRight,
   ShieldAlert,
+  Kanban,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { API_BASE } from "@/lib/api";
@@ -41,13 +42,51 @@ interface QueueItem {
 export default function DoctorQueuePage() {
   const router = useRouter();
   const { user } = useAuth();
-  const doctorId = user?.id || "demo-doctor";
+  const doctorId = user?.id || "doc-sharma-1";
 
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterSeverity, setFilterSeverity] = useState<number | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [refills, setRefills] = useState<any[]>([]);
+
+  // AI-1 Risk Forecast state
+  const [riskPatients, setRiskPatients] = useState<any[]>([
+    {
+      id: "risk-1",
+      patient_id: "patient-savitri",
+      patient_name: "Savitri Kumar",
+      score: 78,
+      reason: "Adherence dropped 20pp in 2 weeks + 2 low well-being scores logged (feeling: 2/5)",
+      factors: { adherence_trend: -20, symptom_trend: -1.1, missed_doses_7d: 3 },
+      action: null,
+    },
+    {
+      id: "risk-2",
+      patient_id: "patient-vikram",
+      patient_name: "Vikram Singh",
+      score: 64,
+      reason: "Frequent dizzy spells after evening Gabapin dose + missed 2 doses this week",
+      factors: { adherence_trend: -14, symptom_trend: -0.8, missed_doses_7d: 2 },
+      action: null,
+    },
+    {
+      id: "risk-3",
+      patient_id: "patient-priya",
+      patient_name: "Priya Sharma",
+      score: 61,
+      reason: "Lab re-check (Thyroid Profile) overdue by 14 days + persistent morning fatigue",
+      factors: { adherence_trend: -5, symptom_trend: -0.5, missed_doses_7d: 1 },
+      action: null,
+    },
+  ]);
+  const [showAllRisk, setShowAllRisk] = useState(false);
+
+  const handleRiskAction = (riskId: string, actionType: string) => {
+    setRiskPatients((prev) =>
+      prev.map((r) => (r.id === riskId ? { ...r, action: actionType } : r))
+    );
+  };
 
   const fetchQueue = useCallback(async () => {
     setLoading(true);
@@ -94,6 +133,8 @@ export default function DoctorQueuePage() {
   const urgentCount = queue.filter((q) => q.chief_complaints?.severity_level === 2).length;
   const routineCount = queue.filter((q) => q.chief_complaints?.severity_level === 1).length;
 
+  const activeRiskPatients = riskPatients.filter((r) => !r.action || r.action !== "dismissed");
+
   return (
     <div className="max-w-7xl w-full mx-auto p-6 md:p-8 space-y-6">
       {/* Top Banner */}
@@ -113,6 +154,13 @@ export default function DoctorQueuePage() {
         </div>
 
         <div className="flex items-center gap-3">
+          <Link
+            href="/doctor/crm"
+            className="flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl bg-[#0F172A] text-white dark:bg-white dark:text-[#0F172A] hover:opacity-90 shadow-xs transition-all"
+          >
+            <Kanban className="w-3.5 h-3.5" />
+            <span>Care Pipeline (CRM) &rarr;</span>
+          </Link>
           <button
             onClick={fetchQueue}
             className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl border border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#111827] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
@@ -122,6 +170,88 @@ export default function DoctorQueuePage() {
           </button>
         </div>
       </div>
+
+      {/* AI-1 RISK FORECAST CARD */}
+      {activeRiskPatients.length > 0 && (
+        <div className="bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-800/50 rounded-2xl p-5 shadow-xs transition-all">
+          <div className="flex items-center justify-between gap-4 mb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-amber-500 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                AI
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-[#0F172A] dark:text-white flex items-center gap-2">
+                  <span>Risk Forecast:</span>
+                  <span className="text-amber-800 dark:text-amber-300 font-extrabold">
+                    {activeRiskPatients.length} Patient{activeRiskPatients.length > 1 ? "s" : ""} Need Attention This Week
+                  </span>
+                </h3>
+                <p className="text-[11px] text-[#64748B] dark:text-gray-400">
+                  Predictive risk analysis based on 7-day adherence decline, low well-being scores &amp; re-check intervals.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowAllRisk(!showAllRisk)}
+              className="text-xs font-bold text-amber-800 dark:text-amber-300 hover:underline"
+            >
+              {showAllRisk ? "Show Top" : `Show All (${activeRiskPatients.length}) →`}
+            </button>
+          </div>
+
+          <div className="space-y-2.5 pt-1">
+            {(showAllRisk ? activeRiskPatients : activeRiskPatients.slice(0, 2)).map((patient) => (
+              <div
+                key={patient.id}
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#111827] border border-amber-200 dark:border-amber-900/60 rounded-xl p-3.5"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-900 dark:text-amber-300 flex items-center justify-center font-black text-xs flex-shrink-0">
+                    {patient.score}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-sm text-[#0F172A] dark:text-white">{patient.patient_name}</span>
+                      <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded-sm bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 font-semibold">
+                        Risk Score: {patient.score}/100
+                      </span>
+                      {patient.action === "contacted_patient" && (
+                        <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded-sm bg-emerald-100 text-emerald-800 font-bold">
+                          ✓ Contacted
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-[#475569] dark:text-gray-300 mt-0.5">{patient.reason}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <Link
+                    href={`/doctor/patient/${patient.patient_id}/timeline`}
+                    className="px-3 py-1.5 text-xs font-bold rounded-lg bg-[#0F172A] text-white dark:bg-white dark:text-[#0F172A] hover:opacity-90 transition-opacity"
+                  >
+                    Review Chart
+                  </Link>
+                  <button
+                    onClick={() => handleRiskAction(patient.id, "contacted_patient")}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-[#E2E8F0] dark:border-[#1F2937] hover:bg-gray-50 dark:hover:bg-gray-800 text-[#0F172A] dark:text-white transition-colors"
+                  >
+                    Mark Contacted
+                  </button>
+                  <button
+                    onClick={() => handleRiskAction(patient.id, "dismissed")}
+                    className="px-2 py-1.5 text-xs text-[#94A3B8] hover:text-[#475569] dark:hover:text-gray-300"
+                    title="Dismiss alert"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

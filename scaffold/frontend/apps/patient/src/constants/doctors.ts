@@ -4,6 +4,8 @@ export type DoctorInfo = {
   specialty: string;
   category: string; // e.g. "Neurosurgery", "Cardiology", "Internal Medicine", "Neurology", "Orthopedics", "Endocrinology"
   hospital: string;
+  license_number?: string;
+  qualifications?: string;
   phone?: string;
   available_hours?: string;
   avatar_url?: string;

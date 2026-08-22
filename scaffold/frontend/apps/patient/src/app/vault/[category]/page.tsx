@@ -3,7 +3,19 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, FileText, FlaskConical, Scan, FolderArchive, Pin, FileDown, Search, AlertTriangle, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  FileText,
+  FlaskConical,
+  Scan,
+  FolderArchive,
+  Search,
+  AlertTriangle,
+  ShieldCheck,
+  Building2,
+  Syringe,
+  FileSignature,
+} from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
 
@@ -15,69 +27,126 @@ type VaultItem = {
   category: string;
   doctor_name: string;
   status: "verified" | "unverified";
+  source?: "clinic_verified" | "patient_uploaded" | "external_import";
   date: string;
   summary: string;
+  days_remaining?: number;
+  condition_tags?: string[];
   pinned?: boolean;
 };
 
-const CATEGORY_NAMES: Record<string, { title: string; icon: typeof FileText }> = {
-  prescriptions: { title: "Prescriptions & Scans", icon: FileText },
-  "lab-reports": { title: "Lab Reports", icon: FlaskConical },
-  "x-rays": { title: "X-Rays & Diagnostic Scans", icon: Scan },
-  other: { title: "Other Documents", icon: FolderArchive },
+const CATEGORY_MAP: Record<
+  string,
+  { title: string; icon: React.ElementType; description: string }
+> = {
+  prescriptions: {
+    title: "Prescriptions & Protocols",
+    icon: FileText,
+    description: "Every prescription ever written across all attending physicians.",
+  },
+  "lab-reports": {
+    title: "Lab Diagnostic Reports",
+    icon: FlaskConical,
+    description: "Pathology tests, blood counts, and metabolic biomarker panels.",
+  },
+  "x-rays": {
+    title: "Imaging & Scans",
+    icon: Scan,
+    description: "Digital X-Rays, MRI scans, CT imaging, and ultrasound reports.",
+  },
+  "hospital-discharges": {
+    title: "Hospital Discharges",
+    icon: Building2,
+    description: "Inpatient admission records and clinical discharge summaries.",
+  },
+  vaccinations: {
+    title: "Vaccinations & Immunizations",
+    icon: Syringe,
+    description: "Vaccine certificates, booster timelines, and immunization lots.",
+  },
+  "referral-letters": {
+    title: "Referral Letters",
+    icon: FileSignature,
+    description: "Doctor-to-doctor clinical consultation and referral notes.",
+  },
+  other: {
+    title: "Other Documents & Records",
+    icon: FolderArchive,
+    description: "Patient-uploaded certificates, fitness forms, and misc records.",
+  },
 };
 
 export default function CategoryDocumentsPage() {
   const { user } = useAuth();
   const params = useParams();
   const categoryKey = (params?.category as string) || "prescriptions";
-  const catInfo = CATEGORY_NAMES[categoryKey] || { title: "Documents", icon: FileText };
+  const catInfo = CATEGORY_MAP[categoryKey] || {
+    title: "Vault Documents",
+    icon: FileText,
+    description: "Clinical archive records.",
+  };
 
   const [documents, setDocuments] = useState<VaultItem[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "verified" | "unverified">("all");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const pid = user?.id || "demo-patient";
+    setLoading(true);
+    const pid = (user?.role === "patient" && user?.id) ? user.id : "demo-patient";
     fetch(`${API_BASE}/patient/${pid}/vault?category=${categoryKey}`)
       .then((res) => res.json())
-      .then((data) => setDocuments(data.documents || []))
-      .catch(() => {});
+      .then((data) => {
+        setDocuments(data.documents || []);
+        setLoading(false);
+      })
+      .catch(() => {
+        setLoading(false);
+      });
   }, [categoryKey, user?.id]);
 
   const filteredDocs = documents.filter((doc) => {
     if (statusFilter !== "all" && doc.status !== statusFilter) return false;
     if (!search.trim()) return true;
     const q = search.toLowerCase();
+    const tags = (doc.condition_tags || []).join(" ").toLowerCase();
     return (
       doc.title.toLowerCase().includes(q) ||
       doc.doctor_name.toLowerCase().includes(q) ||
-      doc.summary.toLowerCase().includes(q)
+      doc.summary.toLowerCase().includes(q) ||
+      tags.includes(q)
     );
   });
+
+  const Icon = catInfo.icon;
 
   return (
     <div className="max-w-6xl mx-auto w-full space-y-6">
       {/* Header */}
-      <div className="glass-card p-6 flex items-center justify-between">
+      <div className="glass-card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Link href="/vault" aria-label="Back to Vault" className="p-2 rounded-full border border-[var(--border)] hover:bg-[var(--bg-muted)] transition-colors">
+          <Link
+            href="/vault"
+            aria-label="Back to Vault"
+            className="p-2 rounded-full border border-[var(--border)] hover:bg-[var(--bg-muted)] transition-colors"
+          >
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
             <p className="text-xs font-mono uppercase tracking-[0.2em] text-[var(--fg-muted)] flex items-center gap-2 mb-1">
-              <span className="w-1.5 h-1.5 bg-[var(--fg)] rounded-full" />
+              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
               Vault Archive // {catInfo.title}
             </p>
             <h1 className="font-display text-xl sm:text-2xl font-bold flex items-center gap-2">
-              <catInfo.icon className="w-6 h-6 text-[var(--fg)]" />
+              <Icon className="w-6 h-6 text-[var(--fg)]" />
               {catInfo.title}
             </h1>
+            <p className="text-xs text-[var(--fg-muted)] mt-0.5">{catInfo.description}</p>
           </div>
         </div>
 
         {/* Status Filter Tabs */}
-        <div className="hidden sm:flex items-center gap-2">
+        <div className="flex items-center gap-2 self-start sm:self-center">
           {[
             { key: "all", label: "All" },
             { key: "verified", label: "Verified" },
@@ -105,17 +174,17 @@ export default function CategoryDocumentsPage() {
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder={`Search ${catInfo.title.toLowerCase()} by title or doctor...`}
-          className="w-full glass-panel border border-[var(--border)] pl-11 pr-4 py-3.5 text-sm focus:outline-none focus:border-[var(--fg)] transition-all rounded-xl shadow-sm"
+          placeholder={`Search ${catInfo.title.toLowerCase()} by title, doctor, or condition tags...`}
+          className="w-full glass-panel border border-[var(--border)] pl-11 pr-4 py-3.5 text-sm focus:outline-none focus:border-[var(--fg)] transition-all rounded-2xl shadow-sm"
         />
       </div>
 
-      {/* List */}
+      {/* List (Sorted newest first) */}
       <div className="space-y-4">
         {filteredDocs.map((doc) => (
           <div
             key={doc.id}
-            className="glass-card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group"
+            className="glass-card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:border-[var(--fg)] transition-all"
           >
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -126,9 +195,18 @@ export default function CategoryDocumentsPage() {
                   {doc.title}
                 </Link>
 
+                {doc.condition_tags?.map((t, idx) => (
+                  <span
+                    key={idx}
+                    className="text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+                  >
+                    {t}
+                  </span>
+                ))}
+
                 {doc.status === "unverified" ? (
                   <span className="text-[10px] font-mono font-bold uppercase tracking-wider bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                    <AlertTriangle className="w-3 h-3" /> UNVERIFIED — NEEDS DOCTOR SIGN-OFF
+                    <AlertTriangle className="w-3 h-3" /> UNVERIFIED
                   </span>
                 ) : (
                   <span className="text-[10px] font-mono font-bold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 px-2.5 py-0.5 rounded-full flex items-center gap-1">
@@ -153,10 +231,10 @@ export default function CategoryDocumentsPage() {
           </div>
         ))}
 
-        {filteredDocs.length === 0 && (
+        {filteredDocs.length === 0 && !loading && (
           <div className="glass-card p-12 text-center">
-            <FileText className="w-10 h-10 text-[var(--fg-muted)] mx-auto mb-3" />
-            <p className="text-sm font-bold mb-1">No Category Documents Found</p>
+            <Icon className="w-10 h-10 text-[var(--fg-muted)] mx-auto mb-3" />
+            <p className="text-sm font-bold mb-1">No Documents in {catInfo.title}</p>
             <p className="text-xs text-[var(--fg-muted)]">No records match your filter criteria.</p>
           </div>
         )}

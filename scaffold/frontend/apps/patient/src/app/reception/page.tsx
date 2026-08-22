@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
@@ -29,7 +29,7 @@ export default function ReceptionPortalPage() {
   const [emergencyName, setEmergencyName] = useState("");
   const [emergencyPhone, setEmergencyPhone] = useState("");
   const [chiefComplaint, setChiefComplaint] = useState("");
-  const [assignedDoctor, setAssignedDoctor] = useState("demo-doctor");
+  const [assignedDoctor, setAssignedDoctor] = useState("doc-sharma-1");
 
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -221,7 +221,7 @@ export default function ReceptionPortalPage() {
                 onChange={(e) => setAssignedDoctor(e.target.value)}
                 className="w-full bg-[#F8F7F4] dark:bg-[#1F2937] border border-[#E2E8F0] dark:border-[#1F2937] rounded-xl px-4 py-2.5 text-xs text-[#0F172A] dark:text-white font-medium"
               >
-                <option value="demo-doctor">Dr. Nitin Sharma (Internal Medicine & Endocrinology)</option>
+                <option value="doc-sharma-1">Dr. Nitin Sharma (Internal Medicine & Endocrinology)</option>
                 <option value="doc-rai-1">Dr. Rai (Cardiology & General Medicine)</option>
                 <option value="doc-patel-1">Dr. Patel (Endocrinology & Diabetology)</option>
               </select>

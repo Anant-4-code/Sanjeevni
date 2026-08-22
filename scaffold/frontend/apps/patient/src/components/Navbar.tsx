@@ -199,6 +199,14 @@ export function Navbar() {
                 <div className="text-xs font-bold text-[#0F172A] dark:text-white">{user?.full_name}</div>
                 <div className="text-[11px] text-[#64748B]">{user?.email}</div>
               </div>
+              <Link
+                href="/settings"
+                onClick={() => setProfileOpen(false)}
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-[#0F172A] dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors text-left mb-1"
+              >
+                <Settings className="w-4 h-4 text-[#64748B]" />
+                <span>Settings &amp; Account</span>
+              </Link>
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors text-left"

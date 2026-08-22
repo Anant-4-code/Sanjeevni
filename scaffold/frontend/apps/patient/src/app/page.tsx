@@ -53,7 +53,7 @@ export default function LandingPage() {
           <nav className="hidden md:flex items-center gap-6 text-xs uppercase tracking-widest font-medium text-[var(--fg-muted)]">
             <a href="#who-we-are" className="hover:text-[var(--fg)] transition-colors">Who We Are</a>
             <a href="#what-we-offer" className="hover:text-[var(--fg)] transition-colors">Capabilities</a>
-            <Link href="http://localhost:5174" className="hover:text-[var(--fg)] text-emerald-600 font-bold transition-colors">Doctor Portal</Link>
+            <Link href="/doctor" className="hover:text-[var(--fg)] text-emerald-600 font-bold transition-colors">Doctor Portal</Link>
             <Link href="/dashboard" className="hover:text-[var(--fg)] transition-colors">Patient Portal</Link>
             <Link href="/login" className="hover:text-[var(--fg)] transition-colors">Sign In</Link>
           </nav>
@@ -83,7 +83,7 @@ export default function LandingPage() {
             </Link>
 
             <Link
-              href="http://localhost:5174"
+              href="/doctor"
               className="hidden sm:inline-flex items-center gap-2 rounded-full bg-[var(--accent)] text-[var(--accent-foreground)] px-5 py-2 text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-opacity"
             >
               Doctor Workspace →
@@ -103,9 +103,10 @@ export default function LandingPage() {
           <div className="md:hidden border-t border-[var(--border)] bg-[var(--bg-elevated)] px-6 py-4 space-y-3 font-medium text-sm">
             <a href="#who-we-are" onClick={() => setMobileMenuOpen(false)} className="block py-1">Who We Are</a>
             <a href="#what-we-offer" onClick={() => setMobileMenuOpen(false)} className="block py-1">Capabilities</a>
-            <a href="#workspace" onClick={() => setMobileMenuOpen(false)} className="block py-1">Portals</a>
-            <a href="#why-sanjeevani" onClick={() => setMobileMenuOpen(false)} className="block py-1">Why Sanjeevani</a>
-            <a href="#contact" onClick={() => setMobileMenuOpen(false)} className="block py-1">Contact</a>
+            <Link href="/doctor" onClick={() => setMobileMenuOpen(false)} className="block py-1 text-emerald-600 font-bold">Doctor Workspace</Link>
+            <Link href="/reception" onClick={() => setMobileMenuOpen(false)} className="block py-1">Reception Intake</Link>
+            <Link href="/pharmacy" onClick={() => setMobileMenuOpen(false)} className="block py-1">Pharmacy Desk</Link>
+            <Link href="/lab" onClick={() => setMobileMenuOpen(false)} className="block py-1">Lab Diagnostics</Link>
             <Link href="/dashboard" className="block py-2 text-center bg-[var(--fg)] text-[var(--bg)] font-bold rounded-full mt-2">
               Open Patient Portal
             </Link>
@@ -138,12 +139,12 @@ export default function LandingPage() {
             >
               Open Patient Portal <ArrowRight className="w-4 h-4" />
             </Link>
-            <a
-              href="http://localhost:5174"
+            <Link
+              href="/doctor"
               className="inline-flex items-center gap-2.5 rounded-full border border-[var(--fg)] px-8 py-4 text-sm font-bold uppercase tracking-wider hover:bg-[var(--fg)] hover:text-[var(--bg)] transition-colors"
             >
               Physician Workspace
-            </a>
+            </Link>
           </div>
         </div>
       </section>
@@ -414,9 +415,11 @@ export default function LandingPage() {
           </div>
           <p>© 2026 Sanjeevani. Clear Prescriptions for Everyone.</p>
           <div className="flex gap-6 font-mono text-[10px] uppercase">
-            <Link href="/dashboard">Patient</Link>
-            <a href="http://localhost:5174">Doctor</a>
-            <a href="http://localhost:5173">Reception</a>
+            <Link href="/dashboard" className="hover:text-[var(--fg)]">Patient</Link>
+            <Link href="/doctor" className="hover:text-[var(--fg)]">Doctor</Link>
+            <Link href="/reception" className="hover:text-[var(--fg)]">Reception</Link>
+            <Link href="/pharmacy" className="hover:text-[var(--fg)]">Pharmacy</Link>
+            <Link href="/lab" className="hover:text-[var(--fg)]">Lab</Link>
           </div>
         </div>
       </footer>

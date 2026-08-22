@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
 import {
@@ -25,7 +25,13 @@ import {
   X,
   Send,
   Sparkles,
+  Frown,
+  Meh,
+  Smile,
+  Laugh,
+  HelpCircle,
 } from "lucide-react";
+import AdherenceWellbeingTrend from "@/components/AdherenceWellbeingTrend";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 
@@ -40,12 +46,12 @@ type RefillItem = {
   criticality_tier?: string;
 };
 
-const WELLBEING_EMOJIS = [
-  { score: 1, emoji: "ðŸ˜«", label: "Very Bad" },
-  { score: 2, emoji: "ðŸ˜”", label: "Bad" },
-  { score: 3, emoji: "ðŸ˜", label: "Okay" },
-  { score: 4, emoji: "ðŸ™‚", label: "Good" },
-  { score: 5, emoji: "ðŸ˜„", label: "Great" },
+const WELLBEING_LEVELS = [
+  { score: 1, Icon: Frown, color: "text-rose-500", label: "Very Bad" },
+  { score: 2, Icon: Frown, color: "text-amber-500", label: "Bad" },
+  { score: 3, Icon: Meh, color: "text-amber-400", label: "Okay" },
+  { score: 4, Icon: Smile, color: "text-emerald-500", label: "Good" },
+  { score: 5, Icon: Laugh, color: "text-emerald-600", label: "Great" },
 ];
 
 type ScheduleItem = {
@@ -259,6 +265,8 @@ function DoseCard({
 /* â”€â”€ Main Dashboard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export default function Dashboard() {
   const { user } = useAuth();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
   const [adherence, setAdherence] = useState(0);
   const [loaded, setLoaded] = useState(false);
@@ -561,6 +569,31 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* ── AI-8 PERSONALIZED DAILY HEALTH TIP ── */}
+      <div className="glass-card p-5 bg-gradient-to-r from-emerald-50/70 via-teal-50/60 to-cyan-50/70 dark:from-emerald-950/20 dark:via-teal-950/20 dark:to-cyan-950/20 border border-emerald-200/80 dark:border-emerald-900/50 shadow-xs flex items-start gap-4 transition-all">
+        <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 shadow-xs mt-0.5">
+          <Sparkles className="w-5 h-5 text-emerald-100" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-[0.15em] text-emerald-800 dark:text-emerald-300">
+              AI-8 // DAILY HEALTH INSIGHT
+            </span>
+            <span className="text-[10px] font-mono bg-emerald-100 dark:bg-emerald-900/60 text-emerald-900 dark:text-emerald-200 px-2 py-0.2 rounded-full font-bold">
+              Personalized
+            </span>
+          </div>
+          <p className="text-sm font-semibold text-[#0F172A] dark:text-gray-100 leading-snug">
+            Since you&apos;re taking Metformin and Noveron, try to keep your evening meal timings consistent — it optimizes postprandial blood sugar control and prevents evening dizziness episodes.
+          </p>
+          <div className="flex items-center gap-3 text-[11px] text-[#64748B] dark:text-gray-400 mt-2 font-mono">
+            <span>Tailored to: Metformin 500mg &bull; Noveron 500mg</span>
+            <span>&bull;</span>
+            <span className="text-emerald-700 dark:text-emerald-300">Refreshed today</span>
+          </div>
+        </div>
+      </div>
+
       {/* A1 & A3: Unified Anti-Pileup Batch Escalation Alert */}
       {escalationBatch && escalationBatch.missed_count > 0 && escalationBatch.highest_tier === "critical" && (
         <div className="glass-card p-4 border-2 border-red-500 bg-red-50/70 dark:bg-red-950/30 flex items-start gap-3.5 shadow-md">
@@ -742,20 +775,24 @@ export default function Dashboard() {
                     Rate your wellbeing
                   </p>
                   <div className="flex items-center justify-center gap-3">
-                    {WELLBEING_EMOJIS.map((e) => (
-                      <button
-                        key={e.score}
-                        onClick={() => setWellbeingScore(e.score)}
-                        className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
-                          wellbeingScore === e.score
-                            ? "bg-[var(--fg)] text-[var(--bg)] scale-110 shadow-lg"
-                            : "hover:bg-[var(--bg-muted)] text-[var(--fg)]"
-                        }`}
-                      >
-                        <span className="text-2xl">{e.emoji}</span>
-                        <span className="text-[9px] font-mono uppercase tracking-wider">{e.label}</span>
-                      </button>
-                    ))}
+                    {WELLBEING_LEVELS.map((e) => {
+  const Icon = e.Icon;
+  return (
+    <button
+      key={e.score}
+      type="button"
+      onClick={() => setWellbeingScore(e.score)}
+      className={`flex flex-col items-center gap-1.5 p-2.5 rounded-2xl border transition-all ${
+        wellbeingScore === e.score
+          ? "bg-[#0F172A] text-white dark:bg-white dark:text-[#0F172A] scale-105 shadow-md border-transparent"
+          : "hover:bg-[var(--bg-muted)] border-transparent text-[var(--fg)]"
+      }`}
+    >
+      <Icon className={`w-6 h-6 ${wellbeingScore === e.score ? "" : e.color}`} />
+      <span className="text-[10px] font-mono uppercase tracking-wider font-bold">{e.label}</span>
+    </button>
+  );
+})}
                   </div>
                 </div>
 
@@ -899,50 +936,8 @@ export default function Dashboard() {
             ))}
           </div>
 
-          {/* B4: Dual-Trend Adherence vs. Wellbeing Correlation Visualizer */}
-          {correlationData.length > 0 && (
-            <div className="glass-card p-6 space-y-4 border-2 border-[var(--border)]">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-bold text-[var(--fg)] flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-emerald-600" />
-                    Adherence & Wellbeing Trend (Past 7 Days)
-                  </h3>
-                  <p className="text-xs text-[var(--fg-muted)] mt-0.5">
-                    Display-only side-by-side tracking for doctor review (non-causal).
-                  </p>
-                </div>
-                <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--fg-muted)] border border-[var(--border)] px-2 py-0.5 rounded-full">
-                  7-Day Window
-                </span>
-              </div>
-
-              <div className="grid grid-cols-7 gap-2 pt-2">
-                {correlationData.map((pt) => (
-                  <div key={pt.date} className="flex flex-col items-center space-y-2 p-2 rounded-xl bg-[var(--bg-muted)]/50 border border-[var(--border)] text-center">
-                    <span className="text-[10px] font-mono text-[var(--fg-muted)]">{pt.label}</span>
-                    
-                    {/* Adherence Bar */}
-                    <div className="w-full bg-[var(--border)] h-12 rounded-lg flex items-end justify-center p-0.5">
-                      <div
-                        className="w-full bg-emerald-500 rounded-md transition-all"
-                        style={{ height: `${pt.adherence_pct}%` }}
-                        title={`Adherence: ${pt.adherence_pct}%`}
-                      />
-                    </div>
-                    <span className="text-[9px] font-bold text-emerald-600">{pt.adherence_pct}%</span>
-
-                    {/* Wellbeing Indicator */}
-                    <div className="pt-1 border-t border-[var(--border)] w-full">
-                      <span className="text-xs" title={`Wellbeing Score: ${pt.wellbeing_score}/5`}>
-                        {WELLBEING_EMOJIS.find((e) => e.score === pt.wellbeing_score)?.emoji || "ðŸ˜"}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* B4: Live Adherence & Wellbeing Trend */}
+          <AdherenceWellbeingTrend patientId={(user?.role === "patient" && user?.id) ? user.id : "patient-ramesh"} />
         </div>
 
         {/* Right Column (1 Col on Desktop) */}

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
@@ -17,11 +17,12 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { API_BASE } from "@/lib/api";
+import AdherenceWellbeingTrend from "@/components/AdherenceWellbeingTrend";
 
 export default function DoctorPatientTimelinePage() {
   const params = useParams();
   const { user } = useAuth();
-  const doctorId = user?.id || "demo-doctor";
+  const doctorId = user?.id || "doc-sharma-1";
   const patientId = params.patientId as string;
 
   const [data, setData] = useState<any>(null);
@@ -61,6 +62,9 @@ export default function DoctorPatientTimelinePage() {
 
   return (
     <div className="space-y-6">
+      {/* ── Section: Live Adherence & Wellbeing Trend (Spec B & C) ── */}
+      <AdherenceWellbeingTrend patientId={patientId} />
+
       {/* ── Section: Active Medications (Prescribed by this Physician) ── */}
       <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-2xl p-6 shadow-xs space-y-4">
         <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#1F2937] pb-3">

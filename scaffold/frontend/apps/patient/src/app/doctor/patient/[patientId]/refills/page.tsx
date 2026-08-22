@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
@@ -21,7 +21,7 @@ import { API_BASE } from "@/lib/api";
 export default function DoctorRefillsAndOrdersPage() {
   const params = useParams();
   const { user } = useAuth();
-  const doctorId = user?.id || "demo-doctor";
+  const doctorId = user?.id || "doc-sharma-1";
   const patientId = params.patientId as string;
 
   const [refills, setRefills] = useState<any[]>([]);

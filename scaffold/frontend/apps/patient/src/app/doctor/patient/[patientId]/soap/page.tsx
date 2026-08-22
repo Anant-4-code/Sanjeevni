@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useRef, useEffect } from "react";
 import { useParams } from "next/navigation";
@@ -26,7 +26,7 @@ interface SOAPNote {
 export default function DoctorSOAPPage() {
   const params = useParams();
   const { user } = useAuth();
-  const doctorId = user?.id || "demo-doctor";
+  const doctorId = user?.id || "doc-sharma-1";
   const patientId = params.patientId as string;
 
   const [recording, setRecording] = useState(false);

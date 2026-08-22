@@ -1588,3 +1588,382 @@ The Symptom Journal's honesty principle (don't backfill or imply continuous trac
 8. **A4 Rich calendar entries** — polish layer on Lab/Appointment Reminders
 9. **A3 Coordinated multi-channel** — needed once Caregiver Access ships, not before
 10. **B4 Correlation view** — polish/analysis layer, lowest urgency of the set
+
+
+# Sanjeevani — Adherence & Wellbeing Trend Widget
+### Bug Diagnosis + Full Spec + Working Code + Fix Prompt
+
+**Widget:** "Adherence & Wellbeing Trend (Past 7 Days)" — doctor-facing card showing daily adherence % + wellbeing score side by side.
+
+---
+
+# PART A — WHAT'S BROKEN, EXPLAINED
+
+## A.1 The Mojibake Bug (garbled emoji: `ðŸ™‚`)
+
+**What's happening:** The emoji characters are almost certainly hardcoded as raw Unicode string literals (`"🙂"`, `"😐"`, etc.) somewhere in the component. Those bytes are being written/read through a layer that isn't UTF-8-aware — Windows console output getting relayed into the browser, a file saved without explicit UTF-8 encoding, or an API response missing `charset=utf-8` in its `Content-Type` header. The result: valid UTF-8 bytes get reinterpreted as Latin-1/Windows-1252, producing the `ðŸ™‚`-style garbage. This is why it's inconsistent per cell — different underlying emoji, same corruption pattern, not a one-off typo.
+
+**Why "just re-save the file as UTF-8" isn't the real fix:** it'll silently break again the next time anyone edits that file in a tool/OS that doesn't default to UTF-8, or the next time the string passes through a misconfigured pipe (Windows terminal → subprocess → log → frontend, etc.). The actual fix is to stop representing mood as a raw emoji character at all, and use an icon component instead (Part C code below) — this is encoding-proof by construction, not by discipline.
+
+## A.2 The "Dummy Data" Tells
+
+Three signs this card is static/seeded rather than live:
+1. **Every bar is identical green** regardless of 75% vs 90% — no severity-based coloring, so a bad day doesn't visually stand out.
+2. **The tooltip shows a flat "Wellbeing Score: 3/5"** that doesn't appear to change per bar hovered — a single hardcoded tooltip string, not bound to per-day data.
+3. **"7-DAY WINDOW" looks like a control but likely isn't wired** — no visible way to actually change it, no loading state when it would change.
+
+## A.3 What "Live" Requires
+
+Two real queries (adherence from `intake_logs`, wellbeing from `symptom_logs`), merged server-side into one response keyed by date, with the frontend rendering exactly what it receives — never computing, guessing, or falling back to a hardcoded array.
+
+---
+
+# PART B — UPGRADED FEATURE SPEC
+
+## B.1 What Changes
+
+| Current | Upgraded |
+|---|---|
+| Static 7-day seeded array | Live query, date-range selectable (7/14/30 days) |
+| All bars same green | Color-coded by threshold: ≥85% green, 70–84% amber, <70% red |
+| Broken emoji, non-UTF-8-safe | Icon component (lucide-react), theme-colored, `aria-label`'d |
+| Flat, identical tooltip | Real per-day tooltip: exact %, doses taken/scheduled, wellbeing score, patient's note excerpt |
+| Dead-end chart (not clickable) | Click a day → jumps to that date in the Symptom Calendar / Timeline tab |
+| No pattern insight | One computed, non-diagnostic sentence when a real pattern is visible (e.g. "Wellbeing dropped on the 2 days adherence was below 75% this week") |
+
+## B.2 Non-Goals (Keep the Existing Honesty)
+
+- Never claim causation — the existing "non-causal" framing was correct and must be preserved in copy.
+- The pattern-insight sentence (B.1, last row) is informational only, never a diagnosis, never auto-actioned.
+
+---
+
+# PART C — WORKING CODE
+
+## C.1 Backend — FastAPI Endpoint
+
+```python
+# scaffold/backend/app/routers/doctor.py (add to existing router)
+
+from datetime import date, timedelta
+from fastapi import APIRouter, Query
+
+@router.get("/patient/{patient_id}/adherence-wellbeing")
+async def get_adherence_wellbeing_trend(
+    patient_id: str,
+    days: int = Query(7, ge=1, le=90)
+):
+    """
+    Live, merged adherence + wellbeing trend for the doctor's review card.
+    Never returns hardcoded/seeded data — if a day has no symptom log,
+    wellbeing_score is null and the frontend must render an empty state
+    for that day's icon, not a fake default.
+    """
+    sb = get_supabase()
+    start_date = (date.today() - timedelta(days=days - 1)).isoformat()
+
+    # Adherence % per day
+    intake_res = (
+        sb.table("intake_logs")
+        .select("scheduled_at, taken")
+        .eq("patient_id", patient_id)
+        .gte("scheduled_at", start_date)
+        .execute()
+    )
+
+    adherence_by_day: dict[str, dict] = {}
+    for row in intake_res.data:
+        day = row["scheduled_at"][:10]
+        bucket = adherence_by_day.setdefault(day, {"taken": 0, "total": 0})
+        bucket["total"] += 1
+        if row.get("taken"):
+            bucket["taken"] += 1
+
+    # Wellbeing score per day (+ optional note excerpt)
+    symptom_res = (
+        sb.table("symptom_logs")
+        .select("log_date, feeling_score, notes")
+        .eq("patient_id", patient_id)
+        .gte("log_date", start_date)
+        .execute()
+    )
+    wellbeing_by_day = {
+        row["log_date"]: {
+            "score": row["feeling_score"],
+            "note": (row.get("notes") or "")[:120] or None
+        }
+        for row in symptom_res.data
+    }
+
+    # Merge into one day-by-day series, oldest → newest
+    series = []
+    for i in range(days):
+        day = (date.today() - timedelta(days=days - 1 - i)).isoformat()
+        adherence = adherence_by_day.get(day)
+        adherence_pct = (
+            round(100 * adherence["taken"] / adherence["total"])
+            if adherence and adherence["total"] > 0
+            else None
+        )
+        wellbeing = wellbeing_by_day.get(day)
+
+        series.append({
+            "date": day,
+            "adherence_pct": adherence_pct,
+            "doses_taken": adherence["taken"] if adherence else None,
+            "doses_scheduled": adherence["total"] if adherence else None,
+            "wellbeing_score": wellbeing["score"] if wellbeing else None,
+            "note_excerpt": wellbeing["note"] if wellbeing else None,
+        })
+
+    # Non-causal pattern flag: only surfaced if it's actually true this window
+    low_adherence_days = [d for d in series if d["adherence_pct"] is not None and d["adherence_pct"] < 75]
+    low_wellbeing_on_low_adherence_days = [
+        d for d in low_adherence_days if d["wellbeing_score"] is not None and d["wellbeing_score"] <= 2
+    ]
+    pattern_note = None
+    if len(low_wellbeing_on_low_adherence_days) >= 2:
+        pattern_note = (
+            f"Wellbeing was low on {len(low_wellbeing_on_low_adherence_days)} of the "
+            f"{len(low_adherence_days)} days adherence was below 75% this window."
+        )
+
+    return {
+        "patient_id": patient_id,
+        "days": days,
+        "series": series,
+        "pattern_note": pattern_note  # null if no clear pattern — never fabricated
+    }
+```
+
+## C.2 Frontend — React Component (encoding-safe icons, real tooltip, clickable days)
+
+```tsx
+// scaffold/frontend/apps/doctor/src/components/AdherenceWellbeingTrend.tsx
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Frown, Meh, Smile, Laugh, HelpCircle, TrendingUp } from "lucide-react";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000/api";
+
+type DayPoint = {
+  date: string;
+  adherence_pct: number | null;
+  doses_taken: number | null;
+  doses_scheduled: number | null;
+  wellbeing_score: number | null;
+  note_excerpt: string | null;
+};
+
+type TrendResponse = {
+  series: DayPoint[];
+  pattern_note: string | null;
+};
+
+const MOOD_ICON: Record<number, { Icon: any; color: string; label: string }> = {
+  1: { Icon: Frown, color: "text-red-400", label: "Very low" },
+  2: { Icon: Frown, color: "text-amber-400", label: "Low" },
+  3: { Icon: Meh, color: "text-amber-300", label: "Okay" },
+  4: { Icon: Smile, color: "text-green-400", label: "Good" },
+  5: { Icon: Laugh, color: "text-green-400", label: "Great" },
+};
+
+function adherenceColor(pct: number | null): string {
+  if (pct === null) return "bg-[var(--border)]";
+  if (pct >= 85) return "bg-emerald-500";
+  if (pct >= 70) return "bg-amber-500";
+  return "bg-red-500";
+}
+
+function formatDayLabel(iso: string): string {
+  const d = new Date(iso + "T00:00:00");
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+export default function AdherenceWellbeingTrend({ patientId }: { patientId: string }) {
+  const [windowDays, setWindowDays] = useState<7 | 14 | 30>(7);
+  const [data, setData] = useState<TrendResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [hoveredDay, setHoveredDay] = useState<string | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    fetch(`${API_BASE}/doctor/patient/${patientId}/adherence-wellbeing?days=${windowDays}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (!cancelled) setData(d);
+      })
+      .catch(() => {
+        if (!cancelled) setData(null);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [patientId, windowDays]);
+
+  const goToDay = (day: string) => {
+    router.push(`/doctor/patient/${patientId}/timeline?date=${day}`);
+  };
+
+  return (
+    <div className="border border-[var(--border)] bg-[var(--bg-elevated)] p-6">
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-2">
+          <TrendingUp size={18} className="text-emerald-400" />
+          <h3 className="font-semibold text-[var(--fg)]">
+            Adherence &amp; Wellbeing Trend (Past {windowDays} Days)
+          </h3>
+        </div>
+        <select
+          value={windowDays}
+          onChange={(e) => setWindowDays(Number(e.target.value) as 7 | 14 | 30)}
+          className="text-xs bg-[var(--bg-muted)] border border-[var(--border)] px-2 py-1"
+        >
+          <option value={7}>7-DAY WINDOW</option>
+          <option value={14}>14-DAY WINDOW</option>
+          <option value={30}>30-DAY WINDOW</option>
+        </select>
+      </div>
+      <p className="text-xs text-[var(--fg-muted)] mb-4">
+        Display-only side-by-side tracking for doctor review (non-causal).
+      </p>
+
+      {loading ? (
+        <div className="grid grid-flow-col auto-cols-fr gap-2">
+          {Array.from({ length: windowDays }).map((_, i) => (
+            <div key={i} className="h-32 bg-[var(--bg-muted)] animate-pulse" />
+          ))}
+        </div>
+      ) : !data || data.series.length === 0 ? (
+        <p className="text-sm text-[var(--fg-muted)] py-6">
+          No adherence or wellbeing data recorded in this window yet.
+        </p>
+      ) : (
+        <div className={`grid gap-2 overflow-x-auto`} style={{ gridTemplateColumns: `repeat(${data.series.length}, minmax(90px, 1fr))` }}>
+          {data.series.map((day) => {
+            const mood = day.wellbeing_score ? MOOD_ICON[day.wellbeing_score] : null;
+            const isHovered = hoveredDay === day.date;
+
+            return (
+              <button
+                key={day.date}
+                onClick={() => goToDay(day.date)}
+                onMouseEnter={() => setHoveredDay(day.date)}
+                onMouseLeave={() => setHoveredDay(null)}
+                className="relative text-left border border-[var(--border)] p-2 hover:border-[var(--fg)] transition-colors"
+              >
+                <p className="text-xs text-[var(--fg-muted)] mb-2">{formatDayLabel(day.date)}</p>
+
+                <div className="h-16 flex items-end mb-2">
+                  <div
+                    className={`w-full ${adherenceColor(day.adherence_pct)} transition-all`}
+                    style={{ height: day.adherence_pct !== null ? `${day.adherence_pct}%` : "8%" }}
+                  />
+                </div>
+
+                <p className="text-sm font-semibold text-center mb-2">
+                  {day.adherence_pct !== null ? `${day.adherence_pct}%` : "—"}
+                </p>
+
+                <div className="flex justify-center">
+                  {mood ? (
+                    <mood.Icon size={18} className={mood.color} aria-label={mood.label} />
+                  ) : (
+                    <HelpCircle size={18} className="text-[var(--fg-muted)]" aria-label="No log" />
+                  )}
+                </div>
+
+                {isHovered && (
+                  <div className="absolute z-10 left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 bg-black text-white text-xs p-3 rounded shadow-lg">
+                    <p className="font-semibold mb-1">{formatDayLabel(day.date)}</p>
+                    <p>
+                      {day.adherence_pct !== null
+                        ? `${day.adherence_pct}% adherence (${day.doses_taken}/${day.doses_scheduled} doses)`
+                        : "No doses scheduled"}
+                    </p>
+                    <p>
+                      Wellbeing: {day.wellbeing_score ? `${day.wellbeing_score}/5` : "Not logged"}
+                    </p>
+                    {day.note_excerpt && (
+                      <p className="mt-1 italic text-[var(--fg-muted)]">"{day.note_excerpt}"</p>
+                    )}
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {data?.pattern_note && (
+        <p className="text-xs text-amber-400 mt-4 border-t border-[var(--border)] pt-3">
+          ⓘ {data.pattern_note} This is an observation, not a diagnosis.
+        </p>
+      )}
+    </div>
+  );
+}
+```
+
+---
+
+# PART D — FIX PROMPT (Copy-Paste to Your Coding Agent)
+
+```
+Fix the "Adherence & Wellbeing Trend" card in the doctor patient-detail view. It is
+currently rendering static/seeded data with a real bug: the wellbeing emoji are
+garbled (e.g. "ðŸ™‚") due to a UTF-8/Latin-1 mojibake issue from hardcoding raw emoji
+string literals somewhere in the component.
+
+1. DELETE any hardcoded emoji string arrays used for the mood indicator
+   (e.g. `["😢","🙁","😐","🙂","😄"][score-1]`). Replace with an icon-component
+   mapping (lucide-react Frown/Meh/Smile/Laugh, color-coded, each with a proper
+   aria-label) exactly as in the reference implementation below. This permanently
+   fixes the encoding bug because it never stores emoji as a string that can be
+   corrupted by an intermediate encoding step again.
+
+2. DELETE any static/seeded 7-day array currently backing this card. Add the
+   `GET /doctor/patient/{id}/adherence-wellbeing?days=N` endpoint (reference
+   implementation provided) that computes adherence % from `intake_logs` and
+   wellbeing score from `symptom_logs`, merges them by date server-side, and
+   returns `null` (not a fake default) for any day with no data.
+
+3. Rewire the frontend card to fetch that endpoint, keyed by `patientId` AND the
+   selected window size, so switching patients or window size always triggers a
+   fresh fetch with a loading skeleton — never leaves the previous patient's bars
+   visible while new data loads.
+
+4. Color-code each day's bar by threshold (≥85% green, 70–84% amber, <70% red) —
+   do not render every bar as the same static green regardless of value.
+
+5. Fix the tooltip so it shows that SPECIFIC day's real data (exact %, doses
+   taken/scheduled, wellbeing score, and a short excerpt from that day's symptom
+   note if one exists) — not one flat hardcoded string repeated for every bar.
+
+6. Make the "7-DAY WINDOW" control an actual working selector (7/14/30 days) that
+   re-fetches from the same endpoint with a different `days` param — if it's
+   currently just a static pill with no interaction, wire it up or remove the
+   dropdown-arrow affordance so it doesn't look clickable when it isn't.
+
+7. Make each day clickable, navigating to that exact date in the patient's
+   Timeline/Symptom Calendar tab (`/doctor/patient/{id}/timeline?date=YYYY-MM-DD`)
+   so the chart is an entry point into the record, not a dead-end visualization.
+
+8. Only surface the "pattern note" sentence when the backend's own threshold logic
+   (2+ days where adherence <75% AND wellbeing <=2 in the current window) actually
+   fires — never hardcode this sentence, and always keep the existing "this is an
+   observation, not a diagnosis" framing in the UI copy. Do not let this evolve into
+   a causal claim.
+
+9. Verify: open a patient with genuinely no symptom logs in the window and confirm
+   the card shows an honest empty/muted state per day (a "no log" icon, not a fake
+   score) rather than defaulting to a fabricated 3/5 or similar placeholder value.
+```
+
+

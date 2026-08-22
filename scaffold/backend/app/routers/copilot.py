@@ -368,16 +368,43 @@ async def get_visit_prep(patient_id: str):
     return patient_service.get_visit_prep(patient_id)
 
 
+class VaultSearchRequest(BaseModel):
+    query: str
+
+
 @router.get("/{patient_id}/vault")
 async def get_vault(patient_id: str, category: str | None = Query(default=None)):
     items = patient_service.get_vault(patient_id, category)
     return {"documents": items, "count": len(items)}
 
 
+@router.get("/{patient_id}/vault/insights")
+async def get_vault_insights(patient_id: str):
+    from app.services.vault_service import VaultAIService
+    insights = VaultAIService.get_vault_insights(patient_id, patient_service.vault_documents)
+    return {"insights": insights, "count": len(insights)}
+
+
+@router.post("/{patient_id}/vault/search-ai")
+async def search_vault_ai(patient_id: str, payload: VaultSearchRequest):
+    from app.services.vault_service import VaultAIService
+    res = VaultAIService.search_vault_ai(payload.query, patient_service.vault_documents, patient_id)
+    return res
+
+
+@router.get("/{patient_id}/vault/document/{doc_id}")
+async def get_vault_document_detail(patient_id: str, doc_id: str):
+    doc = patient_service.get_vault_document_detail(patient_id, doc_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Vault document not found")
+    return {"document": doc}
+
+
 @router.get("/{patient_id}/logs")
 async def get_logs(patient_id: str):
     logs = patient_service.get_logs(patient_id)
     return {"logs": logs, "count": len(logs)}
+
 
 
 def parse_ai_response_to_prescription_json(content: str) -> dict:

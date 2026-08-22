@@ -334,3 +334,262 @@ create policy "reminders_patient_update_status_only" on patient_reminders
 create policy "audit_logs_patient_read" on patient_audit_logs
   for select using (patient_id in (select id from patients where portal_user_id = auth.uid()));
 
+-- ========== SPEC 15: NEW AI FEATURES, SETTINGS & PROFILES ==========
+
+create table if not exists user_settings (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid references app_users(id) on delete cascade unique,
+
+  -- notifications
+  notify_channels text[] default '{in_app,whatsapp}',
+  quiet_hours_start time,
+  quiet_hours_end time,
+
+  -- language
+  ui_language text default 'en',
+  regional_language text default 'en',
+
+  -- ai feature toggles (role-relevant subset used per role)
+  ai_risk_forecast_enabled boolean default true,
+  ai_smart_search_enabled boolean default true,
+  ai_differential_suggestions_enabled boolean default true,
+  ai_daily_tip_enabled boolean default true,
+  ai_auto_triage_enabled boolean default true,
+  ai_inventory_forecast_enabled boolean default true,
+  ai_abnormal_flagging_enabled boolean default true,
+
+  updated_at timestamptz default now()
+);
+
+create table if not exists doctor_credentials (
+  id uuid primary key default uuid_generate_v4(),
+  doctor_id uuid references app_users(id) on delete cascade unique,
+  license_number text,
+  specialty text,
+  qualifications text,
+  signature_image_url text,
+  clinic_name text,
+  clinic_address text,
+  created_at timestamptz default now()
+);
+
+create table if not exists staff_availability (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid references app_users(id) on delete cascade,
+  day_of_week int check (day_of_week between 0 and 6),
+  start_time time,
+  end_time time,
+  is_available boolean default true,
+  created_at timestamptz default now()
+);
+
+create table if not exists patient_risk_scores (
+  id uuid primary key default uuid_generate_v4(),
+  patient_id uuid references patients(id) on delete cascade,
+  doctor_id uuid references app_users(id),
+  score int check (score between 0 and 100),
+  reason text,
+  contributing_factors jsonb,
+  computed_at timestamptz default now(),
+  doctor_action text, -- 'reviewed' | 'contacted_patient' | 'dismissed' | null
+  doctor_action_at timestamptz
+);
+create index if not exists idx_risk_scores_doctor_score on patient_risk_scores(doctor_id, score desc, computed_at desc);
+
+create table if not exists inventory_forecasts (
+  id uuid primary key default uuid_generate_v4(),
+  medication_id uuid references medications(id),
+  current_stock int,
+  avg_daily_dispense numeric,
+  days_until_stockout int,
+  suggested_reorder_qty int,
+  computed_at timestamptz default now()
+);
+create index if not exists idx_inventory_forecasts_med on inventory_forecasts(medication_id, computed_at desc);
+
+alter table user_settings enable row level security;
+alter table doctor_credentials enable row level security;
+alter table staff_availability enable row level security;
+alter table patient_risk_scores enable row level security;
+alter table inventory_forecasts enable row level security;
+
+create policy "settings_user_own" on user_settings
+  for all using (user_id = auth.uid());
+
+create policy "credentials_doctor_own" on doctor_credentials
+  for all using (doctor_id = auth.uid());
+
+create policy "availability_staff_own" on staff_availability
+  for all using (user_id = auth.uid());
+
+create policy "risk_scores_doctor_read" on patient_risk_scores
+  for select using (doctor_id = auth.uid() or auth.uid() in (select id from app_users where role = 'doctor'));
+
+create policy "risk_scores_doctor_update" on patient_risk_scores
+  for update using (doctor_id = auth.uid() or auth.uid() in (select id from app_users where role = 'doctor'));
+
+-- ========== DOCTOR CRM LAYER ==========
+
+create table if not exists crm_pipeline_stages (
+  id uuid primary key default uuid_generate_v4(),
+  doctor_id uuid references app_users(id) on delete cascade,
+  name text not null,
+  sort_order int not null default 0,
+  color text default '#111111',
+  is_terminal boolean default false,
+  created_at timestamptz default now(),
+  unique (doctor_id, name)
+);
+create index if not exists idx_crm_pipeline_stages_doctor on crm_pipeline_stages(doctor_id, sort_order);
+
+create table if not exists crm_patient_pipeline (
+  id uuid primary key default uuid_generate_v4(),
+  patient_id uuid references patients(id) on delete cascade,
+  doctor_id uuid references app_users(id) on delete cascade,
+  stage_id uuid references crm_pipeline_stages(id),
+  entered_stage_at timestamptz default now(),
+  priority_weight int default 0,
+  source text,
+  referred_by text,
+  updated_at timestamptz default now(),
+  unique (patient_id, doctor_id)
+);
+create index if not exists idx_crm_patient_pipeline_doctor_stage on crm_patient_pipeline(doctor_id, stage_id);
+create index if not exists idx_crm_patient_pipeline_patient on crm_patient_pipeline(patient_id);
+
+create table if not exists crm_pipeline_stage_history (
+  id uuid primary key default uuid_generate_v4(),
+  patient_id uuid references patients(id) on delete cascade,
+  doctor_id uuid references app_users(id) on delete cascade,
+  from_stage_id uuid references crm_pipeline_stages(id),
+  to_stage_id uuid references crm_pipeline_stages(id),
+  reason text,
+  changed_by uuid references app_users(id),
+  changed_at timestamptz default now()
+);
+
+create table if not exists crm_tasks (
+  id uuid primary key default uuid_generate_v4(),
+  patient_id uuid references patients(id) on delete cascade,
+  doctor_id uuid references app_users(id) on delete cascade,
+  assigned_to_id uuid references app_users(id),
+  title text not null,
+  description text,
+  due_at timestamptz,
+  priority text default 'normal' check (priority in ('low','normal','high','urgent')),
+  status text default 'open' check (status in ('open','in_progress','done','cancelled')),
+  completed_at timestamptz,
+  created_by uuid references app_users(id),
+  created_at timestamptz default now()
+);
+
+create table if not exists crm_patient_notes (
+  id uuid primary key default uuid_generate_v4(),
+  patient_id uuid references patients(id) on delete cascade,
+  doctor_id uuid references app_users(id) on delete cascade,
+  author_id uuid references app_users(id),
+  body text not null,
+  pinned boolean default false,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table if not exists crm_activity_log (
+  id uuid primary key default uuid_generate_v4(),
+  patient_id uuid references patients(id) on delete cascade,
+  doctor_id uuid references app_users(id) on delete cascade,
+  event_type text not null,
+  event_summary text not null,
+  event_data jsonb default '{}',
+  actor_id uuid references app_users(id),
+  occurred_at timestamptz default now()
+);
+
+create table if not exists crm_tags (
+  id uuid primary key default uuid_generate_v4(),
+  doctor_id uuid references app_users(id) on delete cascade,
+  name text not null,
+  color text default '#6b7280',
+  created_at timestamptz default now(),
+  unique (doctor_id, name)
+);
+
+create table if not exists crm_patient_tags (
+  id uuid primary key default uuid_generate_v4(),
+  patient_id uuid references patients(id) on delete cascade,
+  tag_id uuid references crm_tags(id) on delete cascade,
+  applied_by uuid references app_users(id),
+  applied_at timestamptz default now(),
+  unique (patient_id, tag_id)
+);
+
+create table if not exists crm_saved_segments (
+  id uuid primary key default uuid_generate_v4(),
+  doctor_id uuid references app_users(id) on delete cascade,
+  name text not null,
+  filter_json jsonb not null,
+  created_at timestamptz default now()
+);
+
+create table if not exists crm_communication_log (
+  id uuid primary key default uuid_generate_v4(),
+  patient_id uuid references patients(id) on delete cascade,
+  doctor_id uuid references app_users(id) on delete cascade,
+  channel text check (channel in ('call','whatsapp','sms','email','in_person')),
+  direction text check (direction in ('outbound','inbound')),
+  summary text not null,
+  logged_by uuid references app_users(id),
+  occurred_at timestamptz default now()
+);
+
+create table if not exists crm_automation_rules (
+  id uuid primary key default uuid_generate_v4(),
+  doctor_id uuid references app_users(id) on delete cascade,
+  name text not null,
+  trigger_type text not null,
+  trigger_params jsonb default '{}',
+  action_type text not null,
+  action_params jsonb default '{}',
+  is_active boolean default true,
+  created_at timestamptz default now()
+);
+
+create table if not exists crm_automation_run_log (
+  id uuid primary key default uuid_generate_v4(),
+  rule_id uuid references crm_automation_rules(id) on delete cascade,
+  patient_id uuid references patients(id) on delete cascade,
+  action_taken text,
+  ran_at timestamptz default now()
+);
+
+-- ========== VAULT ARCHIVE & AI EXTENSIONS ==========
+create table if not exists vault_document_links (
+  id uuid primary key default uuid_generate_v4(),
+  patient_id uuid references patients(id) on delete cascade,
+  source_document_id uuid references patient_documents(id) on delete cascade,
+  target_document_id uuid references patient_documents(id) on delete cascade,
+  link_type text not null check (link_type in ('prescribed_for_scan', 'ordered_lab', 'discharge_treatment', 'repeat_scan', 'related_condition')),
+  confidence_score numeric(4,2) default 90.0,
+  created_at timestamptz default now()
+);
+
+create table if not exists vault_ai_insights (
+  id uuid primary key default uuid_generate_v4(),
+  patient_id uuid references patients(id) on delete cascade,
+  insight_type text not null check (insight_type in ('duplicate_warning', 'prescription_comparison', 'expiry_decay', 'scan_trend', 'visit_bundle')),
+  title text not null,
+  body text not null,
+  severity text default 'info' check (severity in ('info', 'warning', 'critical', 'notice')),
+  related_document_ids uuid[] default '{}',
+  action_cta text,
+  action_href text,
+  created_at timestamptz default now()
+);
+
+create table if not exists vault_search_log (
+  id uuid primary key default uuid_generate_v4(),
+  patient_id uuid references patients(id) on delete cascade,
+  search_query text not null,
+  results_count int default 0,
+  searched_at timestamptz default now()
+);

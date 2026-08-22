@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
@@ -20,12 +20,14 @@ import {
   TrendingUp,
   User,
   CheckCircle2,
+  Kanban,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { API_BASE } from "@/lib/api";
 
 const TABS = [
   { slug: "timeline", label: "Timeline & Meds", icon: Activity },
+  { slug: "crm", label: "CRM & Activity", icon: Kanban },
   { slug: "vault", label: "Full Medical Record", icon: FileText },
   { slug: "ocr-xray", label: "OCR & X-Ray Review", icon: Sparkles },
   { slug: "prescribe", label: "Prescribe & Guardrails", icon: Pill },
@@ -42,7 +44,7 @@ export default function DoctorPatientLayout({
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useAuth();
-  const doctorId = user?.id || "demo-doctor";
+  const doctorId = user?.id || "doc-sharma-1";
   const patientId = params.patientId as string;
 
   const [patientData, setPatientData] = useState<any>(null);

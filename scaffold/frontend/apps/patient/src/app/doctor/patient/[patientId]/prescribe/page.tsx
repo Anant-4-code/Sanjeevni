@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
@@ -29,7 +29,7 @@ interface MedicationItem {
 export default function DoctorPrescribePage() {
   const params = useParams();
   const { user } = useAuth();
-  const doctorId = user?.id || "demo-doctor";
+  const doctorId = user?.id || "doc-sharma-1";
   const patientId = params.patientId as string;
 
   const [medications, setMedications] = useState<MedicationItem[]>([
@@ -253,6 +253,52 @@ export default function DoctorPrescribePage() {
           })}
         </div>
       )}
+
+      {/* ── AI-3 SMART DIFFERENTIAL SUGGESTIONS CHECKLIST (Doctor-Only) ── */}
+      <div className="bg-gradient-to-r from-blue-50/70 via-indigo-50/60 to-purple-50/70 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20 border border-blue-200/80 dark:border-blue-900/60 rounded-2xl p-5 shadow-xs space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
+              AI
+            </div>
+            <h3 className="font-bold text-sm text-[#0F172A] dark:text-white flex items-center gap-2">
+              <span>Smart Differential Checklist</span>
+              <span className="text-[10px] font-mono font-bold text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/60 px-2 py-0.5 rounded-full">
+                AI-3 CLINICAL AID
+              </span>
+            </h3>
+          </div>
+          <span className="text-[11px] text-[#64748B] dark:text-gray-400 font-mono">
+            Rule-Out Aid &bull; Internal Only
+          </span>
+        </div>
+
+        <p className="text-xs text-[#475569] dark:text-gray-300 leading-relaxed">
+          Based on presenting complaint &amp; medication profile, consider ruling out these associated secondary factors before final sign-off:
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+          <div className="p-3 bg-white dark:bg-[#111827] border border-blue-200/80 dark:border-blue-900/60 rounded-xl space-y-1 text-xs">
+            <div className="flex items-center justify-between font-bold text-[#0F172A] dark:text-white">
+              <span>1. Orthostatic Hypotension / Drug-Induced Vertigo</span>
+              <span className="text-[10px] font-mono text-amber-600">Consider</span>
+            </div>
+            <p className="text-[11px] text-[#64748B] dark:text-gray-400">
+              Verify correlation with evening Noveron (Gabapentin) dose. Advise lying/standing BP check.
+            </p>
+          </div>
+
+          <div className="p-3 bg-white dark:bg-[#111827] border border-blue-200/80 dark:border-blue-900/60 rounded-xl space-y-1 text-xs">
+            <div className="flex items-center justify-between font-bold text-[#0F172A] dark:text-white">
+              <span>2. Renal Clearance &amp; Metformin Lactic Acidosis Risk</span>
+              <span className="text-[10px] font-mono text-emerald-600">Monitored</span>
+            </div>
+            <p className="text-[11px] text-[#64748B] dark:text-gray-400">
+              Recent Serum Creatinine (0.9 mg/dL) confirms adequate glomerular filtration rate.
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* ── Section: Medication List Editor ── */}
       <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-2xl p-6 shadow-xs space-y-4">

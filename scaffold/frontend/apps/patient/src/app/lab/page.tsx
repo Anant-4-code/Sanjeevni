@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -12,6 +12,7 @@ import {
   Sparkles,
   Plus,
   RefreshCw,
+  AlertTriangle,
 } from "lucide-react";
 import { API_BASE } from "@/lib/api";
 
@@ -29,8 +30,8 @@ export default function LabPortalPage() {
   const [orders, setOrders] = useState<LabOrder[]>([
     {
       id: "ord-1",
-      patient_id: "patient-ramesh",
-      patient_name: "Ramesh Kumar",
+      patient_id: "patient-savitri",
+      patient_name: "Savitri Kumar",
       doctor_name: "Dr. Nitin Sharma",
       test_name: "HbA1c & Fasting Lipid Panel",
       ordered_at: "1 hr ago",
@@ -59,6 +60,8 @@ export default function LabPortalPage() {
   const [selectedOrder, setSelectedOrder] = useState<LabOrder | null>(orders[0]);
   const [hba1cVal, setHba1cVal] = useState("6.4");
   const [fastingGlucose, setFastingGlucose] = useState("138");
+  const [totalCholesterol, setTotalCholesterol] = useState("195");
+  const [serumCreatinine, setSerumCreatinine] = useState("0.9");
   const [status, setStatus] = useState<"idle" | "uploading" | "done">("idle");
 
   const handleUpdateStatus = (id: string, newStatus: "pending_draw" | "analyzing" | "results_ready") => {
@@ -83,19 +86,23 @@ export default function LabPortalPage() {
     { key: "results_ready", label: "03 // Results Published", color: "border-emerald-200 bg-emerald-50/50" },
   ];
 
+  const isHba1cAbnormal = parseFloat(hba1cVal) >= 6.5;
+  const isGlucoseAbnormal = parseFloat(fastingGlucose) > 110;
+  const isCholesterolAbnormal = parseFloat(totalCholesterol) > 200;
+
   return (
     <div className="max-w-7xl w-full mx-auto p-6 md:p-8 space-y-6">
       {/* Top Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#E2E8F0] dark:border-[#1F2937] pb-6">
         <div>
           <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#64748B] dark:text-gray-400 font-bold">
-            04 // PATHOLOGY & DIAGNOSTICS
+            04 // PATHOLOGY &amp; DIAGNOSTICS
           </span>
           <h1 className="font-display text-3xl font-black text-[#0F172A] dark:text-white mt-1">
             Laboratory Diagnostics Workbench
           </h1>
           <p className="text-xs text-[#64748B] dark:text-gray-400 mt-1">
-            Process test requisitions, enter biomarkers, and auto-generate dual clinical/plain-language summaries.
+            Process test requisitions, enter biomarkers, and auto-generate dual clinical/plain-language summaries with AI-7 abnormal flagging.
           </p>
         </div>
       </div>
@@ -161,7 +168,7 @@ export default function LabPortalPage() {
         })}
       </div>
 
-      {/* ── Section: Structured Biomarker Entry & AI Plain-Language Translation ── */}
+      {/* ── Section: Structured Biomarker Entry & AI-7 Plain-Language Translation ── */}
       {selectedOrder && (
         <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-3xl p-6 md:p-8 shadow-xs space-y-6">
           <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#1F2937] pb-4">
@@ -178,38 +185,80 @@ export default function LabPortalPage() {
           <form onSubmit={handlePublishResults} className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-[10px] font-mono uppercase text-[#64748B] font-bold">
-                  HbA1c Value (%) &mdash; Ref: &lt; 5.7% Normal, 5.7-6.4% Prediabetes, &ge; 6.5% Diabetes
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-mono uppercase text-[#64748B] font-bold">
+                    HbA1c Value (%) &mdash; Ref: &lt; 5.7% Normal, 5.7-6.4% Prediabetes, &ge; 6.5% Diabetes
+                  </label>
+                  {isHba1cAbnormal && (
+                    <span className="text-[9px] font-mono uppercase font-bold text-rose-600 bg-rose-50 px-1.5 py-0.2 rounded">
+                      AI-7 Flagged: High
+                    </span>
+                  )}
+                </div>
                 <input
                   type="text"
                   value={hba1cVal}
                   onChange={(e) => setHba1cVal(e.target.value)}
+                  className={`w-full bg-[#F8F7F4] dark:bg-[#1F2937] border rounded-xl px-4 py-2.5 text-xs font-bold text-[#0F172A] dark:text-white ${
+                    isHba1cAbnormal ? "border-rose-400" : "border-[#E2E8F0] dark:border-[#1F2937]"
+                  }`}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-mono uppercase text-[#64748B] font-bold">
+                    Fasting Blood Sugar (mg/dL) &mdash; Ref: 70 - 99 mg/dL
+                  </label>
+                  {isGlucoseAbnormal && (
+                    <span className="text-[9px] font-mono uppercase font-bold text-amber-600 bg-amber-50 px-1.5 py-0.2 rounded">
+                      AI-7 Flagged: Elevated
+                    </span>
+                  )}
+                </div>
+                <input
+                  type="text"
+                  value={fastingGlucose}
+                  onChange={(e) => setFastingGlucose(e.target.value)}
+                  className={`w-full bg-[#F8F7F4] dark:bg-[#1F2937] border rounded-xl px-4 py-2.5 text-xs font-bold text-[#0F172A] dark:text-white ${
+                    isGlucoseAbnormal ? "border-amber-400" : "border-[#E2E8F0] dark:border-[#1F2937]"
+                  }`}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-mono uppercase text-[#64748B] font-bold">
+                  Total Cholesterol (mg/dL) &mdash; Ref: &lt; 200 mg/dL Desirable
+                </label>
+                <input
+                  type="text"
+                  value={totalCholesterol}
+                  onChange={(e) => setTotalCholesterol(e.target.value)}
                   className="w-full bg-[#F8F7F4] dark:bg-[#1F2937] border border-[#E2E8F0] dark:border-[#1F2937] rounded-xl px-4 py-2.5 text-xs font-bold text-[#0F172A] dark:text-white"
                 />
               </div>
 
               <div className="space-y-1">
                 <label className="text-[10px] font-mono uppercase text-[#64748B] font-bold">
-                  Fasting Blood Sugar (mg/dL) &mdash; Ref: 70 - 99 mg/dL
+                  Serum Creatinine (mg/dL) &mdash; Ref: 0.7 - 1.2 mg/dL
                 </label>
                 <input
                   type="text"
-                  value={fastingGlucose}
-                  onChange={(e) => setFastingGlucose(e.target.value)}
+                  value={serumCreatinine}
+                  onChange={(e) => setSerumCreatinine(e.target.value)}
                   className="w-full bg-[#F8F7F4] dark:bg-[#1F2937] border border-[#E2E8F0] dark:border-[#1F2937] rounded-xl px-4 py-2.5 text-xs font-bold text-[#0F172A] dark:text-white"
                 />
               </div>
             </div>
 
-            {/* AI Plain Language Summary Preview */}
-            <div className="p-4 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 rounded-2xl space-y-1 text-xs">
+            {/* AI-7 Plain Language Summary Preview */}
+            <div className="p-4 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 rounded-2xl space-y-1.5 text-xs">
               <div className="flex items-center gap-1.5 font-bold text-emerald-900 dark:text-emerald-300">
                 <Sparkles className="w-4 h-4 text-emerald-600" />
-                <span>Auto-Generated Patient Plain-Language Translation (Saved to Patient Vault)</span>
+                <span>AI-7 Auto-Generated Plain-Language Translation (For Patient Report Vault)</span>
               </div>
               <p className="text-emerald-950 dark:text-emerald-200 text-[11px] leading-relaxed">
-                "Your 3-month average blood sugar (HbA1c) is <strong>{hba1cVal}%</strong>, which is within the borderline target range for your diabetes regimen. Fasting glucose is <strong>{fastingGlucose} mg/dL</strong>. Your doctor will review this at your next visit."
+                &ldquo;Your 3-month average blood sugar (HbA1c) was recorded at <strong>{hba1cVal}%</strong>, and Fasting Glucose is <strong>{fastingGlucose} mg/dL</strong>. Total Cholesterol is <strong>{totalCholesterol} mg/dL</strong>, and kidney filtration marker (Serum Creatinine) is healthy at <strong>{serumCreatinine} mg/dL</strong>. Your doctor will review this at your next visit.&rdquo;
               </p>
             </div>
 
@@ -225,7 +274,7 @@ export default function LabPortalPage() {
             {status === "done" && (
               <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-                <span>Results published successfully! Indexed into Patient Vault & Doctor Full Record.</span>
+                <span>Results published successfully! Indexed into Patient Vault &amp; Doctor Full Record.</span>
               </div>
             )}
           </form>
