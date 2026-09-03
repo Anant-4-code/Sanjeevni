@@ -1967,3 +1967,662 @@ string literals somewhere in the component.
 ```
 
 
+# Sanjeevani — Vault Archive: Prescriptions & Scans
+### What Belongs Here + AI Features to Add
+
+---
+
+# PART A — WHAT "VAULT ARCHIVE" SHOULD CONTAIN OVERALL
+
+The Vault is the patient's (and doctor's, via full-record) permanent, categorized document store. Per the multi-document model (doc 12), it should never be "one slot per category" — it's an ever-growing archive.
+
+## A.1 Top-Level Categories
+
+```
+Vault Archive
+├── 💊 Prescriptions           (every prescription ever written, any doctor)
+├── 🧪 Lab Diagnostic Reports   (every test result, any lab)
+├── 🦴 Imaging & Scans          (X-Ray, MRI, CT, Ultrasound)
+├── 🏥 Hospital Discharges       (discharge summaries, admission notes)
+├── 💉 Vaccinations             (immunization certificates)
+├── 📋 Referral Letters          (doctor-to-doctor referrals)
+└── 📁 Other Documents          (patient-uploaded, insurance docs, misc)
+```
+
+Each category is a **list, sorted newest-first**, filterable by date range and doctor, with a count badge (e.g. "Prescriptions (12)") — never a single overwritten record.
+
+---
+
+# PART B — WHAT GOES INSIDE ONE "PRESCRIPTION" ENTRY
+
+This is the actual content model for a single prescription card in the vault.
+
+## B.1 Header (always visible, collapsed state)
+
+| Field | Example | Source |
+|---|---|---|
+| Prescribing doctor + specialty | Dr. V. K. Rai, Cardiology | `prescriptions.doctor_id` → `app_users` |
+| Date issued | Aug 12, 2026 | `prescriptions.verified_at` |
+| Status badge | Verified / Dispensed / Expired | `prescriptions.status` |
+| Condition tag(s) | HEART CARE, DIABETES | `prescription_items.condition_tag` |
+| Days remaining (if active) | 3 days left ⚠ | computed from `duration_days` (Feature #1) |
+| Source clinic | Manikanta Neuro Centre | `app_users.clinic_name` |
+
+## B.2 Expanded Detail (on tap)
+
+1. **Original scanned image** — the raw prescription scan, zoomable, with OCR bounding-box overlay (existing Evidence Viewer).
+2. **Structured medicine list** — for each medicine:
+   - Name + dosage + frequency (e.g. "1-0-1") + duration
+   - OCR confidence score (so a low-confidence field is visually flagged)
+   - **Uses & Details** (expandable) — what it's for, side effects, precautions (Feature #6/medication_info)
+   - **Cost estimate** — brand price, generic alternative if available (Feature #7)
+3. **Doctor's patient-facing notes** — the plain-language note field, separate from clinical SOAP (doc 08 §PV-9).
+4. **Regional language toggle** — re-render instructions/notes in the patient's chosen language (doc 08 §PV-7), with drug names/dosages always kept in original form.
+5. **Allergy cross-check flag** — if any medicine on this prescription conflicts with a patient-declared allergy (Feature #5), show a small warning badge here too, not just at prescribing time.
+6. **Refill status** (if applicable) — pending/approved/dispensed, with a direct [Request Refill] action if running low.
+7. **Linked lab orders** — if this prescription was accompanied by a diagnostic order, cross-link to that lab report.
+8. **Folder membership** — which Prescription Folder(s) this belongs to (e.g. "Diabetes Management"), with [Add to Folder].
+9. **Verification metadata** (doctor/full-record view only) — protocol hash, `verified_at` timestamp, immutable audit trail reference — this is what makes the record medico-legally trustworthy, and should be visible to a doctor reviewing cross-doctor history even though a patient doesn't need to see the hash itself.
+10. **Source flag** — `clinic_verified` vs `patient_uploaded` (doc 12 §B.1) — an uploaded external prescription must always show "Not clinically verified" until a doctor confirms it.
+
+## B.3 What Goes Inside a "Scan" Entry (X-Ray/MRI/CT)
+
+| Field | Notes |
+|---|---|
+| Scan type + body region | "Right Wrist — Digital X-Ray" |
+| Ordering/reviewing doctor | who requested + who read it |
+| AI detection results | e.g. "Fracture (92% confidence)" with bounding box overlay |
+| Radiologist/doctor's written finding | plain text, e.g. "Non-displaced cortical hairline fissure" |
+| Normal/Abnormal badge | quick-glance status |
+| Linked prescription (if treatment followed) | e.g. the pain medication prescribed because of this finding |
+| Comparison view (if repeat scan exists) | side-by-side with a prior scan of the same region/type |
+
+---
+
+# PART C — AI FEATURES FOR THIS SPECIFIC SECTION
+
+These are scoped tightly to "Prescriptions & Scans," building only on infrastructure you already have (OCR, X-ray ONNX model, LLM pipeline, embeddings).
+
+## C.1 AI Feature Matrix
+
+| ID | Feature | What It Does | Reuses |
+|---|---|---|---|
+| VA-1 | **Auto-categorization on upload** | When any document is uploaded/scanned, AI classifies it into the right vault category (prescription vs. lab vs. scan vs. discharge) automatically instead of the user picking manually | Existing OCR + a lightweight classification prompt |
+| VA-2 | **Duplicate/near-duplicate detection** | Flags if a newly uploaded prescription looks like a re-upload of one already in the vault (same doctor, same date range, similar medicines) — prevents clutter | Embedding similarity over extracted text |
+| VA-3 | **Auto-linking related documents** | Automatically links a prescription to the lab order that prompted it, or a scan to the prescription that resulted from its finding, based on date proximity + doctor + condition tag match | Rule-based + LLM disambiguation for ambiguous cases |
+| VA-4 | **"Explain This Scan" plain-language summary** | For X-ray/MRI entries, generates a 2-3 sentence plain-language explanation of the radiologist's finding (already partly spec'd as Feature #6) | Existing plain-language pipeline |
+| VA-5 | **Prescription comparison across visits** | If a patient has multiple prescriptions for the same condition tag over time, AI generates a one-line diff: "Metformin dose increased from 500mg to 1000mg since March" | LLM summarization over structured `prescription_items` history |
+| VA-6 | **Scan trend/comparison view** | For repeat imaging of the same body region, AI drafts a short comparison note: "Compared to the Jan 2026 MRI, no new findings; prior mild disc bulge appears stable" | Vision-capable LLM comparing two scan images + their written findings |
+| VA-7 | **Smart Vault Search** | Natural-language search across the entire vault: "Show me all prescriptions for my back pain" or "When was my last chest X-ray?" — returns matching documents, not just keyword hits | Same RAG approach as full-record "Ask about this patient" (doc 15 AI-9), scoped to one patient's own vault |
+| VA-8 | **OCR confidence-based review nudge** | If any field in a scanned prescription has OCR confidence below a threshold (e.g. 80%), proactively flag it for the doctor to double check at next sign-off, rather than silently trusting a low-confidence transcription | Existing OCR confidence scores, already computed but not surfaced as an action |
+| VA-9 | **Expiry/relevance decay flagging** | Old prescriptions for resolved short-term conditions (e.g. a 5-day antibiotic course from 2 years ago) get a subtle "Archived — likely no longer relevant" tag so the vault doesn't visually clutter with irrelevant history, without ever deleting the record | Simple rule: `duration_days` elapsed + condition tag not in patient's current active tags |
+| VA-10 | **Auto-generated visit summary from a bundle of documents** | If a patient uploads/receives a prescription + lab report + discharge summary from the same visit, AI drafts one combined visit summary card sitting above the three individual documents | LLM summarization across linked documents (VA-3's links feed this) |
+
+## C.2 Implementation Notes (Keep It Safe)
+
+- **VA-1, VA-2, VA-3, VA-9** are pure organization/UX — no clinical risk, safe to fully automate.
+- **VA-4, VA-5, VA-6, VA-10** produce clinical-adjacent language — always show a "not medical advice, generated summary" caption, and for doctor-facing views, always link back to the original document rather than replacing it.
+- **VA-8** must never auto-correct a low-confidence field itself — it only nudges a human to look, consistent with your existing rule that OCR is assistive, not authoritative.
+- **VA-7** must never search into `patient_uploaded` (unverified) documents and present them with the same confidence as `clinic_verified` ones — always carry the verification badge through into search results.
+
+## C.3 Suggested UI Addition — "AI Insights" Strip Above the Document List
+
+```
+┌─────────────────────────────────────────────────────┐
+│  💊 Prescriptions (12)                    [🔍 Ask...]│
+├─────────────────────────────────────────────────────┤
+│  ✨ Metformin dose increased 500mg → 1000mg since    │
+│     March 2026 (Dr. Patel)                            │
+│  ✨ 2 prescriptions this month may be duplicates —     │
+│     [Review]                                          │
+├─────────────────────────────────────────────────────┤
+│  [ Aug 12, 2026 — Dr. Rai — Gabapin NT ...      ]    │
+│  [ Jul 2, 2026 — Dr. Sharma — Noveron ...        ]    │
+│  ...                                                  │
+└─────────────────────────────────────────────────────┘
+```
+
+---
+
+# PART D — BUILD PROMPT
+
+```
+Add the following to the existing Vault Archive (patient_documents table from doc 12):
+
+1. Confirm every field listed in Part B.1/B.2/B.3 above is actually returned by the
+   vault list/detail endpoints — cross-check against `prescriptions`,
+   `prescription_items`, `medications`, `medication_info`, `scans`, and
+   `patient_documents`. Add any missing joins (e.g. cost estimate from Feature #7's
+   reference data, allergy cross-check from Feature #5).
+
+2. Implement VA-1 (auto-categorization) at upload time: when a new document hits the
+   OCR/ingestion pipeline, run a classification prompt ("prescription | lab_report |
+   xray_scan | discharge_summary | other") and set `patient_documents.category`
+   automatically — still let the user recategorize manually if wrong.
+
+3. Implement VA-3 (auto-linking) as a background job: for each new document, search
+   for other documents from the same patient within +/- 3 days with matching
+   condition_tag or doctor_id, and populate `linked_prescription_id` /
+   `linked_lab_result_id` / `linked_diagnostic_order_id` on `patient_documents`
+   accordingly.
+
+4. Implement VA-7 (Smart Vault Search) as
+   `POST /api/patient/{id}/vault/search-ai { query }`, scoped ONLY to that patient's
+   own documents, always including each result's `source` (clinic_verified vs
+   patient_uploaded) in the response so the frontend can badge it correctly.
+
+5. Implement VA-5 (prescription comparison) as a computed insight shown only when 2+
+   prescriptions share the same condition_tag for the same patient — never fabricate
+   a comparison when there's only one data point.
+
+6. Add the "AI Insights" strip (Part C.3) above the Prescriptions list, populated by
+   whichever of VA-2/VA-5/VA-9 have something real to say for this patient right now
+   — show nothing in that strip when there are no genuine insights, rather than
+   filling it with generic filler text.
+```
+
+
+
+
+
+
+
+
+# Sanjeevani — Vault Archive: Lab Diagnostic Reports
+### What Belongs Here + AI Features to Add
+
+---
+
+# PART A — WHAT GOES INSIDE ONE "LAB REPORT" ENTRY
+
+## A.1 Header (always visible, collapsed state)
+
+| Field | Example | Source |
+|---|---|---|
+| Test name | Complete Blood Count (CBC) | `diagnostic_orders.test_name` |
+| Date collected / reported | Aug 12, 2026 | `lab_results.created_at` |
+| Ordering doctor + specialty | Dr. Rai, Cardiology | `diagnostic_orders.doctor_id` |
+| Lab / diagnostic center | Central Path Lab | `lab_results.lab_name` |
+| Overall status badge | Normal / Abnormal / Critical | computed from flagged parameters |
+| Source flag | Clinic-Verified / Patient-Uploaded | `patient_documents.source` (doc 12) |
+
+## A.2 Expanded Detail (on tap)
+
+1. **Original report file** — scanned/uploaded PDF or image, viewable full-screen.
+2. **Structured biomarker table** — for each parameter:
+   - Parameter name, result value, unit, reference range
+   - Status badge per row: Low / Normal / High / Critical (color-coded, not just text)
+   - Trend arrow if this same test exists from a prior date (↑↓→)
+3. **Plain-language summary** — 2-3 sentence explanation of what the results mean overall, written for the patient (Feature #6), clearly separated from the raw table so a patient isn't left to interpret numbers alone.
+4. **Doctor's review note** — "Reviewed by Dr. Rai — no action needed" / "Discuss at next visit" — distinct from the lab tech's raw data entry, this is the doctor's clinical read on the result.
+5. **Linked prescription/order** — the `diagnostic_orders` row that requested this test, and if a prescription was written as a result of this report, a cross-link to it.
+6. **Re-check reminder status** — if this test type has a recommended recheck interval (e.g. HbA1c every 3 months), show "Next recheck suggested: Nov 2026" with a [Set Reminder] action (Feature #4).
+7. **Historical trend chart** — if 2+ instances of the same test exist, a simple line chart across all dates, not just this one snapshot (doc 12 §MD-6).
+8. **Abnormal flag audit** — which specific parameters triggered the "Abnormal" badge, so the summary badge is always traceable to real numbers, never a vague label.
+
+---
+
+# PART B — AI FEATURES FOR LAB REPORTS
+
+| ID | Feature | What It Does | Reuses |
+|---|---|---|---|
+| LR-1 | **Auto-flagging of abnormal values** | As soon as a lab tech enters raw values, AI compares each against the reference range and flags Low/High/Critical automatically — lab tech confirms, doesn't manually eyeball every row | Rule-based range check, already partly built (Feature #7 in doc 09) |
+| LR-2 | **Plain-language summary draft** | Generates the patient-facing 2-3 sentence summary from the structured values, for the lab tech/doctor to review and approve before it's patient-visible | Existing plain-language pipeline |
+| LR-3 | **Cross-report trend detection** | When a new result comes in for a test the patient has had before, AI automatically computes the trend ("HbA1c improving: 7.8% → 7.2% → 6.9% over 6 months") instead of a doctor manually comparing PDFs | Structured `lab_results` history, no new infra |
+| LR-4 | **Critical-value escalation** | If any parameter comes back at a critical (not just abnormal) threshold, immediately notify the ordering doctor (not just wait for them to open the vault) — this is the one lab-report AI feature with real urgency, so it should push, not just passively flag | New: threshold check + existing notification pipeline |
+| LR-5 | **Recheck interval suggestion** | Based on test type + result trend, AI suggests when the next recheck should happen (e.g. sooner than the default interval if a value is borderline) — doctor confirms before it becomes a patient reminder | LLM/rule hybrid over test-type reference data |
+| LR-6 | **Duplicate/redundant test detection** | If a doctor is about to order a test the patient already had very recently (e.g. within the last week) with no clinical reason for repeat, flag it at order time — saves cost and patient inconvenience | Simple recency check against `diagnostic_orders`, surfaced at order-creation time |
+| LR-7 | **Natural-language query over lab history** | "What was my cholesterol last year?" / doctor: "Show me all abnormal kidney function tests for this patient" — answers from the full lab history, not manual scrolling | Same RAG approach as vault search (doc 18 VA-7) |
+| LR-8 | **Multi-parameter pattern insight (doctor-only, non-diagnostic)** | Flags when a combination of parameters together suggests something worth a doctor's attention (e.g. rising creatinine + declining eGFR trend) — framed strictly as "worth reviewing," never a diagnosis | LLM reasoning over structured trend data, doctor-facing only, logged as AI-suggested per doc 15's audit-trail rule |
+
+## B.1 Safety Notes
+
+- **LR-1, LR-3, LR-6** are safe to fully automate — pure data computation, no interpretation risk.
+- **LR-2, LR-5, LR-8** must always be reviewed/approved by a lab tech or doctor before becoming visible to the patient or acted on — never auto-publish a generated summary or auto-schedule a recheck without human confirmation.
+- **LR-4** is the one feature that should push proactively rather than wait to be viewed, because a critical value sitting unopened in a vault is a real safety gap — but it must never bypass the doctor to notify the patient directly with clinical interpretation; the doctor sees it first.
+- **LR-8** is explicitly doctor-only, never patient-visible, and every instance must be logged with whether the doctor reviewed/dismissed it (same audit pattern as the Risk Forecast Card, doc 15 §A.3).
+
+---
+
+# PART C — SUGGESTED UI (Matches Existing Vault Style)
+
+```
+┌─────────────────────────────────────────────────────┐
+│  🧪 Lab Diagnostic Reports (6)             [🔍 Ask...]│
+├─────────────────────────────────────────────────────┤
+│  ✨ HbA1c improving: 7.8% → 7.2% → 6.9% over 6 months │
+│  🔴 Critical value flagged in Aug 12 report — Dr. Rai │
+│     notified                                          │
+├─────────────────────────────────────────────────────┤
+│  ┌───────────────────────────────────────────────┐   │
+│  │ 🧪 Complete Blood Count (CBC)      [Normal]    │   │
+│  │ Aug 12, 2026 · Dr. Rai · Central Path Lab      │   │
+│  │ ────────────────────────────────────────────   │   │
+│  │ "Your blood count looks good. All values are    │   │
+│  │  within normal range."                          │   │
+│  │ Reviewed by Dr. Rai: "No action needed."         │   │
+│  │ [View Full Report →]                            │   │
+│  └───────────────────────────────────────────────┘   │
+│  ┌───────────────────────────────────────────────┐   │
+│  │ 🧪 HbA1c                        [High] ↓ trend │   │
+│  │ Aug 12, 2026 · Dr. Patel                        │   │
+│  │ Next recheck suggested: Nov 12, 2026            │   │
+│  │ [View Trend Chart →] [Set Reminder]             │   │
+│  └───────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────┘
+```
+
+---
+
+# PART D — BUILD PROMPT
+
+```
+Extend the Vault Archive's Lab Diagnostic Reports category with the fields and AI
+features above:
+
+1. Confirm the lab report detail view returns every field in Part A.1/A.2 — cross-
+   check against `diagnostic_orders`, `lab_results`, and `patient_documents`. Add a
+   `lab_results.reviewed_by_doctor_note` column if it doesn't exist, distinct from
+   the lab tech's raw entry and the patient-facing plain-language summary.
+
+2. Implement LR-1 (auto-flagging) at the point the lab tech saves raw values —
+   compare each parameter against a reference-range table and set a per-parameter
+   status before the lab tech ever sees the "Normal/Abnormal" preview, so they're
+   confirming AI's flags, not doing the range-lookup manually.
+
+3. Implement LR-4 (critical-value escalation) as a synchronous check on save: if any
+   parameter crosses a "critical" (not just "abnormal") threshold, immediately fire a
+   notification to the ordering doctor through the existing alert/notification
+   pipeline — do not let this wait for a nightly batch job like the other AI features
+   in this system; a critical lab value is time-sensitive.
+
+4. Implement LR-3 (trend detection) as part of the same full-record / lab-trends
+   endpoint already spec'd in doc 12 §B.3 — this is not new infrastructure, just
+   ensure the Lab Reports vault category surfaces the same trend data inline, not
+   only in the doctor's full-record screen.
+
+5. Implement LR-6 (duplicate test detection) at the moment a doctor creates a new
+   `diagnostic_orders` row — check for the same `test_name` for the same patient
+   within the last N days (configurable, default 7) and show a soft warning
+   ("Patient had this test 3 days ago — order again?") that the doctor can dismiss
+   and proceed past, never a hard block.
+
+6. Gate LR-2, LR-5, and LR-8 behind an explicit human-review step before anything
+   reaches the patient: LR-2's draft summary and LR-5's suggested recheck date must
+   sit in a "pending review" state until a lab tech/doctor approves them; LR-8's
+   pattern insight is doctor-only and must never be patient-visible at all, logged
+   with `doctor_action` exactly like the Risk Forecast Card in doc 15.
+```
+
+
+
+
+
+
+# Sanjeevani — Dosing & Reminders Calendar
+### Bug Diagnosis + Full Spec + AI Features + Working Code + Fix Prompt
+
+**Screen:** Patient PWA, `/patient/calendar` — "09 // Care Schedule Calendar"
+
+---
+
+# PART A — WHAT'S WRONG (Diagnosis From the Screenshot)
+
+## A.1 The "Today" Indicator Is Stale/Hardcoded
+
+The black filled circle marking "today" sits on **August 14**, but the "Selected Day" panel on the right — and the actual system date — is **August 22, 2026**. This is the same class of bug as the adherence widget and the doctor dashboard: a hardcoded "today" value baked in during development (Aug 14 was very likely the actual date this screen was being built) that never gets recomputed from `new Date()` / the server clock. It's a dead giveaway the calendar's "current day" highlight is a static prop, not `today.getDate()`.
+
+## A.2 No Dose Indicators on Any Day Cell
+
+Every day cell in the grid is blank — no dot, no color, no count badge — even on days that almost certainly have scheduled doses (this patient has active prescriptions elsewhere in the app, per every other screenshot you've shared). A calendar that can't show "this day has 3 doses, 2 taken" at a glance is not doing the one job a dosing calendar exists to do: let a patient (or caregiver) see their month's compliance shape in one look, per doc 08 §PV-10 / §6.4's spec.
+
+## A.3 Selected Day Panel Is Empty ("0/0 Taken", "Scheduled Doses (0)")
+
+August 22 shows **zero** scheduled doses. Either:
+- The calendar isn't querying `intake_logs`/`patient_dosing_timeline` at all for this month (most likely, given #A.2 is also blank everywhere), or
+- It's querying but filtering on the wrong date format/timezone (a common bug: comparing a `date` column to a `datetime` string incorrectly, silently returning zero rows).
+
+## A.4 Reminders Are Invisible on the Calendar
+
+Per doc 08 §5.4 / §6.4, the calendar is supposed to overlay **both** doses and staff-sent reminders on the same grid (a day with a doctor's "come in Friday" reminder should show a bell indicator alongside the dose dots). Right now there's no reminder indicator anywhere — either the overlay was never built, or the `patient_reminders` join was never added to whatever endpoint (if any) backs this screen.
+
+## A.5 No Legend / No Empty-vs-No-Data Distinction
+
+Even if today genuinely has zero doses, the UI can't currently tell the difference between "no prescriptions active" and "data failed to load" — both render as the same blank grid. That's a debugging and trust problem: a patient staring at an empty calendar has no way to know if that's real or broken.
+
+---
+
+# PART B — FULL FEATURE SPEC (What This Screen Should Actually Do)
+
+## B.1 Day Cell — What It Should Render
+
+| State | Visual |
+|---|---|
+| Has doses, all taken | Small filled green dot(s), count badge if >1 |
+| Has doses, some pending | Outlined/half-filled dot, amber |
+| Has doses, some missed (past due, not taken) | Red dot |
+| Has a reminder (staff-sent or system) | Small bell icon, distinct from dose dots |
+| No scheduled activity | Fully blank (this is the ONLY case that should look like today's screenshot) |
+| Today | A ring/border around the date number (computed from real date, never hardcoded) |
+| Selected | Filled background (already works correctly in the screenshot) |
+
+## B.2 Selected Day Panel — What It Should Render
+
+```
+SELECTED DAY
+August 22, 2026                          [2 / 3 TAKEN]
+
+SCHEDULED DOSES (3)
+┌─────────────────────────────────────┐
+│ 08:00 AM  Noveron 500mg    ✓ Taken   │
+│           Dr. Sharma · marked by you  │
+├─────────────────────────────────────┤
+│ 02:00 PM  Gabapin NT 100mg  ✓ Taken   │
+│           Dr. Rai · marked by Priya   │
+│           (caregiver)                 │
+├─────────────────────────────────────┤
+│ 08:00 PM  Metformin 500mg   ○ Pending │
+│           Dr. Patel        [Mark Taken]│
+└─────────────────────────────────────┘
+
+REMINDERS (1)
+┌─────────────────────────────────────┐
+│ 🔔 Follow-up with Dr. Rai              │
+│    Sent by Dr. Rai · "Please come in  │
+│    Friday for a quick check"           │
+└─────────────────────────────────────┘
+```
+
+## B.3 Month Navigation
+
+Clicking `<` / `>` must trigger a fresh fetch for the new month (not slice a client-side cached array that only ever held one month), with a loading state on the grid while it loads — same pattern as every other "switch context → refetch" fix already applied elsewhere in this app.
+
+## B.4 Empty vs. Error States (Must Be Distinguishable)
+
+- **Genuinely no data this month** → "No doses or reminders scheduled this month." (calm, not alarming)
+- **Fetch failed** → a visible retry affordance ("Couldn't load your calendar. [Retry]"), never a silently blank grid indistinguishable from "nothing scheduled."
+
+---
+
+# PART C — AI FEATURES FOR THE CALENDAR
+
+| ID | Feature | What It Does | Reuses |
+|---|---|---|---|
+| CAL-1 | **Smart reminder-time suggestion** | Analyzes which times of day a patient most reliably marks doses taken vs. misses, and suggests shifting a dose's reminder time closer to their actual habit (e.g. "You usually take your evening dose around 9 PM, not 8 PM — shift the reminder?") | Pattern over `intake_logs.marked_at` timestamps, no new infra |
+| CAL-2 | **Month-at-a-glance adherence heatmap summary** | One line above the grid: "This month: 82% adherence, your best week was Aug 10–16" — computed, not decorative | Same data already powering the day dots |
+| CAL-3 | **Travel/schedule-aware reminder shift** | If a patient marks upcoming days as "traveling" (simple toggle), AI suggests adjusted reminder times for a different timezone or shifted routine, rather than silently sending reminders at the wrong local hour | Existing reminder infra + a new lightweight travel-mode flag |
+| CAL-4 | **Natural-language calendar query** | "When do I take my evening pills?" or "What did I miss last week?" answered directly instead of scrolling the grid | Same RAG/search pattern as vault search (doc 18 VA-7), scoped to this patient's own schedule |
+| CAL-5 | **Predictive missed-dose risk day** | Based on historical pattern (e.g. patient reliably misses Sunday evening doses), proactively surface "You've missed this dose the last 3 Sundays — want an extra reminder this week?" before it happens, not just react after | Pattern detection over `intake_logs`, feeds into existing Smart Reminders (Feature #4) rather than replacing it |
+
+## Safety Note
+All five are informational/UX conveniences, not diagnostic — CAL-5 in particular must stay framed as "here's a pattern," never "you will definitely miss this," and any suggested reminder-time change must require the patient's explicit confirmation before it's applied (never silently reschedule someone's reminders).
+
+---
+
+# PART D — WORKING CODE
+
+## D.1 Backend — Month Calendar Endpoint
+
+```python
+# scaffold/backend/app/routers/patient.py
+
+from datetime import date
+import calendar as pycalendar
+from fastapi import APIRouter, Query
+
+@router.get("/patient/{patient_id}/calendar")
+async def get_patient_calendar(patient_id: str, year: int = Query(...), month: int = Query(..., ge=1, le=12)):
+    """
+    Returns every day in the given month with dose + reminder counts,
+    plus full detail for use when a day is selected client-side.
+    Never returns a fake/empty result silently on error — raises so the
+    frontend can show a real error state instead of a blank grid.
+    """
+    sb = get_supabase()
+
+    _, days_in_month = pycalendar.monthrange(year, month)
+    start = date(year, month, 1).isoformat()
+    end = date(year, month, days_in_month).isoformat()
+
+    intake_res = (
+        sb.table("intake_logs")
+        .select("*, prescription_items(medications(name), dosage), marked_by_role, marked_by_id")
+        .eq("patient_id", patient_id)
+        .gte("scheduled_at", start)
+        .lte("scheduled_at", end)
+        .execute()
+    )
+
+    reminder_res = (
+        sb.table("patient_reminders")
+        .select("*")
+        .eq("patient_id", patient_id)
+        .gte("remind_at", start)
+        .lte("remind_at", end)
+        .execute()
+    )
+
+    days: dict[str, dict] = {}
+    for log in intake_res.data:
+        day = log["scheduled_at"][:10]
+        bucket = days.setdefault(day, {"doses": [], "reminders": []})
+        bucket["doses"].append(log)
+
+    for rem in reminder_res.data:
+        day = rem["remind_at"][:10]
+        bucket = days.setdefault(day, {"doses": [], "reminders": []})
+        bucket["reminders"].append(rem)
+
+    calendar_days = []
+    for d in range(1, days_in_month + 1):
+        iso_day = date(year, month, d).isoformat()
+        bucket = days.get(iso_day, {"doses": [], "reminders": []})
+        taken = sum(1 for x in bucket["doses"] if x.get("taken"))
+        total = len(bucket["doses"])
+        calendar_days.append({
+            "date": iso_day,
+            "dose_count": total,
+            "doses_taken": taken,
+            "has_missed": any(
+                (not x.get("taken")) and x["scheduled_at"] < date.today().isoformat()
+                for x in bucket["doses"]
+            ),
+            "reminder_count": len(bucket["reminders"]),
+        })
+
+    return {"year": year, "month": month, "days": calendar_days}
+
+
+@router.get("/patient/{patient_id}/calendar/day/{day}")
+async def get_patient_calendar_day(patient_id: str, day: str):
+    """Full detail for one selected day — doses + reminders with names/times."""
+    sb = get_supabase()
+
+    doses = (
+        sb.table("intake_logs")
+        .select("*, prescription_items(medications(name), dosage, frequency), marked_by_role, marked_by_id")
+        .eq("patient_id", patient_id)
+        .gte("scheduled_at", f"{day}T00:00:00")
+        .lte("scheduled_at", f"{day}T23:59:59")
+        .execute()
+    ).data
+
+    reminders = (
+        sb.table("patient_reminders")
+        .select("*")
+        .eq("patient_id", patient_id)
+        .gte("remind_at", f"{day}T00:00:00")
+        .lte("remind_at", f"{day}T23:59:59")
+        .execute()
+    ).data
+
+    return {"date": day, "doses": doses, "reminders": reminders}
+```
+
+## D.2 Frontend — Fixed Calendar Component (Real "Today", Real Data, Real Loading/Error States)
+
+```tsx
+// scaffold/frontend/apps/patient/src/app/calendar/page.tsx
+
+"use client";
+import { useEffect, useState } from "react";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000/api";
+const PATIENT_ID = "..."; // from AuthContext, never hardcoded
+
+type CalendarDay = {
+  date: string;
+  dose_count: number;
+  doses_taken: number;
+  has_missed: boolean;
+  reminder_count: number;
+};
+
+export default function CalendarPage() {
+  const today = new Date(); // ← the ONLY source of "today", always live
+  const [year, setYear] = useState(today.getFullYear());
+  const [month, setMonth] = useState(today.getMonth() + 1);
+  const [days, setDays] = useState<CalendarDay[] | null>(null);
+  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState(today.toISOString().slice(0, 10));
+  const [dayDetail, setDayDetail] = useState<any>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    setError(false);
+    fetch(`${API_BASE}/patient/${PATIENT_ID}/calendar?year=${year}&month=${month}`)
+      .then((r) => {
+        if (!r.ok) throw new Error("fetch failed");
+        return r.json();
+      })
+      .then((d) => setDays(d.days))
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, [year, month]);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/patient/${PATIENT_ID}/calendar/day/${selectedDate}`)
+      .then((r) => r.json())
+      .then(setDayDetail)
+      .catch(() => setDayDetail(null));
+  }, [selectedDate]);
+
+  const isToday = (dateStr: string) =>
+    dateStr === today.toISOString().slice(0, 10); // computed live, never hardcoded
+
+  const dotColor = (day: CalendarDay) => {
+    if (day.dose_count === 0) return null;
+    if (day.has_missed) return "bg-red-500";
+    if (day.doses_taken === day.dose_count) return "bg-emerald-500";
+    return "bg-amber-500";
+  };
+
+  return (
+    <div>
+      {/* month nav */}
+      <div className="flex items-center justify-between mb-4">
+        <button onClick={() => setMonth((m) => (m === 1 ? (setYear(year - 1), 12) : m - 1))}>‹</button>
+        <h2>{new Date(year, month - 1).toLocaleString(undefined, { month: "long", year: "numeric" })}</h2>
+        <button onClick={() => setMonth((m) => (m === 12 ? (setYear(year + 1), 1) : m + 1))}>›</button>
+      </div>
+
+      {loading && <div className="grid grid-cols-7 gap-2">{Array.from({length: 35}).map((_,i)=><div key={i} className="h-20 bg-[var(--bg-muted)] animate-pulse" />)}</div>}
+
+      {error && (
+        <div className="text-center py-8 text-red-500">
+          Couldn't load your calendar.{" "}
+          <button onClick={() => setMonth(month)} className="underline">Retry</button>
+        </div>
+      )}
+
+      {!loading && !error && days && (
+        <div className="grid grid-cols-7 gap-2">
+          {days.map((day) => (
+            <button
+              key={day.date}
+              onClick={() => setSelectedDate(day.date)}
+              className={`h-20 border p-2 text-left relative ${
+                day.date === selectedDate ? "bg-[var(--bg-muted)]" : ""
+              } ${isToday(day.date) ? "border-2 border-[var(--fg)]" : "border-[var(--border)]"}`}
+            >
+              <span className="font-semibold">{Number(day.date.slice(-2))}</span>
+              <div className="absolute bottom-2 left-2 flex gap-1">
+                {dotColor(day) && <span className={`w-2 h-2 rounded-full ${dotColor(day)}`} />}
+                {day.reminder_count > 0 && <span className="text-xs">🔔</span>}
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* selected day panel */}
+      <aside>
+        <h3>{selectedDate}</h3>
+        {dayDetail?.doses?.length === 0 && dayDetail?.reminders?.length === 0 ? (
+          <p className="text-[var(--fg-muted)]">No doses or reminders scheduled this day.</p>
+        ) : (
+          <>
+            {dayDetail?.doses?.map((d: any) => (
+              <div key={d.id}>
+                {d.scheduled_at.slice(11, 16)} — {d.prescription_items?.medications?.name}{" "}
+                {d.taken ? "✓ Taken" : "○ Pending"}
+                {d.marked_by_role === "caregiver" && " (marked by caregiver)"}
+              </div>
+            ))}
+            {dayDetail?.reminders?.map((r: any) => (
+              <div key={r.id}>🔔 {r.title} — {r.message}</div>
+            ))}
+          </>
+        )}
+      </aside>
+    </div>
+  );
+}
+```
+
+---
+
+# PART E — FIX PROMPT (Copy-Paste to Your Coding Agent)
+
+```
+Fix the Dosing & Reminders Calendar screen (/patient/calendar). It currently shows an
+empty grid with no dose/reminder indicators on any day, and the "today" highlight is
+stuck on a hardcoded date (Aug 14) instead of the real current date.
+
+1. DELETE any hardcoded "today" date constant. The highlighted "today" cell must be
+   computed from `new Date()` (or the server's date) on every render, never a fixed
+   string — verify by checking the app on two different days and confirming the
+   highlight moves.
+
+2. Build/fix `GET /patient/{id}/calendar?year=&month=` to return real per-day dose
+   and reminder counts by querying `intake_logs` and `patient_reminders` for the
+   requested month (reference implementation provided). Confirm the date-range
+   comparison uses consistent types (don't compare a `date` column against a
+   `datetime` string, or a timezone-naive value against an aware one — this is the
+   most likely reason the grid is currently blank even for a patient with known
+   active prescriptions).
+
+3. Render dose indicator dots on every day cell per the color rules in Part B.1
+   (green = all taken, amber = pending, red = missed) and a small bell icon for any
+   day with a reminder — do not leave day cells visually blank when they have real
+   scheduled activity.
+
+4. Build/fix `GET /patient/{id}/calendar/day/{date}` and wire the "Selected Day"
+   panel to it, showing each dose's time/medicine/status/marked-by, and each
+   reminder's title/sender, exactly as in Part B.2 — replace whatever is currently
+   producing the empty "Scheduled Doses (0)" state for a day that should have real
+   doses.
+
+5. Fix month navigation (`<` / `>`) to trigger a real refetch for the new month with
+   a loading skeleton, not a client-side slice of one cached month's data.
+
+6. Add a real error state, distinguishable from "genuinely nothing scheduled" —
+   never let a failed fetch render identically to an honest empty day.
+
+7. Verify: pick a day known to have 3 scheduled doses for this patient (cross-check
+   against the Dashboard's daily timeline, which already works) and confirm the
+   calendar shows the same 3 doses for that date — the calendar and the dashboard
+   must never disagree about what's scheduled on a given day, since they're supposed
+   to be two views over the same underlying `intake_logs` data.
+```

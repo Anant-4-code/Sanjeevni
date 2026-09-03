@@ -41,6 +41,11 @@ export default function DoctorPatientVaultPage() {
   const [doctorFilter, setDoctorFilter] = useState("all");
   const [verifyingDocId, setVerifyingDocId] = useState<string | null>(null);
 
+  // AI-9 Smart Search state
+  const [askQuery, setAskQuery] = useState("");
+  const [askLoading, setAskLoading] = useState(false);
+  const [askResult, setAskResult] = useState<{ answer: string; sources: any[] } | null>(null);
+
   const fetchRecord = useCallback(async () => {
     if (!patientId) return;
     setLoading(true);
@@ -95,20 +100,6 @@ export default function DoctorPatientVaultPage() {
 
   const totalDocs = Object.values(categoryCounts).reduce((a: number, b: number) => a + b, 0);
 
-  if (loading && !data) {
-    return (
-      <div className="p-12 text-center text-[#64748B] bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-2xl animate-pulse">
-        <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-[#0F172A] dark:text-white" />
-        <p className="text-xs">Aggregating complete multi-document history...</p>
-      </div>
-    );
-  }
-
-  // AI-9 Smart Search state
-  const [askQuery, setAskQuery] = useState("");
-  const [askLoading, setAskLoading] = useState(false);
-  const [askResult, setAskResult] = useState<{ answer: string; sources: any[] } | null>(null);
-
   const handleAsk = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!askQuery.trim()) return;
@@ -152,6 +143,15 @@ export default function DoctorPatientVaultPage() {
       setAskLoading(false);
     }
   };
+
+  if (loading && !data) {
+    return (
+      <div className="p-12 text-center text-[#64748B] bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-2xl animate-pulse">
+        <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-[#0F172A] dark:text-white" />
+        <p className="text-xs">Aggregating complete multi-document history...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

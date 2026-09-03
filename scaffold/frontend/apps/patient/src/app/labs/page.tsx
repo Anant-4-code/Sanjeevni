@@ -88,27 +88,33 @@ export default function LabsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {results.map((result) => (
-            <div
+            <Link
               key={result.id}
-              className="border border-[var(--border)] bg-[var(--bg-elevated)] p-6 flex flex-col justify-between hover:border-[var(--fg)] transition-colors rounded-sm"
+              href={`/vault/lab-report/${result.id}`}
+              className="border border-[var(--border)] bg-[var(--bg-elevated)] p-6 flex flex-col justify-between hover:border-[var(--fg)] transition-all rounded-2xl group shadow-xs space-y-4"
             >
               <div>
-                <div className="flex items-start gap-3 mb-4">
-                  <div className="w-9 h-9 rounded-full border border-[var(--border)] flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-2xl border border-[var(--border)] flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:border-[var(--fg)]">
                     <FlaskConical className="w-4 h-4 text-[var(--fg)]" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-base">{result.test_name}</h3>
+                    <h3 className="font-bold text-base group-hover:underline">{result.test_name}</h3>
                     <p className="text-xs text-[var(--fg-muted)]">
                       Ordered by {result.ordered_by} · {result.date}
                     </p>
                   </div>
                 </div>
-                <p className="text-sm text-[var(--fg-muted)] leading-relaxed">
+                <p className="text-xs sm:text-sm text-[var(--fg-muted)] leading-relaxed line-clamp-3">
                   {result.summary}
                 </p>
               </div>
-            </div>
+
+              <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[var(--fg)] pt-2 border-t border-[var(--border)]">
+                <span>View Full Report &amp; Trends</span>
+                <span>→</span>
+              </div>
+            </Link>
           ))}
         </div>
       )}

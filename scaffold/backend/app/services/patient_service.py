@@ -267,45 +267,142 @@ class PatientService:
                 "verified_at": "2024-11-14T16:00:00Z"
             },
             {
-                "id": "doc-lab-101",
+                "id": "doc-lab-cbc-1",
                 "patient_id": "demo-patient",
-                "title": "Comprehensive Lipid Panel & Complete Blood Count",
+                "title": "Complete Blood Count (CBC) Panel",
                 "category": "lab-reports",
-                "doctor_name": "Metropolis Healthcare Laboratory",
+                "test_name": "Complete Blood Count (CBC)",
+                "doctor_name": "Dr. V. K. Rai",
+                "doctor_specialty": "Cardiology & Internal Medicine",
+                "lab_name": "Central Path Lab & Diagnostics",
                 "status": "verified",
                 "source": "clinic_verified",
-                "date": "Aug 14, 2026",
-                "summary": "Hemoglobin: 13.5 g/dL (Normal). Fasting Blood Glucose: 95 mg/dL. Total Cholesterol: 185 mg/dL within healthy reference bounds.",
+                "date": "Aug 12, 2026",
+                "overall_status": "normal",
+                "summary": "Hemoglobin: 13.5 g/dL (Normal). Platelets: 240,000 /mcL. WBC count is normal. All baseline biological parameters show balanced cellular indices.",
+                "plain_language_summary": "Your blood count looks good. All parameters including Hemoglobin and White Blood Cells are within normal range.",
+                "summary_status": "approved",
+                "reviewed_by_doctor_note": "Reviewed by Dr. Rai: No action needed. Baseline complete blood count is steady.",
                 "file_url": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&q=80",
                 "pinned": True,
-                "condition_tags": ["HEART CARE", "ROUTINE LABS"],
-                "patient_notes": "Lipid control on Atorva 20mg looks stable. Continue current dosage.",
+                "next_recheck_suggested": "Aug 12, 2027",
+                "recheck_reason": "Annual routine health surveillance.",
+                "recheck_reminder_set": false,
+                "condition_tags": ["ROUTINE LABS", "HEMATOLOGY"],
                 "biomarkers": [
-                    {"parameter": "Hemoglobin", "value": "13.5 g/dL", "reference_range": "12.0-15.5 g/dL", "status": "normal"},
-                    {"parameter": "Blood Glucose (Fasting)", "value": "95 mg/dL", "reference_range": "70-99 mg/dL", "status": "normal"},
-                    {"parameter": "Total Cholesterol", "value": "185 mg/dL", "reference_range": "< 200 mg/dL", "status": "normal"},
-                    {"parameter": "Triglycerides", "value": "142 mg/dL", "reference_range": "< 150 mg/dL", "status": "normal"}
+                    {"parameter": "Hemoglobin", "value": "13.5 g/dL", "unit": "g/dL", "reference_range": "12.0 - 15.5 g/dL", "status": "normal", "trend_direction": "stable"},
+                    {"parameter": "WBC (Total Count)", "value": "6,800 /mcL", "unit": "/mcL", "reference_range": "4,000 - 11,000 /mcL", "status": "normal", "trend_direction": "stable"},
+                    {"parameter": "Platelets", "value": "240,000 /mcL", "unit": "/mcL", "reference_range": "150,000 - 450,000 /mcL", "status": "normal", "trend_direction": "stable"},
+                    {"parameter": "RBC Count", "value": "4.6 million/mcL", "unit": "M/mcL", "reference_range": "4.0 - 5.2 M/mcL", "status": "normal", "trend_direction": "stable"}
                 ]
             },
             {
-                "id": "doc-lab-102",
+                "id": "doc-lab-hba1c-recent",
                 "patient_id": "demo-patient",
-                "title": "Glycated Hemoglobin (HbA1c) & Fasting Insulin",
+                "title": "Glycated Hemoglobin (HbA1c) & Fasting Plasma Glucose",
                 "category": "lab-reports",
-                "doctor_name": "Thyrocare Diagnostic Centre",
+                "test_name": "HbA1c & Fasting Glucose Profile",
+                "doctor_name": "Dr. Nitin Sharma",
+                "doctor_specialty": "Endocrinology & Diabetology",
+                "lab_name": "Thyrocare Diagnostics Centre",
+                "status": "verified",
+                "source": "clinic_verified",
+                "date": "Aug 12, 2026",
+                "overall_status": "abnormal",
+                "summary": "HbA1c: 6.9% (Elevated, but improved from 7.8% in Feb). Fasting Blood Glucose: 112 mg/dL. Prompted Dr. Sharma's Metformin titration to 1000mg.",
+                "plain_language_summary": "Your HbA1c is 6.9%, which reflects improved blood sugar management compared to your prior 7.8% reading in February. The current medication plan is effectively driving down average glycemic load.",
+                "summary_status": "approved",
+                "reviewed_by_doctor_note": "Reviewed by Dr. Sharma: Downward trajectory confirmed (7.8% → 7.2% → 6.9%). Metformin titrated to 1000mg. Recheck HbA1c in 3 months.",
+                "file_url": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&q=80",
+                "pinned": True,
+                "next_recheck_suggested": "Nov 12, 2026",
+                "recheck_reason": "Quarterly glycemic titration review.",
+                "recheck_reminder_set": false,
+                "linked_prescription_id": "doc-rx-diab-2",
+                "condition_tags": ["DIABETES", "ENDOCRINOLOGY"],
+                "historical_trend_data": [
+                    {"date": "Feb 10, 2026", "value": 7.8, "label": "7.8%"},
+                    {"date": "May 14, 2026", "value": 7.2, "label": "7.2%"},
+                    {"date": "Aug 12, 2026", "value": 6.9, "label": "6.9%"}
+                ],
+                "biomarkers": [
+                    {"parameter": "HbA1c (Glycated Hemoglobin)", "value": "6.9%", "unit": "%", "reference_range": "< 5.7% (Normal), 5.7-6.4% (Pre-diabetes)", "status": "high", "trend_direction": "declining"},
+                    {"parameter": "Fasting Plasma Glucose", "value": "112 mg/dL", "unit": "mg/dL", "reference_range": "70 - 99 mg/dL", "status": "high", "trend_direction": "declining"},
+                    {"parameter": "Estimated Average Glucose (eAG)", "value": "151 mg/dL", "unit": "mg/dL", "reference_range": "< 117 mg/dL", "status": "high", "trend_direction": "declining"}
+                ],
+                "abnormal_audit": [
+                    {"parameter": "HbA1c", "value": "6.9%", "threshold": "> 5.6%", "severity": "abnormal"},
+                    {"parameter": "Fasting Plasma Glucose", "value": "112 mg/dL", "threshold": "> 99 mg/dL", "severity": "abnormal"}
+                ]
+            },
+            {
+                "id": "doc-lab-critical-1",
+                "patient_id": "demo-patient",
+                "title": "Serum Electrolytes & Renal Chemistry Panel",
+                "category": "lab-reports",
+                "test_name": "Serum Electrolytes & Renal Function",
+                "doctor_name": "Dr. V. K. Rai",
+                "doctor_specialty": "Cardiology & Nephrology Care",
+                "lab_name": "Metropolis Healthcare Laboratory",
                 "status": "verified",
                 "source": "clinic_verified",
                 "date": "Aug 16, 2026",
-                "summary": "HbA1c: 6.8% (Borderline elevated). Fasting Blood Sugar: 112 mg/dL. Prompted Dr. Sharma's Metformin titration to 1000mg.",
+                "overall_status": "critical",
+                "summary": "CRITICAL ALERT: Serum Potassium measured at 6.2 mmol/L (Critical High). Immediate escalation pushed to Dr. V. K. Rai.",
+                "plain_language_summary": "Your electrolyte test shows an elevated potassium level. Your attending doctor was immediately alerted for prompt clinical review.",
+                "summary_status": "approved",
+                "reviewed_by_doctor_note": "Reviewed by Dr. Rai (URGENT): Hold potassium-sparing medications. Immediate dietary restriction. Repeat electrolytes in 48 hours.",
+                "critical_alert_sent": True,
+                "critical_alert_at": "2026-08-16T11:45:00Z",
                 "file_url": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&q=80",
                 "pinned": True,
-                "condition_tags": ["DIABETES", "ENDOCRINOLOGY"],
-                "patient_notes": "HbA1c test prompted prescription update to 1000mg.",
+                "next_recheck_suggested": "Aug 18, 2026",
+                "recheck_reason": "48-Hour critical electrolyte re-evaluation.",
+                "recheck_reminder_set": false,
+                "condition_tags": ["CRITICAL LAB", "ELECTROLYTES", "HEART CARE"],
                 "biomarkers": [
-                    {"parameter": "HbA1c (Glycated Hemoglobin)", "value": "6.8%", "reference_range": "< 5.7% (Normal), 5.7-6.4% (Pre-diabetes)", "status": "high"},
-                    {"parameter": "Fasting Plasma Glucose", "value": "112 mg/dL", "reference_range": "70-99 mg/dL", "status": "high"}
+                    {"parameter": "Serum Potassium", "value": "6.2 mmol/L", "unit": "mmol/L", "reference_range": "3.5 - 5.0 mmol/L", "status": "critical", "trend_direction": "rising", "is_critical": True},
+                    {"parameter": "Serum Sodium", "value": "138 mmol/L", "unit": "mmol/L", "reference_range": "135 - 145 mmol/L", "status": "normal", "trend_direction": "stable"},
+                    {"parameter": "Serum Creatinine", "value": "1.35 mg/dL", "unit": "mg/dL", "reference_range": "0.6 - 1.2 mg/dL", "status": "high", "trend_direction": "rising"},
+                    {"parameter": "Blood Urea Nitrogen (BUN)", "value": "24 mg/dL", "unit": "mg/dL", "reference_range": "7 - 20 mg/dL", "status": "high", "trend_direction": "rising"}
+                ],
+                "abnormal_audit": [
+                    {"parameter": "Serum Potassium", "value": "6.2 mmol/L", "threshold": "> 6.0 mmol/L (Critical High Threshold)", "severity": "critical"},
+                    {"parameter": "Serum Creatinine", "value": "1.35 mg/dL", "threshold": "> 1.2 mg/dL", "severity": "abnormal"}
                 ]
             },
+            {
+                "id": "doc-lab-lipid-1",
+                "patient_id": "demo-patient",
+                "title": "Lipid Profile & Cardiovascular Risk Panel",
+                "category": "lab-reports",
+                "test_name": "Lipid Profile",
+                "doctor_name": "Dr. V. K. Rai",
+                "doctor_specialty": "Cardiology",
+                "lab_name": "Metropolis Healthcare Laboratory",
+                "status": "verified",
+                "source": "clinic_verified",
+                "date": "Aug 14, 2026",
+                "overall_status": "normal",
+                "summary": "Total Cholesterol: 185 mg/dL. HDL: 48 mg/dL. LDL: 108 mg/dL. Triglycerides: 142 mg/dL. Lipid control is stable on Atorva 20mg.",
+                "plain_language_summary": "Your cholesterol panel is within healthy target levels. Your current medication is effectively maintaining a safe lipid profile.",
+                "summary_status": "approved",
+                "reviewed_by_doctor_note": "Reviewed by Dr. Rai: Lipid control stable on Atorva 20mg. Continue current evening dose.",
+                "file_url": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&q=80",
+                "pinned": False,
+                "next_recheck_suggested": "Feb 14, 2027",
+                "recheck_reason": "6-Month cardiovascular lipid checkup.",
+                "recheck_reminder_set": false,
+                "linked_prescription_id": "doc-rx-cardio-1",
+                "condition_tags": ["HEART CARE", "LIPID PROFILE"],
+                "biomarkers": [
+                    {"parameter": "Total Cholesterol", "value": "185 mg/dL", "unit": "mg/dL", "reference_range": "< 200 mg/dL", "status": "normal", "trend_direction": "stable"},
+                    {"parameter": "HDL Cholesterol (Good)", "value": "48 mg/dL", "unit": "mg/dL", "reference_range": "> 40 mg/dL", "status": "normal", "trend_direction": "stable"},
+                    {"parameter": "LDL Cholesterol", "value": "108 mg/dL", "unit": "mg/dL", "reference_range": "< 100 mg/dL (Optimal)", "status": "normal", "trend_direction": "stable"},
+                    {"parameter": "Triglycerides", "value": "142 mg/dL", "unit": "mg/dL", "reference_range": "< 150 mg/dL", "status": "normal", "trend_direction": "stable"}
+                ]
+            },
+
             {
                 "id": "doc-mri-202",
                 "patient_id": "demo-patient",
@@ -1037,6 +1134,279 @@ class PatientService:
             "talking_points": talking_points
         }
 
+    # ── Dosing & Reminders Calendar Layer (Spec PV-10 / §6.4) ──
+    def get_calendar_month(self, patient_id: str, year: int, month: int):
+        import calendar as pycalendar
+        _, days_in_month = pycalendar.monthrange(year, month)
+        today = datetime.date.today()
+        today_iso = today.isoformat()
+        first_weekday = pycalendar.weekday(year, month, 1)  # 0=Mon, 6=Sun
+
+        days = []
+        total_month_doses = 0
+        total_month_taken = 0
+
+        for d in range(1, days_in_month + 1):
+            iso_day = datetime.date(year, month, d).isoformat()
+            day_doses = self.get_calendar_day_doses(patient_id, iso_day)
+            day_reminders = self.get_calendar_day_reminders(patient_id, iso_day)
+
+            taken = sum(1 for x in day_doses if x.get("taken") or x.get("acknowledgment_state") == "taken")
+            total = len(day_doses)
+            total_month_doses += total
+            total_month_taken += taken
+
+            is_past = iso_day < today_iso
+            is_cur = iso_day == today_iso
+            has_missed = is_past and (taken < total) and total > 0
+            has_pending = (is_cur or not is_past) and (taken < total) and total > 0
+            all_taken = (total > 0) and (taken == total)
+
+            days.append({
+                "date": iso_day,
+                "day_number": d,
+                "dose_count": total,
+                "doses_taken": taken,
+                "has_missed": has_missed,
+                "has_pending": has_pending,
+                "all_taken": all_taken,
+                "reminder_count": len(day_reminders),
+                "reminders": day_reminders,
+            })
+
+        month_adherence = round((total_month_taken / total_month_doses) * 100) if total_month_doses > 0 else 100
+        month_dt = datetime.date(year, month, 1)
+
+        ai_summary = {
+            "adherence_percentage": month_adherence,
+            "best_week": f"{month_dt.strftime('%b')} 10–16",
+            "insight_text": f"This month: {month_adherence}% adherence, your best week was {month_dt.strftime('%b')} 10–16.",
+            "smart_reminder_suggestion": "You usually take your evening dose around 9:00 PM, not 8:00 PM — shift the reminder?",
+            "missed_dose_risk_day": "You've missed doses on past Sundays — want an extra morning reminder this weekend?",
+        }
+
+        return {
+            "year": year,
+            "month": month,
+            "month_name": month_dt.strftime("%B %Y"),
+            "days_in_month": days_in_month,
+            "start_day_offset": first_weekday,
+            "days": days,
+            "ai_summary": ai_summary,
+        }
+
+    def get_calendar_day_doses(self, patient_id: str, day_iso: str):
+        today_iso = datetime.date.today().isoformat()
+        day_num = int(day_iso.split("-")[2]) if "-" in day_iso else 1
+
+        # Base daily templates for today
+        if day_iso == today_iso:
+            return [
+                {
+                    "id": "dose-today-1",
+                    "prescription_item_id": "item-demo-1",
+                    "time": "08:00 AM",
+                    "medicine": "Noveron 500mg (Pan 40mg)",
+                    "dosage": "1 Tablet",
+                    "condition": "GASTRIC CARE",
+                    "doctor": "Dr. Nitin Sharma",
+                    "taken": True,
+                    "acknowledgment_state": "taken",
+                    "marked_by_role": "patient",
+                    "marked_by_name": "you",
+                },
+                {
+                    "id": "dose-today-2",
+                    "prescription_item_id": "item-demo-3",
+                    "time": "02:00 PM",
+                    "medicine": "Gabapin NT 100mg",
+                    "dosage": "1 Tablet",
+                    "condition": "NEURO RECOVERY",
+                    "doctor": "Dr. V. K. Rai",
+                    "taken": True,
+                    "acknowledgment_state": "taken",
+                    "marked_by_role": "caregiver",
+                    "marked_by_name": "Priya (caregiver)",
+                },
+                {
+                    "id": "dose-today-3",
+                    "prescription_item_id": "item-demo-2",
+                    "time": "08:00 PM",
+                    "medicine": "Metformin 500mg",
+                    "dosage": "500mg",
+                    "condition": "DIABETES",
+                    "doctor": "Dr. Patel",
+                    "taken": False,
+                    "acknowledgment_state": "none",
+                    "marked_by_role": "none",
+                    "marked_by_name": "Pending",
+                },
+            ]
+
+        # Past days simulation based on realistic adherence pattern
+        if day_iso < today_iso:
+            if day_num in [3, 10, 17]:  # Sundays with a missed dose
+                return [
+                    {
+                        "id": f"dose-{day_iso}-1",
+                        "prescription_item_id": "item-demo-1",
+                        "time": "08:00 AM",
+                        "medicine": "Pan 40mg",
+                        "dosage": "1 Tablet",
+                        "condition": "GASTRIC CARE",
+                        "doctor": "Dr. Nitin Sharma",
+                        "taken": True,
+                        "acknowledgment_state": "taken",
+                        "marked_by_role": "patient",
+                        "marked_by_name": "you",
+                    },
+                    {
+                        "id": f"dose-{day_iso}-2",
+                        "prescription_item_id": "item-demo-2",
+                        "time": "08:00 PM",
+                        "medicine": "Metformin 500mg",
+                        "dosage": "500mg",
+                        "condition": "DIABETES",
+                        "doctor": "Dr. Patel",
+                        "taken": False,
+                        "acknowledgment_state": "missed",
+                        "marked_by_role": "system",
+                        "marked_by_name": "Missed",
+                    },
+                ]
+            else:
+                return [
+                    {
+                        "id": f"dose-{day_iso}-1",
+                        "prescription_item_id": "item-demo-1",
+                        "time": "08:00 AM",
+                        "medicine": "Pan 40mg",
+                        "dosage": "1 Tablet",
+                        "condition": "GASTRIC CARE",
+                        "doctor": "Dr. Nitin Sharma",
+                        "taken": True,
+                        "acknowledgment_state": "taken",
+                        "marked_by_role": "patient",
+                        "marked_by_name": "you",
+                    },
+                    {
+                        "id": f"dose-{day_iso}-2",
+                        "prescription_item_id": "item-demo-3",
+                        "time": "02:00 PM",
+                        "medicine": "Gabapin NT 100mg",
+                        "dosage": "1 Tablet",
+                        "condition": "NEURO RECOVERY",
+                        "doctor": "Dr. V. K. Rai",
+                        "taken": True,
+                        "acknowledgment_state": "taken",
+                        "marked_by_role": "caregiver",
+                        "marked_by_name": "Priya (caregiver)",
+                    },
+                    {
+                        "id": f"dose-{day_iso}-3",
+                        "prescription_item_id": "item-demo-2",
+                        "time": "08:00 PM",
+                        "medicine": "Metformin 500mg",
+                        "dosage": "500mg",
+                        "condition": "DIABETES",
+                        "doctor": "Dr. Patel",
+                        "taken": True,
+                        "acknowledgment_state": "taken",
+                        "marked_by_role": "patient",
+                        "marked_by_name": "you",
+                    },
+                ]
+
+        # Future days in the month (pending scheduled doses)
+        return [
+            {
+                "id": f"dose-{day_iso}-1",
+                "prescription_item_id": "item-demo-1",
+                "time": "08:00 AM",
+                "medicine": "Pan 40mg",
+                "dosage": "1 Tablet",
+                "condition": "GASTRIC CARE",
+                "doctor": "Dr. Nitin Sharma",
+                "taken": False,
+                "acknowledgment_state": "none",
+                "marked_by_role": "none",
+                "marked_by_name": "Scheduled",
+            },
+            {
+                "id": f"dose-{day_iso}-2",
+                "prescription_item_id": "item-demo-3",
+                "time": "02:00 PM",
+                "medicine": "Gabapin NT 100mg",
+                "dosage": "1 Tablet",
+                "condition": "NEURO RECOVERY",
+                "doctor": "Dr. V. K. Rai",
+                "taken": False,
+                "acknowledgment_state": "none",
+                "marked_by_role": "none",
+                "marked_by_name": "Scheduled",
+            },
+            {
+                "id": f"dose-{day_iso}-3",
+                "prescription_item_id": "item-demo-2",
+                "time": "08:00 PM",
+                "medicine": "Metformin 500mg",
+                "dosage": "500mg",
+                "condition": "DIABETES",
+                "doctor": "Dr. Patel",
+                "taken": False,
+                "acknowledgment_state": "none",
+                "marked_by_role": "none",
+                "marked_by_name": "Scheduled",
+            },
+        ]
+
+    def get_calendar_day_reminders(self, patient_id: str, day_iso: str):
+        today_iso = datetime.date.today().isoformat()
+        day_num = int(day_iso.split("-")[2]) if "-" in day_iso else 1
+
+        reminders = []
+        if day_iso == today_iso:
+            reminders.append({
+                "id": "rem-today-1",
+                "title": "Follow-up with Dr. Rai",
+                "message": "Please come in Friday for a quick check",
+                "sent_by": "Dr. Rai",
+                "time": "11:00 AM",
+                "type": "doctor_appointment",
+            })
+        elif day_num == 18:
+            reminders.append({
+                "id": "rem-18-1",
+                "title": "Fasting Glucose Morning Check",
+                "message": "Log your morning fasting blood sugar before breakfast.",
+                "sent_by": "Dr. Nitin Sharma",
+                "time": "09:00 AM",
+                "type": "vital_log",
+            })
+        elif day_num == 28:
+            reminders.append({
+                "id": "rem-28-1",
+                "title": "Thyroid Panel Reminder",
+                "message": "Schedule 6-week thyroid follow-up draw.",
+                "sent_by": "Metropolis Diagnostics",
+                "time": "10:00 AM",
+                "type": "lab_collection",
+            })
+        return reminders
+
+    def get_calendar_day_detail(self, patient_id: str, day_iso: str):
+        doses = self.get_calendar_day_doses(patient_id, day_iso)
+        reminders = self.get_calendar_day_reminders(patient_id, day_iso)
+        taken_count = sum(1 for d in doses if d.get("taken") or d.get("acknowledgment_state") == "taken")
+        return {
+            "date": day_iso,
+            "doses": doses,
+            "reminders": reminders,
+            "doses_taken": taken_count,
+            "doses_total": len(doses),
+        }
+
 
 patient_service = PatientService()
+
 

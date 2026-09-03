@@ -593,3 +593,30 @@ create table if not exists vault_search_log (
   results_count int default 0,
   searched_at timestamptz default now()
 );
+
+-- ========== LAB DIAGNOSTIC REPORTS & AI EXTENSIONS (LR-1 to LR-8) ==========
+create table if not exists lab_critical_escalations (
+  id uuid primary key default uuid_generate_v4(),
+  lab_result_id uuid references lab_results(id) on delete cascade,
+  patient_id uuid references patients(id) on delete cascade,
+  ordering_doctor_id uuid references app_users(id),
+  critical_parameter text not null,
+  critical_value text not null,
+  reference_threshold text not null,
+  escalated_at timestamptz default now(),
+  acknowledged_by_doctor boolean default false,
+  acknowledged_at timestamptz
+);
+
+create table if not exists lab_pattern_insights_log (
+  id uuid primary key default uuid_generate_v4(),
+  patient_id uuid references patients(id) on delete cascade,
+  doctor_id uuid references app_users(id),
+  insight_title text not null,
+  insight_body text not null,
+  involved_parameters text[] default '{}',
+  doctor_action text check (doctor_action in ('pending', 'reviewed', 'dismissed', 'action_taken')),
+  action_note text,
+  action_timestamp timestamptz
+);
+

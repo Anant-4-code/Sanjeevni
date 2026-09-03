@@ -392,6 +392,18 @@ async def search_vault_ai(patient_id: str, payload: VaultSearchRequest):
     return res
 
 
+class CheckDuplicateOrderRequest(BaseModel):
+    test_name: str
+    patient_id: str
+    window_days: int = 7
+
+
+class ApproveLabSummaryRequest(BaseModel):
+    summary: str | None = None
+    recheck_date: str | None = None
+    doctor_note: str | None = None
+
+
 @router.get("/{patient_id}/vault/document/{doc_id}")
 async def get_vault_document_detail(patient_id: str, doc_id: str):
     doc = patient_service.get_vault_document_detail(patient_id, doc_id)
@@ -400,10 +412,137 @@ async def get_vault_document_detail(patient_id: str, doc_id: str):
     return {"document": doc}
 
 
+@router.get("/{patient_id}/vault/lab-reports")
+async def get_vault_lab_reports(patient_id: str):
+
+    from app.services.lab_intelligence_service import LabIntelligenceService
+    all_labs = patient_service.get_vault(patient_id, "lab-reports")
+    trends = LabIntelligenceService.detect_cross_report_trends("all", all_labs)
+    return {"reports": all_labs, "trends": trends, "count": len(all_labs)}
+
+
+@router.get("/{patient_id}/vault/lab-reports/{report_id}")
+async def get_vault_lab_report_detail(patient_id: str, report_id: str):
+    from app.services.lab_intelligence_service import LabIntelligenceService
+    from app.services.vault_service import VaultAIService
+    all_docs = patient_service.vault_documents
+    doc = next((d for d in all_docs if d.get("id") == report_id), None)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Lab report not found")
+    
+    # Compute auto-flagging on raw biomarkers (LR-1)
+    eval_res = LabIntelligenceService.evaluate_biomarkers(doc.get("biomarkers", []))
+    
+    # Cross-report trends for this test (LR-3)
+    trends = LabIntelligenceService.detect_cross_report_trends(doc.get("test_name", doc.get("title", "")), all_docs)
+    
+    # Suggested recheck (LR-5)
+    recheck = LabIntelligenceService.suggest_recheck_interval(doc.get("test_name", doc.get("title", "")), eval_res["overall_status"])
+    
+    # Linked documents (VA-3)
+    related_links = VaultAIService.find_related_documents(doc, all_docs)
+    
+    # Doctor pattern insights (LR-8)
+    doctor_patterns = LabIntelligenceService.detect_doctor_pattern_insights(all_docs)
+
+    doc_copy = dict(doc)
+    doc_copy["evaluated_biomarkers"] = eval_res["biomarkers"]
+    doc_copy["overall_status"] = doc.get("overall_status") or eval_res["overall_status"]
+    doc_copy["flagged_parameters"] = eval_res["flagged_parameters"]
+    doc_copy["trends"] = trends
+    doc_copy["suggested_recheck"] = recheck
+    doc_copy["related_links"] = related_links
+    doc_copy["doctor_pattern_insights"] = doctor_patterns
+
+    return {"report": doc_copy}
+
+
+@router.post("/{patient_id}/vault/lab-reports/{report_id}/approve-summary")
+async def approve_lab_summary(patient_id: str, report_id: str, payload: ApproveLabSummaryRequest):
+    all_docs = patient_service.vault_documents
+    doc = next((d for d in all_docs if d.get("id") == report_id), None)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Lab report not found")
+    
+    doc["summary_status"] = "approved"
+    if payload.summary:
+        doc["plain_language_summary"] = payload.summary
+    if payload.doctor_note:
+        doc["reviewed_by_doctor_note"] = payload.doctor_note
+    if payload.recheck_date:
+        doc["next_recheck_suggested"] = payload.recheck_date
+
+    patient_service.add_log(
+        patient_id=patient_id,
+        event_type="LAB_SUMMARY_APPROVED",
+        title=f"Lab Summary Approved ({doc.get('title')})",
+        details="Attending physician reviewed and approved patient-facing diagnostic summary.",
+        actor="Attending Physician",
+    )
+    return {"status": "approved", "report": doc}
+
+
+@router.post("/{patient_id}/vault/lab-reports/{report_id}/set-recheck-reminder")
+async def set_lab_recheck_reminder(patient_id: str, report_id: str):
+    all_docs = patient_service.vault_documents
+    doc = next((d for d in all_docs if d.get("id") == report_id), None)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Lab report not found")
+    
+    doc["recheck_reminder_set"] = True
+    recheck_date = doc.get("next_recheck_suggested") or "Nov 12, 2026"
+
+    patient_service.add_log(
+        patient_id=patient_id,
+        event_type="REMINDER_SCHEDULED",
+        title=f"Diagnostic Recheck Scheduled ({doc.get('title')})",
+        details=f"Patient reminder set for upcoming test recheck on {recheck_date}.",
+        actor="Patient Vault Automation",
+    )
+    return {"status": "reminder_set", "recheck_date": recheck_date}
+
+
+@router.post("/orders/check-duplicate")
+async def check_duplicate_order(payload: CheckDuplicateOrderRequest):
+    from app.services.lab_intelligence_service import LabIntelligenceService
+    all_docs = patient_service.vault_documents
+    res = LabIntelligenceService.check_duplicate_orders(
+        test_name=payload.test_name,
+        patient_id=payload.patient_id,
+        all_docs=all_docs,
+        window_days=payload.window_days,
+    )
+    return {"has_duplicate": bool(res), "warning": res}
+
+
+@router.get("/{patient_id}/calendar")
+async def get_patient_calendar(
+    patient_id: str,
+    year: int = Query(default=2026),
+    month: int = Query(default=8, ge=1, le=12)
+):
+    try:
+        data = patient_service.get_calendar_month(patient_id, year, month)
+        return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch calendar: {str(e)}")
+
+
+@router.get("/{patient_id}/calendar/day/{day}")
+async def get_patient_calendar_day(patient_id: str, day: str):
+    try:
+        data = patient_service.get_calendar_day_detail(patient_id, day)
+        return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch day schedule: {str(e)}")
+
+
 @router.get("/{patient_id}/logs")
 async def get_logs(patient_id: str):
     logs = patient_service.get_logs(patient_id)
     return {"logs": logs, "count": len(logs)}
+
+
 
 
 
