@@ -35,7 +35,7 @@ const NAV_ITEMS = [
 ];
 
 export function Navbar() {
-  const pathname = usePathname() || "";
+  const pathname = usePathname() ?? "";
   const router = useRouter();
   const { user, logout } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
@@ -97,9 +97,9 @@ export function Navbar() {
       {/* Brand & Badge */}
       <div className="flex items-center gap-3">
         <Link href="/dashboard" className="flex items-center gap-2.5 font-display text-lg font-bold tracking-tight text-[#0F172A] dark:text-white">
-          <div className="w-8 h-8 rounded-lg bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] flex items-center justify-center font-bold text-sm">
+          <span className="w-8 h-8 rounded-lg bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] flex items-center justify-center font-bold text-sm">
             S
-          </div>
+          </span>
           <span className="hidden sm:inline">SANJEEVANI</span>
         </Link>
         <span className="text-[10px] font-mono uppercase tracking-[0.2em] bg-blue-50 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300 px-2.5 py-0.5 rounded-full font-bold border border-blue-200 dark:border-blue-800">
@@ -155,9 +155,9 @@ export function Navbar() {
             onClick={() => setProfileOpen(!profileOpen)}
             className="flex items-center gap-2 p-1.5 pl-2 rounded-lg border border-[#E2E8F0] dark:border-[#1F2937] bg-white dark:bg-[#1F2937] hover:bg-gray-50 transition-colors"
           >
-            <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
+            <span className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
               {user?.full_name?.charAt(0) || "P"}
-            </div>
+            </span>
             <span className="text-xs font-bold text-[#0F172A] dark:text-white hidden sm:inline">
               {user?.full_name || "Patient"}
             </span>
