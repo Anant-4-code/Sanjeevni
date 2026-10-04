@@ -66,7 +66,7 @@ function VerifyEmailContent() {
 
         {/* Index label */}
         <div className="text-[10px] font-mono tracking-[0.2em] text-[#64748B] uppercase">
-          03 // Verification Instructions
+          03 — Verification Instructions
         </div>
 
         {/* Icon */}
@@ -116,7 +116,7 @@ function VerifyEmailContent() {
         {/* Role notice for staff */}
         {!isOffline && role !== "patient" && (
           <div className="p-3 border border-amber-300 bg-amber-50 text-amber-800 text-[10px] font-mono leading-relaxed">
-            NOTICE // Staff role <strong>{ROLE_LABELS[role] || role}</strong> requires administrator approval before portal access is granted.
+            NOTICE — Staff role <strong>{ROLE_LABELS[role] || role}</strong> requires administrator approval before portal access is granted.
             You will receive a second email once your credentials are approved.
           </div>
         )}
@@ -124,14 +124,14 @@ function VerifyEmailContent() {
         {/* Success banner */}
         {resent && (
           <div className="p-3 border border-emerald-400 bg-emerald-50 text-emerald-800 text-[10px] font-mono">
-            STATUS // Verification link resent. Check your inbox — if it doesn't arrive within 2 minutes, check your spam folder.
+            STATUS — Verification link resent. Check your inbox — if it doesn't arrive within 2 minutes, check your spam folder.
           </div>
         )}
 
         {/* Error banner */}
         {error && (
           <div className="p-3 border border-red-400 bg-red-50 text-red-800 text-[10px] font-mono">
-            ERROR // {error}
+            ERROR — {error}
           </div>
         )}
 

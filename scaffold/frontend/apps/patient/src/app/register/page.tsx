@@ -153,7 +153,7 @@ export default function RegisterPage() {
 
         {/* Index label */}
         <div className="text-[10px] font-mono tracking-[0.2em] text-[#64748B] uppercase">
-          02 // User Registration
+          02 — User Registration
         </div>
 
         {/* Heading */}

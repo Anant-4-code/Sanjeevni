@@ -79,7 +79,7 @@ export function SettingsLayout({ children, defaultTab = "profile", saveMessage }
           <div>
             <p className="text-xs font-mono uppercase tracking-[0.2em] text-[var(--fg-muted)] flex items-center gap-2 mb-1">
               <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
-              SETTINGS // {currentRole.toUpperCase()} CONSOLE
+              SETTINGS — {currentRole.toUpperCase()} CONSOLE
             </p>
             <h1 className="font-display text-2xl font-bold">Preferences &amp; Account</h1>
           </div>

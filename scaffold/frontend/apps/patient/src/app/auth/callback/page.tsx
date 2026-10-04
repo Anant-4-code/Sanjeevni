@@ -28,9 +28,37 @@ export default function AuthCallbackPage() {
         }
 
         if (data?.session) {
+          const userMeta = data.session.user?.user_metadata || {};
+          const role = userMeta.role || "patient";
+          const homeMap: Record<string, string> = {
+            patient: "/dashboard",
+            doctor: "/doctor",
+            receptionist: "/reception",
+            pharmacist: "/pharmacy",
+            lab_tech: "/lab",
+            admin: "/doctor",
+          };
+          const targetUrl = homeMap[role] || "/dashboard";
+
+          // Sync session to localStorage and Edge middleware cookie
+          try {
+            document.cookie = `sanjeevani_session_role=${role}; path=/; SameSite=Strict`;
+            localStorage.setItem(
+              "sanjeevani_user_session",
+              JSON.stringify({
+                id: data.session.user.id,
+                full_name: userMeta.full_name || data.session.user.email?.split("@")[0] || "User",
+                email: data.session.user.email,
+                phone: userMeta.phone || "",
+                role: role,
+                is_verified: true,
+              })
+            );
+          } catch {}
+
           setStatus("success");
-          setMessage("Your email has been verified! Redirecting to your dashboard…");
-          setTimeout(() => router.replace("/dashboard"), 1800);
+          setMessage(`Your email has been verified! Redirecting to your ${role.replace("_", " ")} workspace…`);
+          setTimeout(() => router.replace(targetUrl), 1500);
         } else {
           // No session yet — might be an offline/dev-mode redirect
           const params = new URLSearchParams(window.location.search);
@@ -59,7 +87,7 @@ export default function AuthCallbackPage() {
 
         {/* Index label */}
         <div className="text-[10px] font-mono tracking-[0.2em] text-[#64748B] uppercase">
-          04 // Email Verification
+          04 — Email Verification
         </div>
 
         {/* Icon */}

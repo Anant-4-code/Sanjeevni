@@ -144,7 +144,7 @@ export default function CategoryDocumentsPage() {
           <div>
             <p className="text-xs font-mono uppercase tracking-[0.2em] text-[var(--fg-muted)] flex items-center gap-2 mb-1">
               <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
-              Vault Archive // {catInfo.title}
+              Vault Archive — {catInfo.title}
             </p>
             <h1 className="font-display text-xl sm:text-2xl font-bold flex items-center gap-2">
               <Icon className="w-6 h-6 text-[var(--fg)]" />

@@ -181,7 +181,7 @@ export default function Login() {
             <span>SANJEEVANI</span>
           </Link>
           <span className="text-[10px] font-mono tracking-[0.2em] text-[#64748B] uppercase">
-            01 // UNIFIED ACCESS
+            01 — UNIFIED ACCESS
           </span>
         </div>
 

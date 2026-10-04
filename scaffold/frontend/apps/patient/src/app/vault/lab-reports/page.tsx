@@ -136,7 +136,7 @@ export default function LabReportsVaultPage() {
           <div>
             <p className="text-xs font-mono uppercase tracking-[0.2em] text-[var(--fg-muted)] flex items-center gap-2 mb-1">
               <span className="w-1.5 h-1.5 bg-teal-500 rounded-full" />
-              Vault Archive // Diagnostic Intelligence
+              Vault Archive — Diagnostic Intelligence
             </p>
             <h1 className="font-display text-xl sm:text-2xl font-extrabold flex items-center gap-2.5">
               <FlaskConical className="w-6 h-6 text-teal-600 dark:text-teal-400" />
