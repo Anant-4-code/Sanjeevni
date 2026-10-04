@@ -175,9 +175,9 @@ export default function Login() {
         {/* Brand Header */}
         <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-4">
           <Link href="/" className="flex items-center gap-2 font-display text-lg font-bold tracking-tight">
-            <div className="w-7 h-7 rounded-lg bg-[#0F172A] text-white flex items-center justify-center font-bold text-xs">
+            <span className="w-7 h-7 rounded-lg bg-[#0F172A] text-white flex items-center justify-center font-bold text-xs">
               S
-            </div>
+            </span>
             <span>SANJEEVANI</span>
           </Link>
           <span className="text-[10px] font-mono tracking-[0.2em] text-[#64748B] uppercase">

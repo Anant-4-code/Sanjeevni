@@ -122,9 +122,9 @@ export default function RoleHeader({ currentRole, badgeLabel, badgeCode }: RoleH
       {/* Brand & Active Badge */}
       <div className="flex items-center gap-4">
         <Link href="/" className="flex items-center gap-2.5 font-display text-lg font-bold tracking-tight text-[#0F172A] dark:text-white">
-          <div className="w-8 h-8 rounded-lg bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] flex items-center justify-center font-bold text-sm">
+          <span className="w-8 h-8 rounded-lg bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] flex items-center justify-center font-bold text-sm">
             S
-          </div>
+          </span>
           <span className="hidden sm:inline">SANJEEVANI</span>
         </Link>
         <div className="h-4 w-px bg-[#E2E8F0] dark:bg-[#1F2937]" />
