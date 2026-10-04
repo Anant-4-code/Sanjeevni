@@ -16,7 +16,11 @@ import cv2
 import numpy as np
 import onnxruntime as ort
 
-MODEL_PATH = Path(__file__).parent / "model" / "yolov7-p6-bonefracture.onnx"
+MODEL_PATHS = [
+    Path(__file__).parent / "model" / "yolov7-p6-bonefracture.onnx",
+    Path(r"c:\PROJECTS\sanjeevani-project\GRAZPEDWRI-DX-Fracture-Detection-main\GRAZPEDWRI-DX-Fracture-Detection-main\yolov7-p6-bonefracture.onnx"),
+    Path(__file__).resolve().parents[4] / "GRAZPEDWRI-DX-Fracture-Detection-main" / "GRAZPEDWRI-DX-Fracture-Detection-main" / "yolov7-p6-bonefracture.onnx",
+]
 INPUT_SIZE = 640
 
 CLASS_NAMES = {
@@ -34,16 +38,22 @@ CLASS_NAMES = {
 _session: ort.InferenceSession | None = None
 
 
+def _get_model_path() -> Path:
+    for p in MODEL_PATHS:
+        # Must exist and be the actual model (> 1MB, not an LFS pointer)
+        if p.exists() and p.stat().st_size > 1_000_000:
+            return p
+    raise FileNotFoundError(
+        "X-ray model not found. Checked: " + ", ".join(str(p) for p in MODEL_PATHS)
+    )
+
+
 def _get_session() -> ort.InferenceSession:
     global _session
     if _session is None:
-        if not MODEL_PATH.exists():
-            raise FileNotFoundError(
-                f"X-ray model not found at {MODEL_PATH}. "
-                "Copy yolov7-p6-bonefracture.onnx into app/ai/xray/model/."
-            )
+        model_path = _get_model_path()
         providers = ["CUDAExecutionProvider", "CPUExecutionProvider"] if "CUDAExecutionProvider" in ort.get_available_providers() else ["CPUExecutionProvider"]
-        _session = ort.InferenceSession(str(MODEL_PATH), providers=providers)
+        _session = ort.InferenceSession(str(model_path), providers=providers)
     return _session
 
 

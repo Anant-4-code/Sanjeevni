@@ -13,7 +13,14 @@ import {
   Bone,
   RefreshCw,
   Maximize2,
+  Bot,
+  Send,
+  ShieldAlert,
+  Activity,
+  Stethoscope,
+  ArrowRight,
 } from "lucide-react";
+
 import { useAuth } from "@/context/AuthContext";
 import { API_BASE } from "@/lib/api";
 
@@ -39,6 +46,42 @@ export default function DoctorOCRAndXrayPage() {
   });
 
   const [xrayDetections, setXrayDetections] = useState<any[]>([]);
+  const [aiAssistantLoading, setAiAssistantLoading] = useState(false);
+  const [aiImpression, setAiImpression] = useState<string>("");
+  const [aiModelUsed, setAiModelUsed] = useState<string>("");
+  const [aiQuestion, setAiQuestion] = useState<string>("");
+
+  const handleQueryAIAssistant = async (customQuestion?: string) => {
+    if (!patientId) return;
+    setAiAssistantLoading(true);
+    try {
+      const q = customQuestion !== undefined ? customQuestion : aiQuestion;
+      const res = await fetch(`${API_BASE}/doctor/xray/ai-assistant`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          patient_id: patientId,
+          scan_id: scanInfo?.xray_scan?.scan_id || `scan-${patientId}`,
+          detections: xrayDetections,
+          question: q || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (data.radiological_impression) {
+        setAiImpression(data.radiological_impression);
+      }
+      if (data.model_tier) {
+        setAiModelUsed(data.model_tier);
+      }
+      if (customQuestion === undefined) {
+        setAiQuestion("");
+      }
+    } catch (err) {
+      console.error("Failed to query radiological AI assistant:", err);
+    } finally {
+      setAiAssistantLoading(false);
+    }
+  };
 
   const fetchScans = async () => {
     if (!patientId) return;
@@ -380,7 +423,7 @@ export default function DoctorOCRAndXrayPage() {
                     </div>
                   )}
                   <div className="text-[10px] text-[#64748B] dark:text-gray-400 font-mono mt-0.5">
-                    Box: [{det.box.x}, {det.box.y}, {det.box.w}, {det.box.h}]
+                    Region: {det.box.x}, {det.box.y} &bull; {det.box.w} &times; {det.box.h} px
                   </div>
                 </div>
                 <span className="text-xs font-mono font-black text-rose-700 dark:text-rose-400">
@@ -388,6 +431,120 @@ export default function DoctorOCRAndXrayPage() {
                 </span>
               </div>
             ))}
+          </div>
+
+          {/* ── AI Radiological Specialist Assistant Panel ── */}
+          <div className="mt-6 border-t border-[#E2E8F0] dark:border-[#1F2937] pt-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 flex items-center justify-center font-bold">
+                  <Bot className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-[#0F172A] dark:text-white flex items-center gap-2">
+                    AI Radiological Specialist
+                    <span className="text-[10px] font-normal text-[#64748B] dark:text-gray-400">
+                      Ollama Multi-Tier Cascade
+                    </span>
+                  </h4>
+                  <p className="text-[11px] text-[#64748B] dark:text-gray-400">
+                    Clinical synthesis of YOLOv7 detections with patient history and trauma protocols
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {aiModelUsed && (
+                  <span className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded-full border ${
+                    aiModelUsed.includes("cloud")
+                      ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200"
+                      : "bg-indigo-50 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300 border-indigo-200"
+                  }`}>
+                    {aiModelUsed.includes("cloud")
+                      ? `Cloud: ${aiModelUsed}`
+                      : `Local Fallback: ${aiModelUsed}`}
+                  </span>
+                )}
+                <button
+                  onClick={() => handleQueryAIAssistant()}
+                  disabled={aiAssistantLoading}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] hover:opacity-90 disabled:opacity-50 rounded-xl transition shadow-xs"
+                >
+                  <Sparkles className={`w-3.5 h-3.5 ${aiAssistantLoading ? "animate-spin" : ""}`} />
+                  {aiAssistantLoading ? "Analyzing..." : aiImpression ? "Regenerate Synthesis" : "Generate AI Synthesis"}
+                </button>
+              </div>
+            </div>
+
+            {/* AI Assistant Output Card */}
+            {aiAssistantLoading ? (
+              <div className="p-5 rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-dashed border-gray-300 dark:border-gray-700 space-y-3 animate-pulse">
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3" />
+                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-5/6" />
+                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3" />
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mt-4" />
+                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-4/5" />
+              </div>
+            ) : aiImpression ? (
+              <div className="p-5 rounded-2xl bg-gradient-to-b from-purple-50/40 to-transparent dark:from-purple-950/10 dark:to-transparent border border-purple-200/80 dark:border-purple-900/40 space-y-3">
+                <div className="prose prose-sm dark:prose-invert max-w-none text-xs leading-relaxed text-[#0F172A] dark:text-gray-200 whitespace-pre-line font-sans">
+                  {aiImpression}
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-900/40 border border-[#E2E8F0] dark:border-[#1F2937] text-center space-y-2">
+                <p className="text-xs text-[#64748B] dark:text-gray-400">
+                  Ready to evaluate fracture alignment, physis involvement, and trauma stabilization protocol.
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                  <button
+                    onClick={() => handleQueryAIAssistant("Assess physis and growth plate displacement risk.")}
+                    className="text-[11px] px-2.5 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-[#0F172A] dark:text-gray-200 hover:border-purple-400 transition"
+                  >
+                    Assess Growth Plate Risk
+                  </button>
+                  <button
+                    onClick={() => handleQueryAIAssistant("Recommend pediatric immobilization cast or splint angle.")}
+                    className="text-[11px] px-2.5 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-[#0F172A] dark:text-gray-200 hover:border-purple-400 transition"
+                  >
+                    Recommend Splinting Angle
+                  </button>
+                  <button
+                    onClick={() => handleQueryAIAssistant("Provide pediatric pain management regimen safe for renal profile.")}
+                    className="text-[11px] px-2.5 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-[#0F172A] dark:text-gray-200 hover:border-purple-400 transition"
+                  >
+                    Check Pain Regimen
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Interactive Physician Follow-Up Input */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (aiQuestion.trim()) {
+                  handleQueryAIAssistant(aiQuestion.trim());
+                }
+              }}
+              className="flex items-center gap-2 pt-1"
+            >
+              <input
+                type="text"
+                value={aiQuestion}
+                onChange={(e) => setAiQuestion(e.target.value)}
+                placeholder="Ask the AI Specialist a clinical question (e.g. Can this patient bear weight?)..."
+                className="flex-1 bg-[#F8F7F4] dark:bg-[#1F2937] border border-[#E2E8F0] dark:border-[#1F2937] rounded-xl px-3.5 py-2 text-xs text-[#0F172A] dark:text-white placeholder-[#94A3B8] focus:outline-none focus:border-purple-500"
+              />
+              <button
+                type="submit"
+                disabled={aiAssistantLoading || !aiQuestion.trim()}
+                className="p-2 rounded-xl bg-purple-600 hover:bg-purple-700 disabled:opacity-40 text-white transition shadow-xs"
+                title="Send Question"
+              >
+                <Send className="w-3.5 h-3.5" />
+              </button>
+            </form>
           </div>
         </div>
       )}

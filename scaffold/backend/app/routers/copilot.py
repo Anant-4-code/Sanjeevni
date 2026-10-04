@@ -15,8 +15,10 @@ from typing import Optional
 from fastapi import APIRouter, Query, UploadFile, File, Form, Request
 from pydantic import BaseModel
 from app.services.patient_service import patient_service
+from app.ai.llm_client import query_ollama_cascade
 
 router = APIRouter()
+
 
 class CopilotRequest(BaseModel):
     patient_id: str
@@ -129,43 +131,17 @@ def query_copilot_llm(question: str, patient_id: str, history: list[dict] | None
 
     openrouter_key = os.getenv("OPENROUTER_API_KEY", "").strip()
 
-    # 1. Try Local Ollama LLM Models FIRST (llama3.2:3b, qwen2.5:7b, gemma3:latest) if Ollama is running
-    ollama_online = False
-    try:
-        check_req = urllib.request.Request("http://localhost:11434/api/tags", method="GET")
-        with urllib.request.urlopen(check_req, timeout=1.0) as check_res:
-            if check_res.status == 200:
-                ollama_online = True
-    except Exception:
-        ollama_online = False
-
-    if ollama_online:
-        ollama_models = ["llama3.2:3b", "qwen2.5:7b", "gemma3:latest", "gemma3:4b"]
-        for o_model in ollama_models:
-            try:
-                o_payload = {
-                    "model": o_model,
-                    "prompt": f"{system_prompt}\n\n{conversation_context}User Question: {question}\n\nCopilot Response:",
-                    "stream": False,
-                }
-                o_req = urllib.request.Request(
-                    "http://localhost:11434/api/generate",
-                    data=json.dumps(o_payload).encode("utf-8"),
-                    headers={"Content-Type": "application/json"},
-                    method="POST",
-                )
-                with urllib.request.urlopen(o_req, timeout=12) as response:
-                    o_res = json.loads(response.read().decode("utf-8"))
-                    ans = o_res.get("response", "").strip()
-                    if ans and "cannot provide medical advice" not in ans.lower():
-                        print(f"Local Ollama Copilot ({o_model}) answered successfully.")
-                        sources = _extract_source_citations(ans, vault_doc_map)
-                        clean_answer = _strip_doc_tags(ans)
-                        return {"answer": clean_answer, "sources": sources, "llm_tier": f"ollama/{o_model}"}
-            except Exception as e:
-                print(f"Local Ollama Copilot query with {o_model} failed: {e}")
+    # 1. Try Ollama Cascade (glm-5.3:cloud -> deepseek-v4.1-flash:cloud -> llama3:8b / llama3.2:3b local fallback)
+    cascade_prompt = f"{conversation_context}User Question: {question}\n\nCopilot Response:"
+    ans, model_used = query_ollama_cascade(prompt=cascade_prompt, system_prompt=system_prompt)
+    if ans and model_used not in ("fallback_exhausted", "ollama_offline") and "cannot provide medical advice" not in ans.lower():
+        print(f"Ollama Copilot ({model_used}) answered successfully.")
+        sources = _extract_source_citations(ans, vault_doc_map)
+        clean_answer = _strip_doc_tags(ans)
+        return {"answer": clean_answer, "sources": sources, "llm_tier": f"ollama/{model_used}"}
 
     # 2. OpenRouter API Fallback
+
     if openrouter_key:
         models = [
             "google/gemma-4-31b-it:free",
