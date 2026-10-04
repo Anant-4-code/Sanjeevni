@@ -2,44 +2,128 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, ShieldCheck } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
+
+type Status = "verifying" | "success" | "error";
 
 export default function AuthCallbackPage() {
   const router = useRouter();
-  const [verified, setVerified] = useState(false);
+  const [status, setStatus]   = useState<Status>("verifying");
+  const [message, setMessage] = useState("Authenticating your verification token…");
 
   useEffect(() => {
-    // Simulating token verification from URL hash/search params
-    const timer = setTimeout(() => {
-      setVerified(true);
-      setTimeout(() => {
-        router.push("/dashboard");
-      }, 1500);
-    }, 1000);
-    return () => clearTimeout(timer);
+    const supabase = createClient();
+
+    async function handleCallback() {
+      try {
+        // Supabase puts the token in the URL hash (#access_token=…&type=signup)
+        // getSession() automatically exchanges the hash token on first call.
+        const { data, error } = await supabase.auth.getSession();
+
+        if (error) {
+          console.error("Auth callback error:", error.message);
+          setStatus("error");
+          setMessage(error.message || "Verification failed. The link may be expired or already used.");
+          return;
+        }
+
+        if (data?.session) {
+          setStatus("success");
+          setMessage("Your email has been verified! Redirecting to your dashboard…");
+          setTimeout(() => router.replace("/dashboard"), 1800);
+        } else {
+          // No session yet — might be an offline/dev-mode redirect
+          const params = new URLSearchParams(window.location.search);
+          if (params.get("mode") === "offline") {
+            setStatus("success");
+            setMessage("Running in offline development mode. Redirecting to dashboard…");
+            setTimeout(() => router.replace("/dashboard"), 1500);
+          } else {
+            setStatus("error");
+            setMessage("No active session found. The link may be expired or already used. Please register again or request a new link.");
+          }
+        }
+      } catch (err: any) {
+        console.error("Unexpected callback error:", err);
+        setStatus("error");
+        setMessage("An unexpected error occurred while verifying your email.");
+      }
+    }
+
+    handleCallback();
   }, [router]);
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center px-6 py-12 bg-dot-grid">
-      <div className="glass-card max-w-md w-full p-8 text-center space-y-6 shadow-2xl">
-        <div className="w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 flex items-center justify-center mx-auto shadow-md">
-          {verified ? (
-            <CheckCircle2 className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
-          ) : (
-            <div className="w-8 h-8 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
-          )}
+    <div className="min-h-screen flex flex-col justify-center items-center bg-[#F7F5F0] text-[#0A0A0A] px-4 py-12">
+      <div className="w-full max-w-md border border-[#D8D5CC] bg-white p-8 space-y-6 shadow-sm text-center">
+
+        {/* Index label */}
+        <div className="text-[10px] font-mono tracking-[0.2em] text-[#64748B] uppercase">
+          04 // Email Verification
         </div>
 
+        {/* Icon */}
+        <div className="flex justify-center">
+          <div className={`w-16 h-16 rounded-full flex items-center justify-center border-2 ${
+            status === "verifying" ? "border-[#D8D5CC] bg-[#F7F5F0]" :
+            status === "success"   ? "border-emerald-400 bg-emerald-50" :
+                                     "border-red-400 bg-red-50"
+          }`}>
+            {status === "verifying" && (
+              <span className="w-7 h-7 border-2 border-[#0A0A0A] border-t-transparent rounded-full animate-spin block" />
+            )}
+            {status === "success" && (
+              <svg className="w-8 h-8 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+            {status === "error" && (
+              <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            )}
+          </div>
+        </div>
+
+        {/* Heading */}
         <div className="space-y-2">
-          <h1 className="font-display text-2xl font-extrabold tracking-tight">
-            {verified ? "Email Verified Successfully!" : "Verifying Your Email..."}
+          <h1 className="font-display text-xl font-black uppercase tracking-tight">
+            {status === "verifying" ? "Verifying…" :
+             status === "success"   ? "Email Verified!" :
+                                      "Verification Failed"}
           </h1>
-          <p className="text-xs sm:text-sm text-[var(--fg-muted)]">
-            {verified
-              ? "Your account is active. Redirecting to your Sanjeevani Patient Portal..."
-              : "Authenticating your email verification token with Supabase..."}
+          <p className="text-xs text-[#64748B] leading-relaxed max-w-xs mx-auto">
+            {message}
           </p>
         </div>
+
+        {/* Error actions */}
+        {status === "error" && (
+          <div className="space-y-3 pt-2">
+            <a
+              href="/register"
+              className="block w-full py-3 text-xs font-bold uppercase tracking-widest rounded-full bg-[#0A0A0A] text-[#F7F5F0] hover:opacity-90 transition-opacity"
+            >
+              Register Again
+            </a>
+            <a
+              href="/login"
+              className="block text-xs font-bold uppercase tracking-widest text-[#64748B] hover:text-[#0A0A0A] underline underline-offset-2 transition-colors"
+            >
+              ← Back to Sign In
+            </a>
+          </div>
+        )}
+
+        {/* Success auto-redirect indicator */}
+        {status === "success" && (
+          <div className="pt-2">
+            <div className="h-1 bg-[#E2E8F0] rounded-full overflow-hidden">
+              <div className="h-full bg-emerald-500 rounded-full animate-[grow_1.8s_linear_forwards]" style={{ width: "0%" }} />
+            </div>
+            <p className="text-[10px] font-mono text-[#64748B] mt-2">Redirecting to dashboard…</p>
+          </div>
+        )}
       </div>
     </div>
   );

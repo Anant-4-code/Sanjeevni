@@ -23,9 +23,21 @@ def determine_criticality_tier(name: str) -> str:
     return "important"
 
 
+DEMO_PATIENT_IDS = {"demo-patient", "patient-ramesh", "patient-savitri", "patient-vikram"}
+
+
 class PatientService:
+    @staticmethod
+    def _is_matching_patient(item_patient_id: str, query_patient_id: str) -> bool:
+        if item_patient_id == query_patient_id:
+            return True
+        if item_patient_id in DEMO_PATIENT_IDS and query_patient_id in DEMO_PATIENT_IDS:
+            return True
+        return False
+
     def __init__(self):
         self.logs = []
+        self.shifted_reminders = {}
         self.schedule_items = [
             {
                 "prescription_item_id": "item-demo-1",
@@ -287,7 +299,7 @@ class PatientService:
                 "pinned": True,
                 "next_recheck_suggested": "Aug 12, 2027",
                 "recheck_reason": "Annual routine health surveillance.",
-                "recheck_reminder_set": false,
+                "recheck_reminder_set": False,
                 "condition_tags": ["ROUTINE LABS", "HEMATOLOGY"],
                 "biomarkers": [
                     {"parameter": "Hemoglobin", "value": "13.5 g/dL", "unit": "g/dL", "reference_range": "12.0 - 15.5 g/dL", "status": "normal", "trend_direction": "stable"},
@@ -317,7 +329,7 @@ class PatientService:
                 "pinned": True,
                 "next_recheck_suggested": "Nov 12, 2026",
                 "recheck_reason": "Quarterly glycemic titration review.",
-                "recheck_reminder_set": false,
+                "recheck_reminder_set": False,
                 "linked_prescription_id": "doc-rx-diab-2",
                 "condition_tags": ["DIABETES", "ENDOCRINOLOGY"],
                 "historical_trend_data": [
@@ -358,7 +370,7 @@ class PatientService:
                 "pinned": True,
                 "next_recheck_suggested": "Aug 18, 2026",
                 "recheck_reason": "48-Hour critical electrolyte re-evaluation.",
-                "recheck_reminder_set": false,
+                "recheck_reminder_set": False,
                 "condition_tags": ["CRITICAL LAB", "ELECTROLYTES", "HEART CARE"],
                 "biomarkers": [
                     {"parameter": "Serum Potassium", "value": "6.2 mmol/L", "unit": "mmol/L", "reference_range": "3.5 - 5.0 mmol/L", "status": "critical", "trend_direction": "rising", "is_critical": True},
@@ -392,7 +404,7 @@ class PatientService:
                 "pinned": False,
                 "next_recheck_suggested": "Feb 14, 2027",
                 "recheck_reason": "6-Month cardiovascular lipid checkup.",
-                "recheck_reminder_set": false,
+                "recheck_reminder_set": False,
                 "linked_prescription_id": "doc-rx-cardio-1",
                 "condition_tags": ["HEART CARE", "LIPID PROFILE"],
                 "biomarkers": [
@@ -512,6 +524,42 @@ class PatientService:
         self.allergy_profile = []           # §5: Allergy profile
         self.symptom_logs = []              # §2: Symptom journal
         self.refill_requests = []           # §1: Refill requests
+        self.staff_reminders = [
+            {
+                "id": "rem-1",
+                "patient_id": "demo-patient",
+                "senderName": "Dr. Nitin Sharma",
+                "senderRole": "doctor",
+                "title": "Post-Antibiotic Follow-Up Lab Order",
+                "message": "Please complete your follow-up CBC & ESR blood tests before next Thursday's review.",
+                "remindAt": "Tomorrow, 09:00 AM",
+                "channel": ["push", "sms"],
+                "status": "pending",
+            },
+            {
+                "id": "rem-2",
+                "patient_id": "demo-patient",
+                "senderName": "Manikanta Diagnostic Desk",
+                "senderRole": "reception",
+                "title": "MRI Lumbar Spine Film Collection",
+                "message": "Your printed MRI report plates and digital CD are ready for pickup at Reception Counter 4.",
+                "remindAt": "Today, 04:00 PM",
+                "channel": ["sms"],
+                "status": "pending",
+            },
+        ]
+
+    def get_reminders(self, patient_id: str):
+        return [r for r in self.staff_reminders if self._is_matching_patient(r.get("patient_id", "demo-patient"), patient_id)]
+
+    def update_reminder_status(self, reminder_id: str, status: str):
+        for r in self.staff_reminders:
+            if r["id"] == reminder_id:
+                r["status"] = status
+                return r
+        new_rem = {"id": reminder_id, "status": status}
+        self.staff_reminders.append(new_rem)
+        return new_rem
 
     def add_log(self, patient_id: str, event_type: str, title: str, details: str, actor: str):
         log_entry = {
@@ -527,10 +575,10 @@ class PatientService:
         return log_entry
 
     def get_logs(self, patient_id: str):
-        return [l for l in self.logs if l["patient_id"] == patient_id or patient_id in ["demo-patient", "patient-ramesh"]]
+        return [l for l in self.logs if self._is_matching_patient(l.get("patient_id", ""), patient_id)]
 
     def get_vault(self, patient_id: str, category: str = None):
-        items = [v for v in self.vault_documents if v.get("patient_id") == patient_id or patient_id in ["demo-patient", "patient-ramesh"]]
+        items = [v for v in self.vault_documents if self._is_matching_patient(v.get("patient_id", ""), patient_id)]
         if category and category != "all":
             cat_lower = category.lower()
             if cat_lower in ["lab-reports", "lab_reports"]:
@@ -565,7 +613,7 @@ class PatientService:
         return doc_copy
 
 
-    def create_digital_prescription(self, patient_id: str, title: str, doctor_name: str, medicines: list, patient_notes: str = "", file_url: str = ""):
+    def create_digital_prescription(self, patient_id: str, title: str, doctor_name: str, medicines: list, patient_notes: str = "", file_url: str = "", primary_doctor_id: str = None):
         doc_id = f"rx-digitized-{uuid.uuid4().hex[:6]}"
         
         formatted_meds = []
@@ -582,6 +630,7 @@ class PatientService:
         presc_doc = {
             "id": doc_id,
             "patient_id": patient_id,
+            "primary_doctor_id": primary_doctor_id or "doc-sharma-1",
             "title": title or "Digital OTC Prescription",
             "category": "prescriptions",
             "doctor_name": doctor_name or "Self Intake / OTC Scan",
@@ -622,6 +671,32 @@ class PatientService:
             details=f"Digital prescription ({title}) created and saved to Patient Vault.",
             actor="Patient / User",
         )
+
+        if primary_doctor_id or True:
+            doc_id_target = primary_doctor_id or "doc-sharma-1"
+            self.add_log(
+                patient_id=patient_id,
+                event_type="OTC_ADDED_DOCTOR_ALERT",
+                title=f"OTC Medication Alert for Attending Physician",
+                details=f"Patient added OTC/Digital prescription '{title}' ({len(formatted_meds)} meds). Alert dispatched to attending physician ({doc_id_target}) for drug interaction review.",
+                actor="System Guardrail Bus",
+            )
+            try:
+                from app.services.doctor_service import doctor_service
+                if patient_id not in doctor_service.smart_alerts:
+                    doctor_service.smart_alerts[patient_id] = []
+                med_names = ", ".join(m.get("name", "") for m in formatted_meds[:3])
+                doctor_service.smart_alerts[patient_id].insert(0, {
+                    "id": f"alert-otc-{uuid.uuid4().hex[:6]}",
+                    "type": "otc_interaction_warning",
+                    "severity": "warning",
+                    "title": f"OTC Medication Added: {title}",
+                    "message": f"Patient self-added medication(s) ({med_names}) via OTC Scanner. Review for potential contraindications or dosage clashes with active therapy.",
+                    "created_at": datetime.datetime.utcnow().isoformat(),
+                    "acknowledged": False,
+                })
+            except Exception:
+                pass
         return presc_doc
 
     def add_scan_to_vault(self, patient_id: str, filename: str, doctor_name: str = "Attending Physician"):
@@ -735,7 +810,7 @@ class PatientService:
         return None
 
     def get_timeline(self, patient_id: str):
-        items = [s for s in self.schedule_items if s.get("patient_id") == patient_id or patient_id == "demo-patient"]
+        items = [s for s in self.schedule_items if self._is_matching_patient(s.get("patient_id", ""), patient_id)]
         # Snoozed is treated as pending (does not count as missed)
         evaluated_items = [s for s in items if s.get("acknowledgment_state") != "snoozed"]
         taken_count = sum(1 for s in evaluated_items if s.get("taken") or s.get("acknowledgment_state") == "taken")
@@ -803,7 +878,7 @@ class PatientService:
 
     # ── A1 & A3: Criticality & Anti-Pileup Escalation Status ──
     def get_escalation_status(self, patient_id: str):
-        items = [s for s in self.schedule_items if s.get("patient_id") == patient_id or patient_id == "demo-patient"]
+        items = [s for s in self.schedule_items if self._is_matching_patient(s.get("patient_id", ""), patient_id)]
         missed_doses = [
             s for s in items 
             if not s.get("taken") and s.get("acknowledgment_state") not in ["taken", "snoozed", "skipped_explicit"]
@@ -860,7 +935,7 @@ class PatientService:
         return entry
 
     def get_copilot_refusals(self, patient_id: str):
-        return [r for r in self.copilot_refused_queries if r["patient_id"] == patient_id or patient_id == "demo-patient"]
+        return [r for r in self.copilot_refused_queries if self._is_matching_patient(r.get("patient_id", ""), patient_id)]
 
     # ── Feature G: Copilot Feedback (👍👎) ──
     def add_copilot_feedback(self, patient_id: str, question: str, answer: str, rating: str, llm_tier: str = ""):
@@ -899,7 +974,7 @@ class PatientService:
         return entry
 
     def get_allergies(self, patient_id: str):
-        return [a for a in self.allergy_profile if a["patient_id"] == patient_id or patient_id == "demo-patient"]
+        return [a for a in self.allergy_profile if self._is_matching_patient(a.get("patient_id", ""), patient_id)]
 
     def remove_allergy(self, allergy_id: str):
         self.allergy_profile = [a for a in self.allergy_profile if a["id"] != allergy_id]
@@ -912,7 +987,7 @@ class PatientService:
         score_clamped = max(1, min(5, wellbeing_score))
         clean_note = note[:280] if note else ""
 
-        existing = next((s for s in self.symptom_logs if s["patient_id"] == patient_id and s["log_date"] == today_str), None)
+        existing = next((s for s in self.symptom_logs if self._is_matching_patient(s.get("patient_id", ""), patient_id) and s["log_date"] == today_str), None)
         
         if existing:
             # B3: Same-day update preserves history of earlier entry
@@ -949,7 +1024,7 @@ class PatientService:
 
         # B2: Check 3-day low score trend (scores <= 2 on last 3 consecutive logs)
         patient_logs = sorted(
-            [s for s in self.symptom_logs if s["patient_id"] == patient_id or patient_id == "demo-patient"],
+            [s for s in self.symptom_logs if self._is_matching_patient(s.get("patient_id", ""), patient_id)],
             key=lambda x: x["log_date"],
             reverse=True
         )
@@ -976,14 +1051,14 @@ class PatientService:
         return result_entry
 
     def get_symptom_logs(self, patient_id: str, limit: int = 30):
-        logs = [s for s in self.symptom_logs if s["patient_id"] == patient_id or patient_id == "demo-patient"]
+        logs = [s for s in self.symptom_logs if self._is_matching_patient(s.get("patient_id", ""), patient_id)]
         return logs[:limit]
 
     # ── B4: Wellbeing vs. Adherence Dual-Trend Correlation ──
     def get_adherence_wellbeing_correlation(self, patient_id: str, days: int = 14):
         today = datetime.date.today()
         results = []
-        sym_by_date = {s["log_date"]: s["wellbeing_score"] for s in self.symptom_logs if s["patient_id"] == patient_id or patient_id == "demo-patient"}
+        sym_by_date = {s["log_date"]: s["wellbeing_score"] for s in self.symptom_logs if self._is_matching_patient(s.get("patient_id", ""), patient_id)}
         
         for d in range(days - 1, -1, -1):
             day_date = today - datetime.timedelta(days=d)
@@ -1004,7 +1079,7 @@ class PatientService:
 
     # ── §1: Refill & Running-Out Intelligence ──
     def get_refill_status(self, patient_id: str):
-        items = [s for s in self.schedule_items if s.get("patient_id") == patient_id or patient_id == "demo-patient"]
+        items = [s for s in self.schedule_items if self._is_matching_patient(s.get("patient_id", ""), patient_id)]
         results = []
         today = datetime.date.today()
         for item in items:
@@ -1063,7 +1138,7 @@ class PatientService:
         return entry
 
     def get_refill_requests(self, patient_id: str):
-        return [r for r in self.refill_requests if r["patient_id"] == patient_id or patient_id == "demo-patient"]
+        return [r for r in self.refill_requests if self._is_matching_patient(r.get("patient_id", ""), patient_id)]
 
     # ── §8.8: Visit Prep Assistant Aggregation ──
     def get_visit_prep(self, patient_id: str):
@@ -1177,12 +1252,20 @@ class PatientService:
         month_adherence = round((total_month_taken / total_month_doses) * 100) if total_month_doses > 0 else 100
         month_dt = datetime.date(year, month, 1)
 
+        shifted_time = self.shifted_reminders.get(patient_id)
+        suggestion = (
+            f"Reminder shifted to {shifted_time} per your preference."
+            if shifted_time
+            else "You usually take your evening dose around 9:00 PM, not 8:00 PM - shift the reminder?"
+        )
+
         ai_summary = {
             "adherence_percentage": month_adherence,
-            "best_week": f"{month_dt.strftime('%b')} 10–16",
-            "insight_text": f"This month: {month_adherence}% adherence, your best week was {month_dt.strftime('%b')} 10–16.",
-            "smart_reminder_suggestion": "You usually take your evening dose around 9:00 PM, not 8:00 PM — shift the reminder?",
-            "missed_dose_risk_day": "You've missed doses on past Sundays — want an extra morning reminder this weekend?",
+            "best_week": f"{month_dt.strftime('%b')} 10-16",
+            "insight_text": f"This month: {month_adherence}% adherence, your best week was {month_dt.strftime('%b')} 10-16.",
+            "smart_reminder_suggestion": suggestion,
+            "missed_dose_risk_day": "You've missed doses on past Sundays - want an extra morning reminder this weekend?",
+            "is_shifted": bool(shifted_time),
         }
 
         return {
@@ -1194,6 +1277,14 @@ class PatientService:
             "days": days,
             "ai_summary": ai_summary,
         }
+
+    def shift_reminder(self, patient_id: str, new_time: str = "09:00 PM") -> dict:
+        self.shifted_reminders[patient_id] = new_time
+        for item in self.schedule_items:
+            if self._is_matching_patient(item["patient_id"], patient_id):
+                if "PM" in item["time"] or "20:00" in item["time"] or "21:00" in item["time"]:
+                    item["time"] = new_time
+        return {"status": "success", "patient_id": patient_id, "new_time": new_time, "message": f"Reminder shifted to {new_time}"}
 
     def get_calendar_day_doses(self, patient_id: str, day_iso: str):
         today_iso = datetime.date.today().isoformat()

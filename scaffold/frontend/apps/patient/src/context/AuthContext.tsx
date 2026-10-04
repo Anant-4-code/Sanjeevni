@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { DoctorInfo, AVAILABLE_DOCTORS } from "@/constants/doctors";
@@ -94,7 +94,7 @@ const DEFAULT_USERS: Record<UserRole, UserProfile> = {
 };
 
 const AuthContext = createContext<AuthContextType>({
-  user: DEFAULT_USERS.doctor,
+  user: null,
   login: () => {},
   logout: () => {},
   updateProfile: () => {},
@@ -102,29 +102,48 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<UserProfile | null>(DEFAULT_USERS.doctor);
+  // BUG-RBAC-01 FIX: Start as null — never auto-assign any role to unauthenticated visitors
+  const [user, setUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
     try {
       const stored = localStorage.getItem("sanjeevani_user_session");
       if (stored) {
         const parsed = JSON.parse(stored);
+        // Validate the stored session has a valid role before trusting it
+        if (!parsed || !parsed.role || !parsed.id) {
+          localStorage.removeItem("sanjeevani_user_session");
+          setUser(null);
+          return;
+        }
         if (!parsed.primary_doctor && parsed.role === "patient") {
           parsed.primary_doctor = AVAILABLE_DOCTORS[0];
         }
         setUser(parsed);
       } else {
-        setUser(DEFAULT_USERS.doctor);
-        localStorage.setItem("sanjeevani_user_session", JSON.stringify(DEFAULT_USERS.doctor));
+        // BUG-RBAC-01 FIX: No stored session → stay null, do NOT seed a doctor session
+        setUser(null);
       }
     } catch {
-      setUser(DEFAULT_USERS.doctor);
+      // Corrupted storage → clear it and stay null
+      localStorage.removeItem("sanjeevani_user_session");
+      setUser(null);
     }
   }, []);
 
+  // Syncs role to a cookie so Edge middleware can read it (localStorage is not
+  // available in the Edge runtime that runs middleware.ts).
+  function syncRoleCookie(role: string | null) {
+    if (role) {
+      document.cookie = `sanjeevani_session_role=${role}; path=/; SameSite=Strict`;
+    } else {
+      document.cookie = 'sanjeevani_session_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    }
+  }
+
   const login = (profile: Partial<UserProfile>) => {
-    const role = profile.role || "doctor";
-    const template = DEFAULT_USERS[role] || DEFAULT_USERS.doctor;
+    const role = profile.role || "patient";
+    const template = DEFAULT_USERS[role];
     const nextUser: UserProfile = {
       ...template,
       ...profile,
@@ -135,29 +154,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       is_verified: true,
     };
     setUser(nextUser);
+    syncRoleCookie(role);
     try {
       localStorage.setItem("sanjeevani_user_session", JSON.stringify(nextUser));
     } catch {}
   };
 
+  // NOTE: switchRole kept for internal demo use only — will be removed in Sequence 1 middleware step
   const switchRole = (role: UserRole) => {
-    const nextUser = DEFAULT_USERS[role] || DEFAULT_USERS.doctor;
+    const nextUser = DEFAULT_USERS[role];
     setUser(nextUser);
     try {
       localStorage.setItem("sanjeevani_user_session", JSON.stringify(nextUser));
     } catch {}
   };
 
+  // BUG-RBAC-02 FIX: logout truly destroys session, sets user to null, never re-seeds doctor
   const logout = () => {
-    setUser(DEFAULT_USERS.doctor);
+    setUser(null);
+    syncRoleCookie(null);
     try {
-      localStorage.setItem("sanjeevani_user_session", JSON.stringify(DEFAULT_USERS.doctor));
+      localStorage.removeItem("sanjeevani_user_session");
     } catch {}
   };
 
   const updateProfile = (profile: Partial<UserProfile>) => {
     setUser((prev) => {
-      if (!prev) return DEFAULT_USERS.doctor;
+      if (!prev) return null; // BUG-RBAC-02 FIX: no silent fallback to doctor
       const updated = { ...prev, ...profile };
       try {
         localStorage.setItem("sanjeevani_user_session", JSON.stringify(updated));
@@ -176,3 +199,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   return useContext(AuthContext);
 }
+

@@ -5,9 +5,18 @@ from app.routers import patients, uploads, doctor, pharmacy, lab, copilot, auth,
 
 app = FastAPI(title="Sanjeevani API", version="0.1.0")
 
+# BUG-BE-02 FIX: Explicitly specify allowed origins for credential-bearing CORS requests
+ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # restrict in production
+    allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -25,6 +34,21 @@ app.include_router(copilot.router, prefix="/api/patient", tags=["patient"])
 app.include_router(copilot.router, prefix="/api/copilot", tags=["copilot"])
 app.include_router(settings.router, prefix="/api/settings", tags=["settings"])
 app.include_router(settings.router, prefix="/api", tags=["profile"])
+
+
+from typing import Optional
+from pydantic import BaseModel
+
+class ClinicAccessRequest(BaseModel):
+    name: str
+    contact: str
+    clinic: Optional[str] = None
+
+
+@app.post("/api/clinic/access-request")
+async def handle_clinic_access_request(req: ClinicAccessRequest):
+    print(f"[CLINIC-LEAD] Access request: name='{req.name}', contact='{req.contact}', clinic='{req.clinic}'")
+    return {"status": "success", "message": "Lead received. Our team will contact you within 24 hours."}
 
 
 @app.get("/health")

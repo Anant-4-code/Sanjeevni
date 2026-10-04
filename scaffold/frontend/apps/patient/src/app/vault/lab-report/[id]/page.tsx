@@ -103,7 +103,7 @@ export default function LabReportDetailPage() {
 
   useEffect(() => {
     setLoading(true);
-    const pid = (user?.role === "patient" && user?.id) ? user.id : "demo-patient";
+    const pid = (user?.role === "patient" && user?.id) ? user.id : "patient-ramesh";
     fetch(`${API_BASE}/patient/${pid}/vault/lab-reports/${reportId}`)
       .then((res) => res.json())
       .then((data) => {
@@ -128,7 +128,7 @@ export default function LabReportDetailPage() {
   }, [reportId, user?.id]);
 
   const handleSetReminder = () => {
-    const pid = (user?.role === "patient" && user?.id) ? user.id : "demo-patient";
+    const pid = (user?.role === "patient" && user?.id) ? user.id : "patient-ramesh";
     fetch(`${API_BASE}/patient/${pid}/vault/lab-reports/${reportId}/set-recheck-reminder`, {
       method: "POST",
     })
@@ -143,7 +143,7 @@ export default function LabReportDetailPage() {
 
   const handleApproveSummary = () => {
     setApprovingSummary(true);
-    const pid = (user?.role === "patient" && user?.id) ? user.id : "demo-patient";
+    const pid = (user?.role === "patient" && user?.id) ? user.id : "patient-ramesh";
     fetch(`${API_BASE}/patient/${pid}/vault/lab-reports/${reportId}/approve-summary`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

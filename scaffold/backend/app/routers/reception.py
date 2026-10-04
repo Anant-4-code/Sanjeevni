@@ -6,7 +6,7 @@ appointment scheduling, and daily activity summary.
 """
 
 from typing import Optional
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
@@ -254,8 +254,41 @@ async def register_patient(payload: RegisterPatientRequest):
     # Fallback mock
     import random
     token = random.randint(10, 25)
+    pid = payload.existing_patient_id or f"patient-{payload.full_name.lower().replace(' ', '-')}"
+
+    # BUG-DR-Q02 & BUG-REC-01 FIX: Dynamically assign queue entry to the assigned doctor
+    try:
+        from app.services.doctor_service import doctor_service
+        complaint_val = getattr(payload, "chief_complaint", None) or getattr(payload, "complaint_text", "")
+        if pid not in doctor_service.patients:
+            doctor_service.patients[pid] = {
+                "id": pid,
+                "full_name": payload.full_name,
+                "age": payload.age or 35,
+                "gender": payload.gender or "other",
+                "phone": payload.phone or "+91 98765 00000",
+                "registered_at": datetime.now(timezone.utc).isoformat(),
+            }
+        doctor_service.queue.append({
+            "id": f"q-{len(doctor_service.queue) + 1}",
+            "patient_id": pid,
+            "doctor_id": payload.doctor_id,
+            "token_number": token,
+            "status": "waiting",
+            "queued_at": datetime.now(timezone.utc).isoformat(),
+            "patients": doctor_service.patients[pid],
+            "chief_complaints": {
+                "id": f"cc-{len(doctor_service.queue) + 1}",
+                "text": complaint_val,
+                "severity_level": final_severity,
+                "severity_source": "reception_triage",
+            },
+        })
+    except Exception as ex:
+        print(f"Queue sync note: {ex}")
+
     return {
-        "patient_id": payload.existing_patient_id or f"patient-{payload.full_name.lower().replace(' ', '-')}",
+        "patient_id": pid,
         "token_number": token,
         "triage": {
             "severity_level": final_severity,

@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -24,7 +24,7 @@
   --unverified-border: #FCD34D;
 }
 
-[data-theme="dark"] {
+[data-theme="dark"], .dark {
   --bg: #090D16;
   --bg-elevated: #111827;
   --bg-muted: #1F2937;
@@ -57,7 +57,7 @@ body {
   border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
-[data-theme="dark"] .glass-panel {
+[data-theme="dark"] .glass-panel, .dark .glass-panel {
   background: rgba(17, 24, 39, 0.75);
   border: 1px solid rgba(31, 41, 55, 0.8);
 }
@@ -76,7 +76,7 @@ body {
   border-color: rgba(15, 23, 42, 0.25);
 }
 
-[data-theme="dark"] .glass-card:hover {
+[data-theme="dark"] .glass-card:hover, .dark .glass-card:hover {
   border-color: rgba(249, 250, 251, 0.25);
   box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.4);
 }
@@ -93,7 +93,9 @@ body {
   animation: marquee 25s linear infinite;
 }
 
-.animate-marquee:hover {
+.animate-marquee:hover,
+.animate-marquee:focus,
+.animate-marquee:focus-within {
   animation-play-state: paused;
 }
 

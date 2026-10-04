@@ -38,8 +38,11 @@ export default function DoctorRefillsAndOrdersPage() {
   const [orderingLab, setOrderingLab] = useState(false);
   const [labOrderSuccess, setLabOrderSuccess] = useState<string | null>(null);
 
-  // Follow-up state
-  const [followUpDate, setFollowUpDate] = useState("2026-09-18");
+  // BUG-DR-REF-01 FIX: Default follow-up date to +14 days in future
+  const [followUpDate, setFollowUpDate] = useState(() => {
+    const d = new Date(Date.now() + 14 * 86400000);
+    return d.toISOString().slice(0, 10);
+  });
   const [followUpReason, setFollowUpReason] = useState("Review blood glucose trajectory and medication tolerance");
   const [schedulingFollowUp, setSchedulingFollowUp] = useState(false);
   const [followUpSuccess, setFollowUpSuccess] = useState<string | null>(null);

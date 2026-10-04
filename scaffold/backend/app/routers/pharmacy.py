@@ -25,6 +25,8 @@ async def pharmacy_queue():
     """
     Returns live verified prescriptions ready for dispensing,
     joined with interaction_flags for safety-lock badges.
+    Falls back to the in-memory FALLBACK_PHARMACY_QUEUE (populated by
+    add_to_pharmacy_queue) when Supabase is unavailable or returns empty.
     """
     sb = get_supabase()
     if sb:
@@ -89,66 +91,81 @@ async def pharmacy_queue():
         except Exception as e:
             print(f"Pharmacy queue error: {e}")
 
-    # Fallback mock data
+    # Fallback: in-memory queue (populated by add_to_pharmacy_queue on prescription verify)
     return {
-        "queue": [
-            {
-                "id": "rx-disp-1",
-                "prescription_id": "rx-savitri-01",
-                "patient_id": "patient-savitri",
-                "patient_name": "Savitri Kumar",
-                "age": 58,
-                "gender": "Female",
-                "doctor_name": "Dr. Nitin Sharma",
-                "verified_at": "2026-09-03T09:30:00Z",
-                "safety_lock": {
-                    "flag_id": "flag-1",
-                    "has_override": True,
-                    "interaction_warning": "Metformin + Noveron (Gabapentin) — Mild dizziness precaution",
-                    "severity": "moderate",
-                    "doctor_override_reason": "Low dose Metformin (500mg), renal parameters normal. Safe to proceed.",
-                    "acknowledged_at": "2026-09-03T09:28:00Z",
-                },
-                "items": [
-                    {"name": "Metformin 500mg", "dosage": "500mg", "frequency": "1-0-1", "days": 30, "qty": 60},
-                    {"name": "Noveron 500mg", "dosage": "500mg", "frequency": "0-0-1", "days": 30, "qty": 30},
-                ],
-                "is_refill": False,
-            },
-            {
-                "id": "rx-disp-2",
-                "prescription_id": "rx-vikram-02",
-                "patient_id": "patient-vikram",
-                "patient_name": "Vikram Singh",
-                "age": 46,
-                "gender": "Male",
-                "doctor_name": "Dr. V. K. Rai",
-                "verified_at": "2026-09-03T10:15:00Z",
-                "safety_lock": None,
-                "items": [
-                    {"name": "Telmisartan 40mg", "dosage": "40mg", "frequency": "1-0-0", "days": 30, "qty": 30},
-                    {"name": "Atorvastatin 10mg", "dosage": "10mg", "frequency": "0-0-1", "days": 30, "qty": 30},
-                ],
-                "is_refill": False,
-            },
-            {
-                "id": "rx-disp-3",
-                "prescription_id": "rx-refill-amox",
-                "patient_id": "patient-sita",
-                "patient_name": "Sita Devi",
-                "age": 62,
-                "gender": "Female",
-                "doctor_name": "Dr. Khan",
-                "verified_at": "2026-09-03T10:45:00Z",
-                "safety_lock": None,
-                "items": [
-                    {"name": "Amoxicillin 500mg", "dosage": "500mg", "frequency": "1-1-1", "days": 5, "qty": 15},
-                ],
-                "is_refill": True,
-                "refill_request_id": "refill-sita-1",
-            },
-        ]
+        "queue": [q for q in FALLBACK_PHARMACY_QUEUE if not q.get("dispensed")]
     }
+
+FALLBACK_PHARMACY_QUEUE = [
+    {
+        "id": "rx-disp-1",
+        "prescription_id": "rx-savitri-01",
+        "patient_id": "patient-savitri",
+        "patient_name": "Savitri Kumar",
+        "age": 58,
+        "gender": "Female",
+        "doctor_name": "Dr. Nitin Sharma",
+        "verified_at": "2026-09-03T09:30:00Z",
+        "safety_lock": {
+            "flag_id": "flag-1",
+            "has_override": True,
+            "interaction_warning": "Metformin + Noveron (Gabapentin) - Mild dizziness precaution",
+            "severity": "moderate",
+            "doctor_override_reason": "Low dose Metformin (500mg), renal parameters normal. Safe to proceed.",
+            "acknowledged_at": "2026-09-03T09:28:00Z",
+        },
+        "items": [
+            {"name": "Metformin 500mg", "dosage": "500mg", "frequency": "1-0-1", "days": 30, "qty": 60},
+            {"name": "Noveron 500mg", "dosage": "500mg", "frequency": "0-0-1", "days": 30, "qty": 30},
+        ],
+        "is_refill": False,
+        "dispensed": False,
+    },
+    {
+        "id": "rx-disp-2",
+        "prescription_id": "rx-vikram-02",
+        "patient_id": "patient-vikram",
+        "patient_name": "Vikram Singh",
+        "age": 46,
+        "gender": "Male",
+        "doctor_name": "Dr. V. K. Rai",
+        "verified_at": "2026-09-03T10:15:00Z",
+        "safety_lock": None,
+        "items": [
+            {"name": "Telmisartan 40mg", "dosage": "40mg", "frequency": "1-0-0", "days": 30, "qty": 30},
+            {"name": "Atorvastatin 10mg", "dosage": "10mg", "frequency": "0-0-1", "days": 30, "qty": 30},
+        ],
+        "is_refill": False,
+        "dispensed": False,
+    },
+    {
+        "id": "rx-disp-3",
+        "prescription_id": "rx-refill-amox",
+        "patient_id": "patient-sita",
+        "patient_name": "Sita Devi",
+        "age": 62,
+        "gender": "Female",
+        "doctor_name": "Dr. Khan",
+        "verified_at": "2026-09-03T10:45:00Z",
+        "safety_lock": None,
+        "items": [
+            {"name": "Amoxicillin 500mg", "dosage": "500mg", "frequency": "1-1-1", "days": 5, "qty": 15},
+        ],
+        "is_refill": True,
+        "refill_request_id": "refill-sita-1",
+        "dispensed": False,
+    },
+]
+
+
+def add_to_pharmacy_queue(item: dict):
+    """Insert newly verified prescription into pharmacy queue."""
+    FALLBACK_PHARMACY_QUEUE.insert(0, item)
+
+
+# ═══════════════════════════════════════════════════════════════
+# 2. Dispense Prescription (PH-3) — previous section header kept below
+# ═══════════════════════════════════════════════════════════════
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -156,11 +173,21 @@ async def pharmacy_queue():
 # ═══════════════════════════════════════════════════════════════
 
 class DispenseRequest(BaseModel):
-    pharmacist_id: str = "pharm-anita-1"
+    pharmacist_id: str = "pharm-anil-1"
     quantity: Optional[int] = None
     partial: bool = False
     backorder_eta: Optional[str] = None
     safety_acknowledged: bool = False
+
+
+FALLBACK_INVENTORY = [
+    {"medication_id": "med-met-500", "medication_name": "Metformin 500mg", "quantity_on_hand": 340, "reorder_threshold": 100, "daily_avg": 31, "status": "reorder_soon"},
+    {"medication_id": "med-nov-500", "medication_name": "Noveron 500mg (Gabapentin)", "quantity_on_hand": 85, "reorder_threshold": 50, "daily_avg": 4, "status": "healthy"},
+    {"medication_id": "med-amox-500", "medication_name": "Amoxicillin 500mg", "quantity_on_hand": 12, "reorder_threshold": 50, "daily_avg": 6, "status": "low_stock"},
+    {"medication_id": "med-tel-40", "medication_name": "Telmisartan 40mg", "quantity_on_hand": 1250, "reorder_threshold": 200, "daily_avg": 28, "status": "healthy"},
+    {"medication_id": "med-ator-10", "medication_name": "Atorvastatin 10mg", "quantity_on_hand": 890, "reorder_threshold": 150, "daily_avg": 22, "status": "healthy"},
+    {"medication_id": "med-gab-100", "medication_name": "Gabapin NT 100mg", "quantity_on_hand": 45, "reorder_threshold": 60, "daily_avg": 8, "status": "low_stock"},
+]
 
 
 @router.post("/dispense/{prescription_id}")
@@ -169,6 +196,25 @@ async def dispense_prescription(prescription_id: str, payload: DispenseRequest):
     Dispense a prescription. Stock decrement + audit log in same transaction.
     Requires safety_acknowledged=True if the prescription has interaction flags.
     """
+    # Also update in-memory fallback queue and inventory
+    for q in FALLBACK_PHARMACY_QUEUE:
+        if q.get("prescription_id") == prescription_id or q.get("id") == prescription_id:
+            q["dispensed"] = True
+            q["dispensed_at"] = datetime.utcnow().isoformat()
+            q["pharmacist_id"] = payload.pharmacist_id
+            
+            # Decrement inventory stock for each dispensed item
+            for item in q.get("items", []):
+                item_name = item.get("name", "").lower()
+                qty = item.get("qty", 30)
+                for inv in FALLBACK_INVENTORY:
+                    if any(w in inv["medication_name"].lower() for w in item_name.split()[:2] if len(w) > 2):
+                        inv["quantity_on_hand"] = max(0, inv["quantity_on_hand"] - qty)
+                        if inv["quantity_on_hand"] <= inv["reorder_threshold"] / 2:
+                            inv["status"] = "critical_low"
+                        elif inv["quantity_on_hand"] <= inv["reorder_threshold"]:
+                            inv["status"] = "low_stock"
+
     sb = get_supabase()
     if sb:
         try:
@@ -212,7 +258,7 @@ async def dispense_prescription(prescription_id: str, payload: DispenseRequest):
 # ═══════════════════════════════════════════════════════════════
 
 class RefillDispenseRequest(BaseModel):
-    pharmacist_id: str = "pharm-anita-1"
+    pharmacist_id: str = "pharm-anil-1"
     quantity: Optional[int] = None
 
 
@@ -267,14 +313,7 @@ async def get_inventory():
             print(f"Inventory error: {e}")
 
     return {
-        "inventory": [
-            {"medication_id": "med-met-500", "medication_name": "Metformin 500mg", "quantity_on_hand": 340, "reorder_threshold": 100, "daily_avg": 31, "status": "reorder_soon"},
-            {"medication_id": "med-nov-500", "medication_name": "Noveron 500mg (Gabapentin)", "quantity_on_hand": 85, "reorder_threshold": 50, "daily_avg": 4, "status": "healthy"},
-            {"medication_id": "med-amox-500", "medication_name": "Amoxicillin 500mg", "quantity_on_hand": 12, "reorder_threshold": 50, "daily_avg": 6, "status": "low_stock"},
-            {"medication_id": "med-tel-40", "medication_name": "Telmisartan 40mg", "quantity_on_hand": 1250, "reorder_threshold": 200, "daily_avg": 28, "status": "healthy"},
-            {"medication_id": "med-ator-10", "medication_name": "Atorvastatin 10mg", "quantity_on_hand": 890, "reorder_threshold": 150, "daily_avg": 22, "status": "healthy"},
-            {"medication_id": "med-gab-100", "medication_name": "Gabapin NT 100mg", "quantity_on_hand": 45, "reorder_threshold": 60, "daily_avg": 8, "status": "low_stock"},
-        ]
+        "inventory": FALLBACK_INVENTORY
     }
 
 
@@ -286,6 +325,21 @@ class InventoryUpdateRequest(BaseModel):
 @router.patch("/inventory/{medication_id}")
 async def update_inventory(medication_id: str, payload: InventoryUpdateRequest):
     """Update stock level or reorder threshold for a medication."""
+    # Update fallback in-memory inventory
+    for inv in FALLBACK_INVENTORY:
+        if inv["medication_id"] == medication_id:
+            if payload.quantity_on_hand is not None:
+                inv["quantity_on_hand"] = payload.quantity_on_hand
+            if payload.reorder_threshold is not None:
+                inv["reorder_threshold"] = payload.reorder_threshold
+            if inv["quantity_on_hand"] <= inv["reorder_threshold"] / 2:
+                inv["status"] = "critical_low"
+            elif inv["quantity_on_hand"] <= inv["reorder_threshold"]:
+                inv["status"] = "low_stock"
+            else:
+                inv["status"] = "healthy"
+            break
+
     sb = get_supabase()
     if sb:
         try:

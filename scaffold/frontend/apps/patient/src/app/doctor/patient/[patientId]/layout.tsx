@@ -66,18 +66,29 @@ export default function DoctorPatientLayout({
   }, [patientId, doctorId]);
 
   useEffect(() => {
+    if (!user && typeof window !== "undefined") {
+      const stored = localStorage.getItem("sanjeevani_user_session");
+      if (!stored) {
+        router.push("/login?error=unauthorized&next=/doctor");
+      }
+    }
+  }, [user, router]);
+
+  useEffect(() => {
     fetchPatientData();
   }, [fetchPatientData]);
 
   const patient = patientData?.patient;
-  const adherenceScore = patientData?.adherence_score ?? 78;
   const caregiverAudit = patientData?.caregiver_audit;
   const smartAlerts = patientData?.smart_alerts || [];
   const activeAlerts = smartAlerts.filter((a: any) => !a.acknowledged);
 
-  // Compute doses text strictly from single source
-  const totalDoses = caregiverAudit?.summary?.total_doses_7d || 4;
-  const takenDoses = caregiverAudit?.summary?.taken_7d || Math.round((adherenceScore / 100) * totalDoses);
+  // BUG-DR-CHART-01 FIX: Derive both the compliance percentage and caption from the exact same data source
+  const totalDoses = caregiverAudit?.summary?.total_doses_7d ?? 0;
+  const takenDoses = caregiverAudit?.summary?.taken_7d ?? 0;
+  const adherenceScore = totalDoses > 0
+    ? Math.round((takenDoses / totalDoses) * 100)
+    : (patientData?.adherence_score !== undefined ? Math.round(patientData.adherence_score) : 100);
 
   // Adherence styling
   const adherenceColor =
@@ -91,6 +102,17 @@ export default function DoctorPatientLayout({
     "#DC2626";
 
   const currentTab = TABS.find((t) => pathname.includes(`/doctor/patient/${patientId}/${t.slug}`))?.slug || "timeline";
+
+  // BUG-DR-TIME-01 FIX: Persist last active tab per patient
+  useEffect(() => {
+    if (patientId && currentTab) {
+      try {
+        localStorage.setItem(`doctor_last_tab_${patientId}`, currentTab);
+      } catch (e) {
+        // Ignore localStorage errors
+      }
+    }
+  }, [patientId, currentTab]);
 
   return (
     <div className="flex-1 max-w-7xl w-full mx-auto p-6 md:p-8 space-y-6">
@@ -184,7 +206,7 @@ export default function DoctorPatientLayout({
                   7-Day Adherence
                 </div>
                 <div className={`text-sm font-bold ${adherenceColor} mt-0.5`}>
-                  {takenDoses} of {totalDoses} doses logged
+                  {totalDoses > 0 ? `${takenDoses} of ${totalDoses} doses logged` : "No doses scheduled"}
                 </div>
                 <div className="text-[11px] text-[#64748B] dark:text-gray-400 mt-0.5">
                   {adherenceScore >= 80 ? "High Compliance" : adherenceScore >= 60 ? "Moderate Adherence" : "Risk of Non-Adherence"}
@@ -194,37 +216,39 @@ export default function DoctorPatientLayout({
           </div>
 
           {/* Dynamic Smart Alert Banner (Third-person Doctor Voice) */}
-          <div className="mt-6 pt-5 border-t border-[#E2E8F0] dark:border-[#1F2937]">
-            {activeAlerts.length > 0 ? (
+          {activeAlerts.length > 0 && (
+            <div className="mt-6 pt-5 border-t border-[#E2E8F0] dark:border-[#1F2937]">
               <div className="space-y-2">
-                {activeAlerts.map((alert: any, i: number) => (
-                  <div
-                    key={alert.id || i}
-                    className="flex items-start gap-3 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-xl p-3 text-xs text-amber-900 dark:text-amber-200"
-                  >
-                    <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <strong className="font-bold">Clinical Adherence Alert: </strong>
-                      <span>
-                        {alert.message ||
-                          `Patient missed scheduled dose recently. Caregiver was notified and dose was verified later.`}
-                      </span>
+                {activeAlerts.map((alert: any, i: number) => {
+                  const patientName = patient?.full_name || "Patient";
+                  const clinicianMessage = (alert.message || `Patient ${patientName} missed scheduled dose recently. Caregiver notified.`)
+                    .replace(/\bYou have\b/gi, `Patient ${patientName} has`)
+                    .replace(/\bYou missed\b/gi, `Patient ${patientName} missed`)
+                    .replace(/\bYou are\b/gi, `Patient ${patientName} is`)
+                    .replace(/\bYou\b/gi, patientName)
+                    .replace(/\bYour\b/gi, `${patientName}'s`);
+
+                  return (
+                    <div
+                      key={alert.id || i}
+                      className="flex items-start gap-3 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-xl p-3 text-xs text-amber-900 dark:text-amber-200"
+                    >
+                      <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <strong className="font-bold">Clinical Adherence Alert: </strong>
+                        <span>{clinicianMessage}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
-            ) : (
-              <div className="flex items-center gap-2 text-xs text-emerald-800 dark:text-emerald-300 bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/40 rounded-xl p-2.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-                <span>All active vital metrics, dosing intervals, and caregiver logs are within clinical baseline.</span>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* Tab Navigation Strip (Deep-linked) */}
-      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar border-b border-[#E2E8F0] dark:border-[#1F2937] pb-px">
+      <div className="w-full max-w-full flex items-center gap-1.5 overflow-x-auto no-scrollbar border-b border-[#E2E8F0] dark:border-[#1F2937] pb-px">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = currentTab === tab.slug;
@@ -232,7 +256,7 @@ export default function DoctorPatientLayout({
             <Link
               key={tab.slug}
               href={`/doctor/patient/${patientId}/${tab.slug}`}
-              className={`flex items-center gap-2 px-4 py-3 text-xs font-bold whitespace-nowrap rounded-t-xl transition-all border-b-2 ${
+              className={`flex items-center gap-2 px-4 py-3 text-xs font-bold whitespace-nowrap flex-shrink-0 rounded-t-xl transition-all border-b-2 ${
                 isActive
                   ? "bg-white dark:bg-[#111827] text-[#0F172A] dark:text-white border-[#0F172A] dark:border-white shadow-xs"
                   : "text-[#64748B] dark:text-gray-400 hover:text-[#0F172A] dark:hover:text-white border-transparent hover:bg-white/50 dark:hover:bg-[#111827]/50"

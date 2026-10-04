@@ -8,6 +8,37 @@ module.exports = {
   darkMode: ["class", '[data-theme="dark"]'],
   theme: {
     extend: {
+      colors: {
+        bg: {
+          DEFAULT: "var(--bg)",
+          elevated: "var(--bg-elevated)",
+          muted: "var(--bg-muted)",
+        },
+        fg: {
+          DEFAULT: "var(--fg)",
+          muted: "var(--fg-muted)",
+        },
+        border: "var(--border)",
+        accent: {
+          DEFAULT: "var(--accent)",
+          foreground: "var(--accent-foreground)",
+        },
+        warn: {
+          DEFAULT: "var(--warn)",
+          bg: "var(--warn-bg)",
+          border: "var(--warn-border)",
+        },
+        safe: {
+          DEFAULT: "var(--safe)",
+          bg: "var(--safe-bg)",
+          border: "var(--safe-border)",
+        },
+        unverified: {
+          DEFAULT: "var(--unverified)",
+          bg: "var(--unverified-bg)",
+          border: "var(--unverified-border)",
+        },
+      },
       fontFamily: {
         display: ['"Archivo"', "sans-serif"],
         sans: ['"Inter"', "sans-serif"],

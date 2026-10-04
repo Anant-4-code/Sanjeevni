@@ -75,7 +75,7 @@ type CorrelationPoint = {
   has_real_log: boolean;
 };
 
-/* â”€â”€ Adherence Ring (SVG stroke-only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Adherence Ring (SVG stroke-only) ── */
 function AdherenceRing({ score, size = 110 }: { score: number; size?: number }) {
   const r = size * 0.4;
   const circumference = 2 * Math.PI * r;
@@ -132,7 +132,7 @@ function AdherenceRing({ score, size = 110 }: { score: number; size?: number }) 
   );
 }
 
-/* â”€â”€ Dose Card with Criticality & Snooze/Skip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Dose Card with Criticality & Snooze/Skip ── */
 function DoseCard({
   item,
   onToggle,
@@ -190,7 +190,7 @@ function DoseCard({
 
             {isSnoozed && (
               <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-700 flex items-center gap-1">
-                <Timer className="w-3 h-3" /> Snoozed (+20m Â· Pending)
+                <Timer className="w-3 h-3" /> Snoozed (+20m · Pending)
               </span>
             )}
 
@@ -250,7 +250,7 @@ function DoseCard({
           >
             {isTaken ? (
               <>
-                <CheckCircle2 className="w-4 h-4" /> Taken âœ“
+                <CheckCircle2 className="w-4 h-4" /> Taken ✓
               </>
             ) : (
               "Mark Taken"
@@ -262,7 +262,7 @@ function DoseCard({
   );
 }
 
-/* â”€â”€ Main Dashboard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Main Dashboard ── */
 export default function Dashboard() {
   const { user } = useAuth();
   const [mounted, setMounted] = useState(false);
@@ -271,7 +271,7 @@ export default function Dashboard() {
   const [adherence, setAdherence] = useState(0);
   const [loaded, setLoaded] = useState(false);
 
-  // Â§1 Refill Intelligence state
+  // §1 Refill Intelligence state
   const [refillItems, setRefillItems] = useState<RefillItem[]>([]);
   const [refillRequested, setRefillRequested] = useState<Set<string>>(new Set());
 
@@ -286,7 +286,7 @@ export default function Dashboard() {
   const [skipModalItem, setSkipModalItem] = useState<ScheduleItem | null>(null);
   const [skipReason, setSkipReason] = useState("Ran out");
 
-  // Â§2 & B1-B3 Symptom Journal state
+  // §2 & B1-B3 Symptom Journal state
   const [symptomOpen, setSymptomOpen] = useState(false);
   const [wellbeingScore, setWellbeingScore] = useState(0);
   const [symptomNote, setSymptomNote] = useState("");
@@ -442,21 +442,39 @@ export default function Dashboard() {
       });
   }
 
-  // Handle Photo Attachment
-  function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  // Handle Photo Attachment (BUG-DASH-03: upload multipart file instead of passing massive raw DataURL)
+  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-        const res = evt.target?.result as string;
-        setPhotoPreview(res);
-        setPhotoUrl(res);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    if (file.size > 15 * 1024 * 1024) {
+      alert("Selected photo exceeds 15MB. Please choose a compressed photo.");
+      return;
+    }
+
+    // Local instant preview
+    const previewUrl = URL.createObjectURL(file);
+    setPhotoPreview(previewUrl);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch(`${API_BASE}/upload`, {
+        method: "POST",
+        body: formData,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPhotoUrl(data.url || previewUrl);
+      } else {
+        setPhotoUrl(previewUrl);
+      }
+    } catch {
+      setPhotoUrl(previewUrl);
     }
   }
 
-  // Â§2 & B1-B3 Symptom Submit
+  // §2 & B1-B3 Symptom Submit
   async function handleSymptomSubmit() {
     if (wellbeingScore < 1) return;
     try {
@@ -464,7 +482,7 @@ export default function Dashboard() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          patient_id: user?.id || "demo-patient",
+          patient_id: (user?.role === "patient" && user?.id) ? user.id : "patient-ramesh",
           wellbeing_score: wellbeingScore,
           note: symptomNote,
           tagged_medicine: taggedMedicine,
@@ -495,7 +513,7 @@ export default function Dashboard() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          patient_id: user?.id || "demo-patient",
+          patient_id: (user?.role === "patient" && user?.id) ? user.id : "patient-ramesh",
           medicine: item.medicine,
           prescription_item_id: item.prescription_item_id,
         }),
@@ -542,7 +560,7 @@ export default function Dashboard() {
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping" />
             <span className="text-xs font-mono uppercase tracking-[0.2em] text-[var(--fg-muted)]">
-              LIVE CLINICAL PROTOCOL Â· {user?.full_name ? user.full_name.toUpperCase() : "PATIENT"}
+              LIVE CLINICAL PROTOCOL · {user?.full_name ? user.full_name.toUpperCase() : "PATIENT"}
             </span>
           </div>
           <h1 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight">
@@ -563,7 +581,7 @@ export default function Dashboard() {
               {takenCount} of {schedule.length} doses logged
             </p>
             <span className="inline-flex items-center gap-1 text-[10px] font-mono text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800 font-bold">
-              â— Active Guard
+              ● Active Guard
             </span>
           </div>
         </div>
@@ -635,13 +653,13 @@ export default function Dashboard() {
               rel="noreferrer"
               className="px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition-all flex items-center gap-1.5 shadow-sm"
             >
-              <Send className="w-3.5 h-3.5" /> Flag for My Doctor (WhatsApp) â†’
+              <Send className="w-3.5 h-3.5" /> Flag for My Doctor (WhatsApp) →
             </a>
             <button
               onClick={() => setTrendAlert(null)}
               className="px-3 py-2 text-xs font-semibold text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors"
             >
-              I'm okay, just tracking â†’
+              I'm okay, just tracking →
             </button>
           </div>
         </div>
@@ -653,7 +671,7 @@ export default function Dashboard() {
           <div className="flex items-center gap-3">
             <Sparkles className="w-4 h-4 text-[var(--fg)]" />
             <p className="text-xs text-[var(--fg)]">
-              Haven't checked in for a few days â€” no pressure, but logging how you're feeling helps your doctor spot patterns.
+              Haven't checked in for a few days — no pressure, but logging how you're feeling helps your doctor spot patterns.
             </p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -674,7 +692,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Â§1 Refill Intelligence Banners */}
+      {/* §1 Refill Intelligence Banners */}
       {refillAlerts.length > 0 && (
         <div className="space-y-2">
           {refillAlerts.map((item) => (
@@ -694,15 +712,15 @@ export default function Dashboard() {
                 />
                 <div>
                   <p className="text-sm font-bold text-[var(--fg)]">
-                    {item.medicine} â€”{" "}
+                    {item.medicine} —{" "}
                     {item.days_remaining === 0
                       ? "Course Complete"
                       : `${item.days_remaining} day${item.days_remaining === 1 ? "" : "s"} remaining`}
                   </p>
                   <p className="text-xs text-[var(--fg-muted)]">
                     {item.urgency === "critical"
-                      ? "Running out â€” request a refill now"
-                      : "Running low â€” consider requesting a refill"}
+                      ? "Running out — request a refill now"
+                      : "Running low — consider requesting a refill"}
                   </p>
                 </div>
               </div>
@@ -727,7 +745,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Â§2 & B1-B3 Symptom Journal Widget with Photo Attachment & Same-Day Edit */}
+      {/* §2 & B1-B3 Symptom Journal Widget with Photo Attachment & Same-Day Edit */}
       <div className="glass-card overflow-hidden">
         <button
           onClick={() => {
@@ -811,7 +829,7 @@ export default function Dashboard() {
                     <p className="text-xs font-mono uppercase tracking-wider text-[var(--fg-muted)] flex items-center gap-1.5">
                       <Camera className="w-3.5 h-3.5" /> Attach Photo of Visible Symptom (Optional)
                     </p>
-                    <span className="text-[10px] text-[var(--fg-muted)]">Purely for doctor's review Â· No automated diagnosis</span>
+                    <span className="text-[10px] text-[var(--fg-muted)]">Purely for doctor's review · No automated diagnosis</span>
                   </div>
 
                   <input
@@ -954,7 +972,7 @@ export default function Dashboard() {
                   href="/settings"
                   className="text-[11px] font-bold text-[var(--fg)] hover:underline uppercase tracking-wider font-mono"
                 >
-                  Manage â†’
+                  Manage →
                 </Link>
               </div>
 

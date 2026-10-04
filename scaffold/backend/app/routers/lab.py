@@ -12,48 +12,54 @@ from pydantic import BaseModel
 router = APIRouter()
 
 
+LAB_ORDERS = [
+    {
+        "id": "lab-ord-1",
+        "patient_id": "patient-savitri",
+        "patient_name": "Savitri Kumar",
+        "doctor_name": "Dr. Nitin Sharma",
+        "test_name": "HbA1c & Fasting Lipid Panel",
+        "ordered_at": "2026-08-16T09:00:00Z",
+        "status": "pending_draw",
+        "priority": "routine",
+        "specimen": "Venous Blood (Serum)"
+    },
+    {
+        "id": "lab-ord-2",
+        "patient_id": "patient-vikram",
+        "patient_name": "Vikram Singh",
+        "doctor_name": "Dr. V. K. Rai",
+        "test_name": "Complete Blood Count (CBC) & ESR",
+        "ordered_at": "2026-08-16T10:00:00Z",
+        "status": "analyzing",
+        "priority": "urgent",
+        "specimen": "Serum"
+    },
+    {
+        "id": "lab-ord-3",
+        "patient_id": "patient-priya",
+        "patient_name": "Priya Sharma",
+        "doctor_name": "Dr. Patel",
+        "test_name": "Thyroid Profile (TSH, Free T3/T4)",
+        "ordered_at": "2026-08-16T08:30:00Z",
+        "status": "results_ready",
+        "priority": "routine",
+        "specimen": "Plasma"
+    }
+]
+
+
+def add_lab_order(order: dict):
+    """Add a new diagnostic order from doctor requisition."""
+    LAB_ORDERS.insert(0, order)
+
+
 @router.get("/orders")
 async def get_lab_orders():
     """
     Returns lab diagnostic orders categorized by status (pending_draw, analyzing, results_ready).
     """
-    return {
-        "orders": [
-            {
-                "id": "lab-ord-1",
-                "patient_id": "patient-savitri",
-                "patient_name": "Savitri Kumar",
-                "doctor_name": "Dr. Nitin Sharma",
-                "test_name": "Comprehensive Metabolic & Lipid Panel",
-                "ordered_at": "2026-08-16T09:00:00Z",
-                "status": "analyzing",
-                "priority": "routine",
-                "specimen": "Venous Blood (Serum)"
-            },
-            {
-                "id": "lab-ord-2",
-                "patient_id": "patient-vikram",
-                "patient_name": "Vikram Singh",
-                "doctor_name": "Dr. V. K. Rai",
-                "test_name": "Lipid Profile & Serum Electrolytes",
-                "ordered_at": "2026-08-16T10:00:00Z",
-                "status": "pending_draw",
-                "priority": "urgent",
-                "specimen": "Serum"
-            },
-            {
-                "id": "lab-ord-3",
-                "patient_id": "patient-priya",
-                "patient_name": "Priya Sharma",
-                "doctor_name": "Dr. Patel",
-                "test_name": "Thyroid Stimulating Hormone (TSH)",
-                "ordered_at": "2026-08-16T08:30:00Z",
-                "status": "results_ready",
-                "priority": "routine",
-                "specimen": "Plasma"
-            }
-        ]
-    }
+    return {"orders": LAB_ORDERS}
 
 
 class OrderStatusUpdate(BaseModel):
@@ -65,6 +71,11 @@ async def update_order_status(order_id: str, payload: OrderStatusUpdate):
     """
     Moves diagnostic order across workflow stages.
     """
+    for o in LAB_ORDERS:
+        if o["id"] == order_id:
+            o["status"] = payload.status
+            break
+
     return {
         "status": "updated",
         "order_id": order_id,
@@ -132,10 +143,53 @@ class LabResultRequest(BaseModel):
 
 
 @router.post("/results")
+@router.post("/orders/{diagnostic_order_id}/publish")
 async def submit_results(payload: LabResultRequest):
     """
     Submits verified laboratory results and publishes the plain-language summary to the patient's record.
     """
+    target_order = None
+    for o in LAB_ORDERS:
+        if o["id"] == payload.diagnostic_order_id:
+            o["status"] = "results_ready"
+            target_order = o
+            break
+
+    patient_id = target_order.get("patient_id", "patient-ramesh") if target_order else "patient-ramesh"
+    test_name = target_order.get("test_name", "Diagnostic Laboratory Report") if target_order else "Diagnostic Laboratory Report"
+    doc_name = target_order.get("doctor_name", "Clinical Pathology Lab") if target_order else "Clinical Pathology Lab"
+
+    # BUG-LAB-01 FIX: Fan out published results to Patient Vault and Activity Logs
+    try:
+        from app.services.patient_service import patient_service
+        import datetime as dt
+        report_id = f"doc-lab-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+        vault_doc = {
+            "id": report_id,
+            "patient_id": patient_id,
+            "title": f"Lab Report: {test_name}",
+            "category": "lab-reports",
+            "doctor_name": doc_name,
+            "status": "verified",
+            "date": dt.date.today().strftime("%b %d, %Y"),
+            "summary": payload.edited_summary or f"Diagnostic report verified. Measurements: {str(payload.raw_values)}",
+            "file_url": "",
+            "pinned": False,
+            "patient_notes": "Diagnostic pathology analysis completed and verified by laboratory technician.",
+            "metrics": payload.raw_values,
+        }
+        patient_service.vault_documents.insert(0, vault_doc)
+
+        patient_service.add_log(
+            patient_id=patient_id,
+            event_type="LAB_RESULTS_PUBLISHED",
+            title=f"Lab Results Published: {test_name}",
+            details=f"Pathology lab published verified metrics for {test_name}. Report saved to patient vault.",
+            actor="Central Diagnostic Lab",
+        )
+    except Exception as e:
+        print(f"Error publishing lab result to patient vault: {e}")
+
     return {
         "status": "published",
         "order_id": payload.diagnostic_order_id,

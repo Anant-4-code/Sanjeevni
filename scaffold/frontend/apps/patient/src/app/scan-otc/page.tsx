@@ -177,7 +177,7 @@ export default function UniversalScannerHubPage() {
       const formData = new FormData();
       formData.append("image", blob, "scanned_document.jpg");
       formData.append("category", selectedCategory);
-      formData.append("patient_id", user?.id || "demo-patient");
+      formData.append("patient_id", (user?.role === "patient" && user?.id) ? user.id : "patient-ramesh");
 
       if (selectedCategory === "prescriptions") {
         const res = await fetch(`${API_BASE}/patient/otc-scan`, {
@@ -272,7 +272,7 @@ export default function UniversalScannerHubPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          patient_id: user?.id || "demo-patient",
+          patient_id: (user?.role === "patient" && user?.id) ? user.id : "patient-ramesh",
           title: docAnalysis.title || `${selectedCategory} Report`,
           category: selectedCategory,
           summary: docAnalysis.summary || "Medical document archived in Vault.",
@@ -294,11 +294,15 @@ export default function UniversalScannerHubPage() {
     setCreating(true);
     try {
       const filteredMeds = medicines.filter((m) => m.name.trim() !== "");
+      const pid = (user?.role === "patient" && user?.id) ? user.id : "patient-ramesh";
+      const docId = user?.primary_doctor?.id || "doc-sharma-1";
+
       await fetch(`${API_BASE}/patient/create-digital-prescription`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          patient_id: user?.id || "demo-patient",
+          patient_id: pid,
+          primary_doctor_id: docId,
           title: rxTitle,
           doctor_name: doctorName,
           medicines: filteredMeds.length > 0 ? filteredMeds : medicines,

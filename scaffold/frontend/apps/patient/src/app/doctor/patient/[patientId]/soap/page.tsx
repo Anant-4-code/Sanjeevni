@@ -33,16 +33,33 @@ export default function DoctorSOAPPage() {
   const [processing, setProcessing] = useState(false);
   const [duration, setDuration] = useState(0);
   const [transcript, setTranscript] = useState("");
-  const [soapNote, setSoapNote] = useState<SOAPNote>({
-    S: "58M presenting for diabetes follow-up. C/O occasional dizziness, especially after evening Noveron dose. Blood sugars stable around 140-160 mg/dL fasting. No chest pain, no shortness of breath.",
-    O: "BP 130/85 mmHg, HR 78 bpm regular, RR 16, SpO2 98% RA. General: well-nourished, no acute distress. Lungs: clear bilaterally. Abdomen: soft, non-tender. Foot pulses intact.",
-    A: "1. Type 2 Diabetes Mellitus — stable control.\n2. Episodic Postprandial Dizziness — likely mild orthostatic effect or evening Noveron timing.\n3. Cardiovascular health stable.",
-    P: "1. Continue Metformin 500mg (1-0-1).\n2. Monitor blood pressure morning & evening.\n3. Order HbA1c, fasting lipid profile, and serum creatinine.\n4. Follow-up in 4 weeks or sooner if dizziness worsens.",
-  });
+  const [soapNote, setSoapNote] = useState<SOAPNote>({ S: "", O: "", A: "", P: "" });
+  const [loadingNote, setLoadingNote] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const intervalRef = useRef<any>(null);
+
+  // BUG-DR-SOAP-01 FIX: Fetch existing or patient-specific SOAP note from backend
+  useEffect(() => {
+    if (!patientId) return;
+    const fetchSoapNote = async () => {
+      setLoadingNote(true);
+      try {
+        const res = await fetch(`${API_BASE}/doctor/patient/${patientId}/soap`);
+        const data = await res.json();
+        if (data.soap_note) {
+          setSoapNote(data.soap_note);
+        }
+      } catch (e) {
+        console.error("Error fetching soap note:", e);
+      } finally {
+        setLoadingNote(false);
+      }
+    };
+    fetchSoapNote();
+  }, [patientId]);
 
   useEffect(() => {
     return () => {
@@ -66,7 +83,7 @@ export default function DoctorSOAPPage() {
         stream.getTracks().forEach((t) => t.stop());
         setProcessing(true);
         try {
-          const res = await fetch(`${API_BASE}/doctor/dictation?prescription_id=rx-${patientId}`, {
+          const res = await fetch(`${API_BASE}/doctor/dictation?patient_id=${encodeURIComponent(patientId)}&prescription_id=rx-${patientId}`, {
             method: "POST",
           });
           const data = await res.json();
@@ -99,18 +116,44 @@ export default function DoctorSOAPPage() {
       mediaRecorderRef.current.stop();
     } else {
       setProcessing(true);
-      setTimeout(() => {
-        setTranscript(
-          "Patient Ramesh Kumar presenting for routine diabetes checkup. BP 130 over 85. Mild dizziness reported with evening dosage. Plan: continue current Metformin regimen, recheck HbA1c."
-        );
-        setProcessing(false);
-      }, 1200);
+      (async () => {
+        try {
+          const res = await fetch(`${API_BASE}/doctor/dictation?patient_id=${encodeURIComponent(patientId)}&prescription_id=rx-${patientId}`, {
+            method: "POST",
+          });
+          const data = await res.json();
+          if (data.transcript) setTranscript(data.transcript);
+          if (data.soap_note) setSoapNote(data.soap_note);
+        } catch (e) {
+          console.error("Dictation endpoint failed:", e);
+        } finally {
+          setProcessing(false);
+        }
+      })();
     }
   };
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+  // BUG-DR-SOAP-02 FIX: Save SOAP note to backend API
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await fetch(`${API_BASE}/doctor/soap/save`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          patient_id: patientId,
+          doctor_id: doctorId,
+          soap_note: soapNote,
+          transcript,
+        }),
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (e) {
+      console.error("Error saving SOAP note to backend:", e);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const formatTimer = (secs: number) => {
@@ -182,10 +225,11 @@ export default function DoctorSOAPPage() {
           </div>
           <button
             onClick={handleSave}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-colors"
+            disabled={saving || loadingNote}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs shadow-xs transition-colors"
           >
             <Save className="w-3.5 h-3.5" />
-            <span>{saved ? "Saved to Chart!" : "Save SOAP Note"}</span>
+            <span>{saving ? "Saving to Chart..." : saved ? "Saved to Chart!" : "Save SOAP Note"}</span>
           </button>
         </div>
 

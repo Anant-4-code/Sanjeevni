@@ -27,26 +27,73 @@ export default function DoctorOCRAndXrayPage() {
   const [zoomLevel, setZoomLevel] = useState(1);
   const [loading, setLoading] = useState(false);
   const [analyzingXray, setAnalyzingXray] = useState(false);
+  const [scanInfo, setScanInfo] = useState<any>(null);
 
-  // Mock scan & OCR data for demo
+  // BUG-DR-OCR-01 FIX: Dynamic scan & OCR data initialized from patient records
   const [ocrData, setOcrData] = useState({
-    clinic_name: "MANIKANTA NEURO & MULTISPECIALITY CENTRE",
-    doctor_name: "Dr. G. Mithun, MD (Neuro)",
+    clinic_name: "CLINICAL OPD CENTRE",
+    doctor_name: "Consultant Physician",
     date: "2026-08-16",
-    medicines: [
-      { name: "Tab. Edushine MX 6", dosage: "1-0-1", duration: "10 days" },
-      { name: "Tab. M-ped 16mg", dosage: "1-0-0", duration: "5 days" },
-      { name: "Tab. Gabapin NT 100mg", dosage: "0-0-1", duration: "15 days" },
-      { name: "Tab. Benforce CD", dosage: "1-0-0", duration: "30 days" },
-      { name: "Tab. Rebote", dosage: "1-0-1", duration: "10 days" },
-    ],
-    notes: "Patient reports severe LBA with radicular pain. Bed rest advised.",
+    medicines: [] as { name: string; dosage: string; duration: string }[],
+    notes: "Clinical review in progress.",
   });
 
-  const [xrayDetections, setXrayDetections] = useState<any[]>([
-    { label: "fracture", confidence: 0.92, box: { x: 140, y: 110, w: 90, h: 65 } },
-    { label: "bone abnormality", confidence: 0.78, box: { x: 260, y: 220, w: 60, h: 55 } },
-  ]);
+  const [xrayDetections, setXrayDetections] = useState<any[]>([]);
+
+  const fetchScans = async () => {
+    if (!patientId) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/doctor/patient/${patientId}/scans`);
+      const data = await res.json();
+      setScanInfo(data);
+      if (data.prescription_scan) {
+        const ps = data.prescription_scan;
+        setOcrData({
+          clinic_name: ps.clinic_name || "Sanjeevani Clinical Care",
+          doctor_name: ps.doctor_name || "Consultant Physician",
+          date: ps.uploaded_at || "2026-08-16",
+          medicines: (ps.ocr_fields || []).map((f: any) => ({
+            name: f.name || "Medication",
+            dosage: f.dosage || "1-0-1",
+            duration: `${f.duration_days || 7} days`,
+          })),
+          notes: ps.notes || "Prescription uploaded and verified. Medical record logged.",
+        });
+      }
+      if (data.xray_scan?.detections) {
+        setXrayDetections(data.xray_scan.detections);
+      }
+    } catch (err) {
+      console.error("Failed to fetch patient scans:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReanalyzeXray = async () => {
+    if (!patientId) return;
+    setAnalyzingXray(true);
+    try {
+      const res = await fetch(`${API_BASE}/doctor/xray/analyze-patient`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ patient_id: patientId }),
+      });
+      const data = await res.json();
+      if (data.detections) {
+        setXrayDetections(data.detections);
+      }
+    } catch (err) {
+      console.error("Failed to re-analyze scan:", err);
+    } finally {
+      setAnalyzingXray(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchScans();
+  }, [patientId]);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -151,28 +198,65 @@ export default function DoctorOCRAndXrayPage() {
               <span className="text-[10px] font-mono text-[#64748B]">Tesseract LSTM OEM 1 PSM 6</span>
             </div>
 
+
             <div className="overflow-auto max-h-[500px] border border-dashed border-gray-300 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-900/50 p-4 flex items-center justify-center min-h-[380px]">
-              <div
-                style={{ transform: `scale(${zoomLevel})`, transformOrigin: "top center" }}
-                className="bg-white dark:bg-[#111827] p-6 shadow-md rounded-lg border max-w-md w-full font-mono text-xs space-y-3 transition-transform"
-              >
-                <div className="text-center border-b pb-2">
-                  <div className="font-bold text-sm">MANIKANTA NEURO CENTRE</div>
-                  <div className="text-[10px] text-gray-500">Dr. G. Mithun MD &bull; OPD Reg #9024</div>
+              {loading ? (
+                /* Loading skeleton while fetching from API */
+                <div className="w-full max-w-md space-y-3 animate-pulse">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mx-auto" />
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mx-auto" />
+                  <div className="border-t border-dashed border-gray-300 dark:border-gray-600 my-2" />
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full" />
+                  ))}
                 </div>
-                <div className="space-y-1.5 text-[11px] leading-relaxed">
-                  <p>1. Tab. Edushine MX 6 &mdash; 1-0-1 (10d)</p>
-                  <p>2. Tab. M-ped 16mg &mdash; 1-0-0 (5d)</p>
-                  <p>3. Tab. Gabapin NT 100mg &mdash; 0-0-1 (15d)</p>
-                  <p>4. Tab. Benforce CD &mdash; 1-0-0 (30d)</p>
-                  <p>5. Tab. Rebote &mdash; 1-0-1 (10d)</p>
+              ) : !scanInfo?.prescription_scan ? (
+                /* Empty state – no prescription scan for this patient */
+                <div className="text-center space-y-3 max-w-xs">
+                  <FileText className="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto" />
+                  <p className="text-sm font-semibold text-[#64748B] dark:text-gray-400">
+                    No prescription scan on file for this patient
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
+                    Upload a scanned prescription slip to the patient&apos;s Health Vault under <em>Prescriptions</em> to enable OCR extraction.
+                  </p>
+                  <a
+                    href={`/vault/prescriptions`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] rounded-xl hover:opacity-90 transition"
+                  >
+                    <Maximize2 className="w-3.5 h-3.5" />
+                    Upload to Vault
+                  </a>
                 </div>
-                <div className="pt-2 border-t text-[10px] text-gray-500">
-                  Diag: Low Back Ache (LBA) with radiculopathy
+              ) : (
+                <div
+                  style={{ transform: `scale(${zoomLevel})`, transformOrigin: "top center" }}
+                  className="bg-white dark:bg-[#111827] p-6 shadow-md rounded-lg border max-w-md w-full font-mono text-xs space-y-3 transition-transform"
+                >
+                  <div className="text-center border-b pb-2">
+                    <div className="font-bold text-sm">{ocrData.clinic_name}</div>
+                    <div className="text-[10px] text-gray-500">{ocrData.doctor_name} &bull; Ref #{patientId}</div>
+                    <div className="text-[10px] text-gray-400 mt-0.5">Date: {ocrData.date}</div>
+                  </div>
+                  <div className="space-y-1.5 text-[11px] leading-relaxed">
+                    {ocrData.medicines && ocrData.medicines.length > 0 ? (
+                      ocrData.medicines.map((m, idx) => (
+                        <p key={idx}>{idx + 1}. {m.name} &mdash; {m.dosage} ({m.duration})</p>
+                      ))
+                    ) : (
+                      <p className="text-gray-400 italic">No prescription slip items attached.</p>
+                    )}
+                  </div>
+                  <div className="pt-2 border-t text-[10px] text-gray-500">
+                    Notes: {ocrData.notes}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
+
 
           {/* Right: AI Normalized Editable Entities */}
           <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-2xl p-5 shadow-xs space-y-4">
@@ -244,16 +328,30 @@ export default function DoctorOCRAndXrayPage() {
             <div>
               <h3 className="font-bold text-sm text-[#0F172A] dark:text-white flex items-center gap-2">
                 <Bone className="w-4 h-4 text-purple-600" />
-                YOLOv7-p6 Bone Fracture Detection Canvas
+                YOLOv7-p6 Diagnostic Imaging &amp; Fracture Canvas
               </h3>
               <p className="text-xs text-[#64748B] dark:text-gray-400 mt-0.5">
-                Model: `yolov7-p6-bonefracture.onnx` &bull; Input: Lumbar Spine / Chest X-Ray
+                Model: `yolov7-p6-bonefracture.onnx` &bull; Region: {scanInfo?.xray_scan?.anatomical_region || "Radiology Scan"}
               </p>
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono font-bold bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 px-2.5 py-1 rounded-full border border-rose-200">
-                1 FRACTURE DETECTED (92%)
+              <button
+                onClick={handleReanalyzeXray}
+                disabled={analyzingXray}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded-xl transition-all shadow-xs"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${analyzingXray ? "animate-spin" : ""}`} />
+                {analyzingXray ? "Inference Running..." : "Re-Analyze Scan (YOLOv7)"}
+              </button>
+              <span className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded-full border ${
+                xrayDetections.length > 0
+                  ? "bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border-rose-200"
+                  : "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200"
+              }`}>
+                {xrayDetections.length > 0
+                  ? `${xrayDetections.length} FINDING(S) (${Math.round((xrayDetections[0]?.confidence || 0.9) * 100)}%)`
+                  : "NO ACUTE FRACTURE / NORMAL"}
               </span>
             </div>
           </div>
@@ -276,7 +374,12 @@ export default function DoctorOCRAndXrayPage() {
               >
                 <div>
                   <span className="font-bold text-rose-900 dark:text-rose-200 uppercase">{det.label}</span>
-                  <div className="text-[11px] text-[#64748B] dark:text-gray-400 font-mono mt-0.5">
+                  {det.anatomical_site && (
+                    <div className="text-[11px] font-semibold text-gray-800 dark:text-gray-200 mt-0.5">
+                      {det.anatomical_site}
+                    </div>
+                  )}
+                  <div className="text-[10px] text-[#64748B] dark:text-gray-400 font-mono mt-0.5">
                     Box: [{det.box.x}, {det.box.y}, {det.box.w}, {det.box.h}]
                   </div>
                 </div>

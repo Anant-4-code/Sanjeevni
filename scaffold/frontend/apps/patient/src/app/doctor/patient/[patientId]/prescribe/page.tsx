@@ -32,9 +32,9 @@ export default function DoctorPrescribePage() {
   const doctorId = user?.id || "doc-sharma-1";
   const patientId = params.patientId as string;
 
+  // BUG-DR-RX-01 FIX: Start with a blank medication item instead of hardcoded diabetes meds
   const [medications, setMedications] = useState<MedicationItem[]>([
-    { id: "m1", name: "Metformin 500mg", dosage: "500mg", frequency: "1-0-1", duration_days: 30, condition_tag: "Type 2 Diabetes" },
-    { id: "m2", name: "Noveron 500mg", dosage: "500mg", frequency: "1-0-1", duration_days: 15, condition_tag: "Neuropathy" },
+    { id: "m1", name: "", dosage: "", frequency: "1-0-1", duration_days: 7, condition_tag: "" },
   ]);
 
   const [guardrailFlags, setGuardrailFlags] = useState<any[]>([]);
@@ -118,8 +118,29 @@ export default function DoctorPrescribePage() {
     }
   };
 
+  const handleLoadTemplate = (type: "diabetes" | "infection" | "hypertension") => {
+    if (type === "diabetes") {
+      setMedications([
+        { id: "m1", name: "Metformin 500mg", dosage: "500mg", frequency: "1-0-1", duration_days: 30, condition_tag: "Type 2 Diabetes" },
+        { id: "m2", name: "Noveron 500mg", dosage: "500mg", frequency: "0-0-1", duration_days: 15, condition_tag: "Neuropathy" },
+      ]);
+    } else if (type === "infection") {
+      setMedications([
+        { id: "m1", name: "Amoxicillin 500mg", dosage: "500mg", frequency: "1-1-1", duration_days: 7, condition_tag: "Respiratory Infection" },
+        { id: "m2", name: "Paracetamol 650mg", dosage: "650mg", frequency: "SOS", duration_days: 5, condition_tag: "Fever" },
+      ]);
+    } else if (type === "hypertension") {
+      setMedications([
+        { id: "m1", name: "Telmisartan 40mg", dosage: "40mg", frequency: "1-0-0", duration_days: 30, condition_tag: "Hypertension" },
+        { id: "m2", name: "Amlodipine 5mg", dosage: "5mg", frequency: "0-0-1", duration_days: 30, condition_tag: "Hypertension" },
+      ]);
+    }
+  };
+
   // Sign-off verification
   const handleVerify = async () => {
+    const validMeds = medications.filter((m) => m.name.trim().length > 0);
+    if (validMeds.length === 0) return;
     setVerifying(true);
     try {
       const res = await fetch(`${API_BASE}/doctor/verify`, {
@@ -130,7 +151,7 @@ export default function DoctorPrescribePage() {
           doctor_id: doctorId,
           final_state: {
             patient_id: patientId,
-            medications,
+            medications: validMeds,
             notes: patientNotes,
           },
           acknowledged_flags: Array.from(acknowledgedFlags).map((f) => ({ flag_id: f })),
@@ -302,18 +323,51 @@ export default function DoctorPrescribePage() {
 
       {/* ── Section: Medication List Editor ── */}
       <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-2xl p-6 shadow-xs space-y-4">
-        <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#1F2937] pb-3">
+        <div className="flex flex-wrap items-center justify-between border-b border-[#E2E8F0] dark:border-[#1F2937] pb-3 gap-2">
           <div className="flex items-center gap-2">
             <Pill className="w-4 h-4 text-[#0F172A] dark:text-white" />
             <h3 className="font-bold text-sm text-[#0F172A] dark:text-white">Draft Medication List ({medications.length})</h3>
           </div>
-          <button
-            onClick={handleAddMed}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] text-xs font-bold hover:opacity-90 transition-opacity"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Add Medication</span>
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1 text-[11px] text-[#64748B]">
+              <span>Templates:</span>
+              <button
+                type="button"
+                onClick={() => handleLoadTemplate("diabetes")}
+                className="px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-950 text-gray-700 dark:text-gray-300 font-medium transition-colors"
+              >
+                Diabetes
+              </button>
+              <button
+                type="button"
+                onClick={() => handleLoadTemplate("infection")}
+                className="px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-950 text-gray-700 dark:text-gray-300 font-medium transition-colors"
+              >
+                Infection
+              </button>
+              <button
+                type="button"
+                onClick={() => handleLoadTemplate("hypertension")}
+                className="px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-950 text-gray-700 dark:text-gray-300 font-medium transition-colors"
+              >
+                Hypertension
+              </button>
+              <button
+                type="button"
+                onClick={() => setMedications([{ id: `med-${Date.now()}`, name: "", dosage: "", frequency: "1-0-1", duration_days: 7, condition_tag: "" }])}
+                className="px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-medium transition-colors"
+              >
+                Clear
+              </button>
+            </div>
+            <button
+              onClick={handleAddMed}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0F172A] dark:bg-white text-white dark:text-[#0F172A] text-xs font-bold hover:opacity-90 transition-opacity"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Medication</span>
+            </button>
+          </div>
         </div>
 
         <div className="space-y-3">
@@ -419,7 +473,7 @@ export default function DoctorPrescribePage() {
 
         <button
           onClick={handleVerify}
-          disabled={verifying || checkingGuardrail || hasUnacknowledgedSevere || medications.length === 0}
+          disabled={verifying || checkingGuardrail || hasUnacknowledgedSevere || !medications.some((m) => m.name.trim().length > 0)}
           className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all flex-shrink-0"
         >
           <CheckCircle2 className="w-4 h-4" />

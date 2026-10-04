@@ -84,6 +84,11 @@ type DayDetailData = {
   doses_total: number;
 };
 
+function cleanEncoding(str: string): string {
+  if (!str) return "";
+  return str.replace(/\?\?/g, " - ").replace(/[–—]/g, " - ");
+}
+
 export default function CalendarPage() {
   const { user } = useAuth();
   const today = new Date(); // The ONLY source of live "today"
@@ -101,7 +106,7 @@ export default function CalendarPage() {
   const [travelMode, setTravelMode] = useState(false);
   const [shiftedReminderAccepted, setShiftedReminderAccepted] = useState(false);
 
-  const patientId = (user?.role === "patient" && user?.id) ? user.id : "demo-patient";
+  const patientId = (user?.role === "patient" && user?.id) ? user.id : "patient-ramesh";
 
   // Fetch Month data on month/year/patient change
   const fetchMonthCalendar = () => {
@@ -113,6 +118,12 @@ export default function CalendarPage() {
         return res.json();
       })
       .then((data) => {
+        if (data?.ai_summary) {
+          data.ai_summary.insight_text = cleanEncoding(data.ai_summary.insight_text);
+          data.ai_summary.best_week = cleanEncoding(data.ai_summary.best_week);
+          data.ai_summary.smart_reminder_suggestion = cleanEncoding(data.ai_summary.smart_reminder_suggestion);
+          data.ai_summary.missed_dose_risk_day = cleanEncoding(data.ai_summary.missed_dose_risk_day);
+        }
         setMonthData(data);
         setLoadingMonth(false);
       })
@@ -194,6 +205,20 @@ export default function CalendarPage() {
           };
         });
       });
+  };
+
+  const handleShiftReminder = (newTime: string = "09:00 PM") => {
+    setShiftedReminderAccepted(true);
+    fetch(`${API_BASE}/patient/${patientId}/shift-reminder`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ new_time: newTime }),
+    })
+      .then(() => {
+        fetchMonthCalendar();
+        fetchDayDetail(selectedDate);
+      })
+      .catch(() => {});
   };
 
   const isToday = (dateStr: string) => dateStr === todayIso;
@@ -307,7 +332,7 @@ export default function CalendarPage() {
               </div>
               <div className="flex items-center gap-2 self-end sm:self-center">
                 <button
-                  onClick={() => setShiftedReminderAccepted(true)}
+                  onClick={() => handleShiftReminder("09:00 PM")}
                   className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider bg-[var(--fg)] text-[var(--bg)] rounded-full hover:opacity-90 transition-opacity"
                 >
                   Shift to 9:00 PM ✓

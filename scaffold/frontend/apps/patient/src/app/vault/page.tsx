@@ -18,6 +18,10 @@ import {
   Building2,
   Syringe,
   FileSignature,
+  Eye,
+  X,
+  Download,
+  Printer,
 } from "lucide-react";
 import VaultInsightsStrip from "@/components/VaultInsightsStrip";
 import VaultSearchAI from "@/components/VaultSearchAI";
@@ -36,6 +40,9 @@ type VaultItem = {
   days_remaining?: number;
   condition_tags?: string[];
   pinned?: boolean;
+  file_url?: string;
+  patient_notes?: string;
+  clinic_name?: string;
 };
 
 type CategoryTile = {
@@ -54,10 +61,11 @@ export default function VaultPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | "verified" | "unverified">("all");
   const [loading, setLoading] = useState(true);
   const [showAISearch, setShowAISearch] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<VaultItem | null>(null);
 
   function fetchVault() {
     setLoading(true);
-    const pid = (user?.role === "patient" && user?.id) ? user.id : "demo-patient";
+    const pid = (user?.role === "patient" && user?.id) ? user.id : "patient-ramesh";
     fetch(`${API_BASE}/patient/${pid}/vault`)
       .then((res) => res.json())
       .then((data) => {
@@ -147,7 +155,7 @@ export default function VaultPage() {
   });
 
   const unverifiedCount = documents.filter((d) => d.status === "unverified").length;
-  const currentPatientId = (user?.role === "patient" && user?.id) ? user.id : "demo-patient";
+  const currentPatientId = (user?.role === "patient" && user?.id) ? user.id : "patient-ramesh";
 
   return (
     <div className="max-w-6xl mx-auto w-full space-y-8">
@@ -316,70 +324,106 @@ export default function VaultPage() {
 
         {/* Documents List */}
         <div className="space-y-4">
-          {filteredDocs.map((doc) => (
-            <div
-              key={doc.id}
-              className="glass-card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:border-[var(--fg)] transition-all"
-            >
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-2 mb-2">
-                  <Link
-                    href={`/vault/prescription/${doc.id}`}
-                    className="font-bold text-base sm:text-lg hover:underline text-[var(--fg)]"
-                  >
-                    {doc.title}
-                  </Link>
+          {filteredDocs.map((doc) => {
+            const isPrescription = doc.category === "prescriptions" || doc.category === "prescription";
+            const isLab = doc.category === "lab-reports" || doc.category === "lab_reports";
+            const detailUrl = isPrescription
+              ? `/vault/prescription/${doc.id}`
+              : isLab
+              ? `/vault/lab-report/${doc.id}`
+              : null;
 
-                  {/* Category Pill */}
-                  <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-[var(--bg-muted)] border border-[var(--border)]">
-                    {doc.category.replace("-", " ")}
-                  </span>
+            return (
+              <div
+                key={doc.id}
+                className="glass-card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:border-[var(--fg)] transition-all"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    {detailUrl ? (
+                      <Link
+                        href={detailUrl}
+                        className="font-bold text-base sm:text-lg hover:underline text-[var(--fg)]"
+                      >
+                        {doc.title}
+                      </Link>
+                    ) : (
+                      <button
+                        onClick={() => setPreviewDoc(doc)}
+                        className="font-bold text-base sm:text-lg hover:underline text-[var(--fg)] text-left"
+                      >
+                        {doc.title}
+                      </button>
+                    )}
 
-                  {/* Condition Tags */}
-                  {doc.condition_tags?.map((t, idx) => (
-                    <span
-                      key={idx}
-                      className="text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
-                    >
-                      {t}
+                    {/* Category Pill */}
+                    <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-[var(--bg-muted)] border border-[var(--border)]">
+                      {doc.category.replace("-", " ")}
                     </span>
-                  ))}
 
-                  {/* Active Days Remaining Badge */}
-                  {doc.days_remaining !== undefined && doc.days_remaining > 0 && (
-                    <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
-                      {doc.days_remaining} Days Left
-                    </span>
-                  )}
+                    {/* Condition Tags */}
+                    {doc.condition_tags?.map((t, idx) => (
+                      <span
+                        key={idx}
+                        className="text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+                      >
+                        {t}
+                      </span>
+                    ))}
 
-                  {/* Status Badge */}
-                  {doc.status === "unverified" ? (
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                      <AlertTriangle className="w-3 h-3" /> UNVERIFIED
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                      <ShieldCheck className="w-3 h-3" /> CLINICALLY VERIFIED
-                    </span>
-                  )}
+                    {/* Active Days Remaining Badge */}
+                    {doc.days_remaining !== undefined && doc.days_remaining > 0 && (
+                      <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                        {doc.days_remaining} Days Left
+                      </span>
+                    )}
+
+                    {/* Status Badge */}
+                    {doc.status === "unverified" ? (
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3" /> UNVERIFIED
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                        <ShieldCheck className="w-3 h-3" /> CLINICALLY VERIFIED
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="text-xs text-[var(--fg-muted)] mb-1.5 font-semibold">
+                    Source / Doctor: <strong className="text-[var(--fg)]">{doc.doctor_name}</strong> · Date: {doc.date}
+                  </p>
+                  <p className="text-xs text-[var(--fg-muted)] leading-relaxed">{doc.summary}</p>
                 </div>
 
-                <p className="text-xs text-[var(--fg-muted)] mb-1.5 font-semibold">
-                  Source / Doctor: <strong className="text-[var(--fg)]">{doc.doctor_name}</strong> · Date: {doc.date}
-                </p>
-                <p className="text-xs text-[var(--fg-muted)] leading-relaxed">{doc.summary}</p>
-              </div>
+                <div className="flex items-center gap-2 flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[var(--border)]">
+                  <button
+                    onClick={() => setPreviewDoc(doc)}
+                    className="p-2.5 rounded-full border border-[var(--border)] hover:border-[var(--fg)] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-all"
+                    title="Quick Document Preview"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </button>
 
-              <div className="flex items-center gap-3 flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[var(--border)]">
-                <Link
-                  href={`/vault/prescription/${doc.id}`}
-                  className="px-5 py-2.5 text-xs font-bold uppercase tracking-wider border border-[var(--fg)] rounded-full hover:bg-[var(--fg)] hover:text-[var(--bg)] transition-all shadow-sm"
-                >
-                  View Record →
-                </Link>
+                  {detailUrl ? (
+                    <Link
+                      href={detailUrl}
+                      className="px-5 py-2.5 text-xs font-bold uppercase tracking-wider border border-[var(--fg)] rounded-full hover:bg-[var(--fg)] hover:text-[var(--bg)] transition-all shadow-sm"
+                    >
+                      View Detail →
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={() => setPreviewDoc(doc)}
+                      className="px-5 py-2.5 text-xs font-bold uppercase tracking-wider border border-[var(--fg)] rounded-full hover:bg-[var(--fg)] hover:text-[var(--bg)] transition-all shadow-sm"
+                    >
+                      View Record →
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {filteredDocs.length === 0 && !loading && (
             <div className="glass-card p-12 text-center">
@@ -390,6 +434,125 @@ export default function VaultPage() {
           )}
         </div>
       </div>
+
+      {/* BUG-VAULT-02 FIX: Generic Document Preview & Download Modal */}
+      {previewDoc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-[#111827] border border-[var(--border)] rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-[var(--border)] flex items-start justify-between gap-4 bg-[var(--bg-muted)]/30">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300">
+                    {previewDoc.category.replace("-", " ")}
+                  </span>
+                  {previewDoc.status === "verified" ? (
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3" /> VERIFIED
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" /> UNVERIFIED
+                    </span>
+                  )}
+                </div>
+                <h2 className="text-xl font-bold text-[var(--fg)] truncate">{previewDoc.title}</h2>
+                <p className="text-xs text-[var(--fg-muted)] mt-1">
+                  Issued by <strong className="text-[var(--fg)]">{previewDoc.doctor_name}</strong> · {previewDoc.date}
+                </p>
+              </div>
+
+              <button
+                onClick={() => setPreviewDoc(null)}
+                className="p-2 rounded-full border border-[var(--border)] hover:bg-[var(--bg-muted)] transition-colors text-[var(--fg-muted)] hover:text-[var(--fg)]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto space-y-6 flex-1">
+              <div className="rounded-2xl border border-[var(--border)] overflow-hidden bg-[var(--bg-muted)]/50 relative">
+                {previewDoc.file_url ? (
+                  <img
+                    src={previewDoc.file_url}
+                    alt={previewDoc.title}
+                    className="w-full max-h-72 object-contain bg-black/5 dark:bg-black/40"
+                  />
+                ) : (
+                  <div className="py-16 text-center">
+                    <FileText className="w-12 h-12 text-[var(--fg-muted)] mx-auto mb-2 opacity-50" />
+                    <p className="text-xs font-mono uppercase tracking-wider text-[var(--fg-muted)]">
+                      Digital Encrypted Clinical Record
+                    </p>
+                    <p className="text-xs text-[var(--fg-muted)] mt-1">Cryptographically authenticated on Sanjeevani Mesh</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="text-xs font-mono uppercase tracking-wider text-[var(--fg-muted)] font-bold">
+                  Clinical Record Summary
+                </h4>
+                <div className="p-4 rounded-2xl bg-[var(--bg-muted)]/40 border border-[var(--border)] text-sm text-[var(--fg)] leading-relaxed">
+                  {previewDoc.summary || "No automated summary available for this record."}
+                </div>
+              </div>
+
+              {previewDoc.patient_notes && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-mono uppercase tracking-wider text-[var(--fg-muted)] font-bold">
+                    Doctor / Intake Notes
+                  </h4>
+                  <p className="text-xs text-[var(--fg-muted)] italic bg-blue-50/50 dark:bg-blue-950/20 p-3 rounded-xl border border-blue-200 dark:border-blue-900">
+                    {previewDoc.patient_notes}
+                  </p>
+                </div>
+              )}
+
+              {previewDoc.condition_tags && previewDoc.condition_tags.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-mono uppercase tracking-wider text-[var(--fg-muted)] font-bold mb-2">
+                    Tagged Clinical Disciplines
+                  </h4>
+                  <div className="flex flex-wrap gap-1.5">
+                    {previewDoc.condition_tags.map((tag, idx) => (
+                      <span
+                        key={idx}
+                        className="text-[10px] font-mono uppercase px-2.5 py-1 rounded-full bg-[var(--bg-muted)] border border-[var(--border)] text-[var(--fg)]"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer Controls */}
+            <div className="p-4 px-6 border-t border-[var(--border)] bg-[var(--bg-muted)]/20 flex items-center justify-between gap-3">
+              <button
+                onClick={() => window.print()}
+                className="px-4 py-2 text-xs font-bold rounded-full border border-[var(--border)] hover:bg-[var(--bg-muted)] transition-colors flex items-center gap-1.5 text-[var(--fg)]"
+              >
+                <Printer className="w-3.5 h-3.5" /> Print
+              </button>
+
+              <div className="flex items-center gap-2">
+                <a
+                  href={previewDoc.file_url || "#"}
+                  target={previewDoc.file_url ? "_blank" : undefined}
+                  rel="noreferrer"
+                  download={previewDoc.title}
+                  className="px-5 py-2 text-xs font-bold uppercase tracking-wider rounded-full bg-[var(--fg)] text-[var(--bg)] hover:opacity-90 transition-all flex items-center gap-1.5 shadow-sm"
+                >
+                  <Download className="w-3.5 h-3.5" /> Download Record
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* VA-7 Smart Search Modal */}
       {showAISearch && (

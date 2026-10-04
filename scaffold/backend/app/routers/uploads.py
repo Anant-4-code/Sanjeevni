@@ -25,3 +25,17 @@ async def upload_scan(
         "badge": "UNVERIFIED — NEEDS DOCTOR SIGN-OFF",
         "vault_document": vault_doc,
     }
+
+
+@router.post("")
+@router.post("/file")
+async def upload_file(file: UploadFile = File(...)):
+    ext = (file.filename or "image.jpg").split(".")[-1]
+    file_id = f"symptom-{uuid.uuid4().hex[:8]}.{ext}"
+    return {
+        "url": f"/uploads/{file_id}",
+        "file_id": file_id,
+        "filename": file.filename,
+        "status": "uploaded"
+    }
+

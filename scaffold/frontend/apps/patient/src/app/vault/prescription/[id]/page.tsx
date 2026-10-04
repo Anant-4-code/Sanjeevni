@@ -112,7 +112,7 @@ export default function PrescriptionDetailPage() {
   const [selectedFolder, setSelectedFolder] = useState("Cardiac Health");
 
   useEffect(() => {
-    const pid = (user?.role === "patient" && user?.id) ? user.id : "demo-patient";
+    const pid = (user?.role === "patient" && user?.id) ? user.id : "patient-ramesh";
     fetch(`${API_BASE}/patient/${pid}/vault/document/${rxId}`)
       .then((res) => res.json())
       .then((data) => {

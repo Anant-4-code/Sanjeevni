@@ -73,7 +73,7 @@ export default function LabReportsVaultPage() {
 
   useEffect(() => {
     setLoading(true);
-    const pid = (user?.role === "patient" && user?.id) ? user.id : "demo-patient";
+    const pid = (user?.role === "patient" && user?.id) ? user.id : "patient-ramesh";
     fetch(`${API_BASE}/patient/${pid}/vault/lab-reports`)
       .then((res) => res.json())
       .then((data) => {
@@ -93,7 +93,7 @@ export default function LabReportsVaultPage() {
   }, [user?.id]);
 
   const handleSetReminder = (reportId: string) => {
-    const pid = (user?.role === "patient" && user?.id) ? user.id : "demo-patient";
+    const pid = (user?.role === "patient" && user?.id) ? user.id : "patient-ramesh";
     fetch(`${API_BASE}/patient/${pid}/vault/lab-reports/${reportId}/set-recheck-reminder`, {
       method: "POST",
     })

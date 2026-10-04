@@ -14,8 +14,11 @@ import {
   Tag,
 } from "lucide-react";
 import { API_BASE } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 export default function PharmacyDispensingPage() {
+  const { user } = useAuth();
+  const pharmacistId = user?.id || "pharm-anil-1";
   const [dispenseQueue, setDispenseQueue] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dispensingId, setDispensingId] = useState<string | null>(null);
@@ -65,7 +68,7 @@ export default function PharmacyDispensingPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          pharmacist_id: "pharm-anita-1",
+          pharmacist_id: pharmacistId,
           safety_acknowledged: true,
         }),
       });
@@ -106,7 +109,11 @@ export default function PharmacyDispensingPage() {
   };
 
   const acknowledgeInteraction = (rxId: string) => {
-    setAcknowledgedLocks((prev) => new Set([...prev, rxId]));
+    setAcknowledgedLocks((prev) => {
+      const s = new Set(prev);
+      s.add(rxId);
+      return s;
+    });
   };
 
   const pendingList = dispenseQueue.filter((rx) => !rx.dispensed);
@@ -269,18 +276,18 @@ export default function PharmacyDispensingPage() {
                             </p>
                           </div>
                         </div>
-                        <div className="flex flex-col gap-1.5 flex-shrink-0">
+                        <div className="flex flex-wrap sm:flex-col items-center sm:items-end gap-2 flex-shrink-0 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-amber-200/50 dark:border-amber-800/50">
                           {!lockAcknowledged && (
                             <button
                               onClick={() => acknowledgeInteraction(rx.id)}
-                              className="px-3 py-1.5 bg-amber-600 text-white rounded-lg text-[11px] font-bold whitespace-nowrap hover:bg-amber-700 transition-colors"
+                              className="px-3.5 py-1.5 bg-amber-600 text-white rounded-lg text-[11px] font-bold whitespace-nowrap hover:bg-amber-700 transition-colors"
                             >
-                              Acknowledge & Continue
+                              Acknowledge &amp; Continue
                             </button>
                           )}
                           <button
                             onClick={() => handleExplainInteraction(rx.safety_lock)}
-                            className="px-3 py-1 bg-amber-200/80 dark:bg-amber-900 text-amber-950 dark:text-amber-200 rounded-lg text-[11px] font-bold whitespace-nowrap hover:bg-amber-300 transition-colors flex items-center gap-1"
+                            className="px-3.5 py-1.5 bg-amber-200/80 dark:bg-amber-900 text-amber-950 dark:text-amber-200 rounded-lg text-[11px] font-bold whitespace-nowrap hover:bg-amber-300 transition-colors flex items-center gap-1"
                           >
                             <Sparkles className="w-3 h-3" />
                             <span>AI Explain</span>
@@ -294,7 +301,7 @@ export default function PharmacyDispensingPage() {
                       {rx.items.map((item: any, idx: number) => (
                         <div
                           key={idx}
-                          className="p-3 rounded-xl border border-[#E2E8F0] dark:border-[#1F2937] bg-[#F8F7F4]/50 dark:bg-[#1F2937]/30 flex items-center justify-between text-xs"
+                          className="p-3 rounded-xl border border-[#E2E8F0] dark:border-[#1F2937] bg-[#F8F7F4]/50 dark:bg-[#1F2937]/30 flex items-center justify-between text-xs gap-2"
                         >
                           <div>
                             <span className="font-bold text-[#0F172A] dark:text-white">{item.name}</span>
@@ -302,7 +309,7 @@ export default function PharmacyDispensingPage() {
                               {item.frequency} &bull; {item.days} days
                             </div>
                           </div>
-                          <span className="font-mono font-bold text-xs bg-white dark:bg-[#111827] px-2.5 py-1 rounded-lg border border-[#E2E8F0] dark:border-[#1F2937]">
+                          <span className="font-mono font-bold text-xs bg-white dark:bg-[#111827] px-2.5 py-1 rounded-lg border border-[#E2E8F0] dark:border-[#1F2937] flex-shrink-0">
                             Qty: {item.qty}
                           </span>
                         </div>
@@ -310,20 +317,20 @@ export default function PharmacyDispensingPage() {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex items-center justify-end gap-2 pt-2">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-2">
                       {!canDispense && (
                         <span className="text-[11px] text-amber-700 dark:text-amber-300 font-bold flex items-center gap-1">
-                          <Lock className="w-3 h-3" />
-                          Acknowledge safety lock to dispense
+                          <Lock className="w-3 h-3 flex-shrink-0" />
+                          <span>Acknowledge safety lock to dispense</span>
                         </span>
                       )}
                       <button
                         onClick={() => handleDispense(rx)}
                         disabled={dispensingId === rx.id || !canDispense}
-                        className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs whitespace-nowrap shadow-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed ml-auto"
                       >
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>{dispensingId === rx.id ? "Dispensing..." : "Confirm & Dispense"}</span>
+                        <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                        <span className="whitespace-nowrap">{dispensingId === rx.id ? "Dispensing..." : "Confirm & Dispense"}</span>
                       </button>
                     </div>
                   </div>

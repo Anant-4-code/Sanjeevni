@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   FlaskConical,
@@ -27,57 +27,100 @@ interface LabOrder {
 }
 
 export default function LabPortalPage() {
-  const [orders, setOrders] = useState<LabOrder[]>([
-    {
-      id: "ord-1",
-      patient_id: "patient-savitri",
-      patient_name: "Savitri Kumar",
-      doctor_name: "Dr. Nitin Sharma",
-      test_name: "HbA1c & Fasting Lipid Panel",
-      ordered_at: "1 hr ago",
-      status: "pending_draw",
-    },
-    {
-      id: "ord-2",
-      patient_id: "patient-vikram",
-      patient_name: "Vikram Singh",
-      doctor_name: "Dr. Rai",
-      test_name: "Complete Blood Count (CBC) & ESR",
-      ordered_at: "3 hrs ago",
-      status: "analyzing",
-    },
-    {
-      id: "ord-3",
-      patient_id: "patient-priya",
-      patient_name: "Priya Sharma",
-      doctor_name: "Dr. Patel",
-      test_name: "Thyroid Profile (TSH, Free T3/T4)",
-      ordered_at: "Yesterday",
-      status: "results_ready",
-    },
-  ]);
-
-  const [selectedOrder, setSelectedOrder] = useState<LabOrder | null>(orders[0]);
+  const [orders, setOrders] = useState<LabOrder[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState<LabOrder | null>(null);
   const [hba1cVal, setHba1cVal] = useState("6.4");
   const [fastingGlucose, setFastingGlucose] = useState("138");
   const [totalCholesterol, setTotalCholesterol] = useState("195");
   const [serumCreatinine, setSerumCreatinine] = useState("0.9");
   const [status, setStatus] = useState<"idle" | "uploading" | "done">("idle");
 
-  const handleUpdateStatus = (id: string, newStatus: "pending_draw" | "analyzing" | "results_ready") => {
+  // BUG-LAB-01 FIX: Fetch lab diagnostic orders from backend API
+  const fetchOrders = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/lab/orders`);
+      const data = await res.json();
+      const list = data.orders || [];
+      setOrders(list);
+      setSelectedOrder((prev) => {
+        if (prev && list.some((o: LabOrder) => o.id === prev.id)) {
+          return list.find((o: LabOrder) => o.id === prev.id) || null;
+        }
+        return list[0] || null;
+      });
+    } catch (err) {
+      console.error("Error fetching lab orders:", err);
+    } finally {
+      setLoadingOrders(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  // BUG-LAB-01 FIX: Persist status update to backend API
+  const handleUpdateStatus = async (id: string, newStatus: "pending_draw" | "analyzing" | "results_ready") => {
     setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: newStatus } : o)));
+    try {
+      await fetch(`${API_BASE}/lab/orders/${id}/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+    } catch (err) {
+      console.error("Error updating order status:", err);
+    }
   };
 
-  const handlePublishResults = (e: React.FormEvent) => {
+  // BUG-LAB-01 FIX: Wire publish results to backend API with AI-7 summary draft
+  const handlePublishResults = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedOrder) return;
     setStatus("uploading");
-    setTimeout(() => {
-      if (selectedOrder) {
-        handleUpdateStatus(selectedOrder.id, "results_ready");
-      }
+    try {
+      const raw_values = {
+        "HbA1c": `${hba1cVal}%`,
+        "Fasting Glucose": `${fastingGlucose} mg/dL`,
+        "Total Cholesterol": `${totalCholesterol} mg/dL`,
+        "Serum Creatinine": `${serumCreatinine} mg/dL`,
+      };
+
+      // 1. Generate AI-7 Draft Summary
+      let plainSummary = "";
+      try {
+        const sumRes = await fetch(`${API_BASE}/lab/draft-summary`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            test_name: selectedOrder.test_name,
+            raw_values,
+          }),
+        });
+        const sumData = await sumRes.json();
+        plainSummary = sumData.plain_language_summary;
+      } catch (e) {}
+
+      // 2. Submit verified results to backend
+      await fetch(`${API_BASE}/lab/results`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          diagnostic_order_id: selectedOrder.id,
+          raw_values,
+          technician_id: "tech-raj-1",
+          edited_summary: plainSummary || `Verified lab results for ${selectedOrder.test_name}`,
+        }),
+      });
+
+      handleUpdateStatus(selectedOrder.id, "results_ready");
       setStatus("done");
       setTimeout(() => setStatus("idle"), 3000);
-    }, 1000);
+    } catch (err) {
+      console.error("Error publishing lab results:", err);
+      setStatus("idle");
+    }
   };
 
   const COLUMNS = [

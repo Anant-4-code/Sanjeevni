@@ -19,17 +19,24 @@ export default function PassportPage() {
 
   const generatePassport = useCallback(async () => {
     setLoading(true);
-    const pid = user?.id || "";
+    const pid = (user?.role === "patient" && user?.id) ? user.id : "patient-ramesh";
     try {
       const res = await fetch(`${API_BASE}/patient/health-passport`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ patient_id: pid }),
       });
+      if (!res.ok) throw new Error("Failed to generate passport");
       const data = await res.json();
-      setQrValue(data.qr_url || data.token);
+      const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+      let tokenUrl = data.qr_url || data.token;
+      if (tokenUrl && tokenUrl.includes("app.sanjeevani.health")) {
+        tokenUrl = tokenUrl.replace("https://app.sanjeevani.health", origin);
+      }
+      setQrValue(tokenUrl);
     } catch {
-      const demoToken = `https://app.sanjeevani.health/api/passport/${pid || 'patient'}-${Date.now()}`;
+      const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+      const demoToken = `${origin}/api/passport/${pid}-${Date.now()}`;
       setQrValue(demoToken);
     } finally {
       setLoading(false);

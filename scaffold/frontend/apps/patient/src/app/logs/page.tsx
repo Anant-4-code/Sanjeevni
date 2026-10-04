@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -128,7 +128,7 @@ export default function ActivityLogsPage() {
 
   function fetchLogs() {
     setLoading(true);
-    const pid = user?.id || "demo-patient";
+    const pid = (user?.role === "patient" && user?.id) ? user.id : "patient-ramesh";
     fetch(`${API_BASE}/patient/${pid}/logs`)
       .then((res) => res.json())
       .then((data) => {
@@ -144,20 +144,34 @@ export default function ActivityLogsPage() {
     fetchLogs();
   }, [user?.id]);
 
-  const filteredLogs = logs.filter((log) => {
-    if (filter === "all") return true;
-    if (filter === "verifications") return log.event_type === "DOCTOR_VERIFIED";
-    if (filter === "scans") return log.event_type === "PRESCRIPTION_SCANNED";
-    if (filter === "doses")
-      return (
-        log.event_type === "DOSE_TOGGLED" ||
-        log.event_type === "DOSE_SNOOZED" ||
-        log.event_type === "DOSE_SKIPPED_EXPLICIT"
-      );
-    if (filter === "symptoms") return log.event_type === "SYMPTOM_LOGGED";
-    if (filter === "otc") return log.event_type === "OTC_CHECKED";
-    return true;
-  });
+  const filteredLogs = useMemo(() => {
+    return logs.filter((log) => {
+      if (filter === "all") return true;
+      if (filter === "verifications") return log.event_type === "DOCTOR_VERIFIED";
+      if (filter === "scans") return log.event_type === "PRESCRIPTION_SCANNED";
+      if (filter === "doses")
+        return (
+          log.event_type === "DOSE_TOGGLED" ||
+          log.event_type === "DOSE_SNOOZED" ||
+          log.event_type === "DOSE_SKIPPED_EXPLICIT"
+        );
+      if (filter === "symptoms") return log.event_type === "SYMPTOM_LOGGED";
+      if (filter === "otc")
+        return (
+          log.event_type === "OTC_CHECKED" ||
+          log.event_type === "OTC_ADDED_DOCTOR_ALERT" ||
+          log.event_type === "DIGITAL_PRESCRIPTION_CREATED"
+        );
+      if (filter === "security")
+        return (
+          log.event_type === "PASSPORT_MINTED" ||
+          log.event_type === "ALLERGY_ADDED" ||
+          log.event_type === "REFILL_REQUESTED" ||
+          log.event_type === "COPILOT_QUESTION"
+        );
+      return true;
+    });
+  }, [logs, filter]);
 
   return (
     <div className="max-w-5xl mx-auto w-full space-y-6">
@@ -243,6 +257,7 @@ export default function ActivityLogsPage() {
           { key: "verifications", label: "Doctor Sign-Offs" },
           { key: "scans", label: "Scans Uploaded" },
           { key: "otc", label: "OTC Safety Checks" },
+          { key: "security", label: "Passports & Consults" },
         ].map((tab) => (
           <button
             key={tab.key}

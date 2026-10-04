@@ -14,6 +14,7 @@ import {
   ScanLine,
   Stethoscope,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -86,23 +87,37 @@ function CopilotContent() {
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get("q");
 
-  const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    if (initialQuery) {
+      return [
+        WELCOME_MESSAGE,
+        {
+          id: "u-init",
+          role: "user",
+          content: initialQuery,
+        },
+      ];
+    }
+    return [WELCOME_MESSAGE];
+  });
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(() => Boolean(initialQuery));
   const scrollRef = useRef<HTMLDivElement>(null);
   const initialSent = useRef(false);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("sanjeevani_copilot_chat");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setMessages(parsed);
+    if (!initialQuery) {
+      try {
+        const saved = localStorage.getItem("sanjeevani_copilot_chat");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setMessages(parsed);
+          }
         }
-      }
-    } catch {}
-  }, []);
+      } catch {}
+    }
+  }, [initialQuery]);
 
   useEffect(() => {
     if (messages.length > 1) {
@@ -115,7 +130,14 @@ function CopilotContent() {
   useEffect(() => {
     if (initialQuery && !initialSent.current) {
       initialSent.current = true;
-      handleDirectSend(initialQuery);
+      executeDirectQuery(initialQuery, [
+        WELCOME_MESSAGE,
+        {
+          id: "u-init",
+          role: "user",
+          content: initialQuery,
+        },
+      ]);
     }
   }, [initialQuery]);
 
@@ -123,28 +145,21 @@ function CopilotContent() {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  async function handleDirectSend(queryText: string) {
-    const userMsg: Message = {
-      id: "u-" + Date.now(),
-      role: "user",
-      content: queryText,
-    };
-
-    const newHistory = [...messages, userMsg];
-    setMessages(newHistory);
+  async function executeDirectQuery(queryText: string, currentHistory: Message[]) {
     setLoading(true);
 
     try {
-      const historyPayload = newHistory.map((m) => ({
+      const historyPayload = currentHistory.map((m) => ({
         role: m.role,
         content: m.content,
       }));
 
+      const pid = (user?.role === "patient" && user?.id) ? user.id : "patient-ramesh";
       const res = await fetch(`${API_BASE}/patient/copilot`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          patient_id: user?.id || "demo-patient",
+          patient_id: pid,
           question: queryText,
           history: historyPayload,
         }),
@@ -175,6 +190,18 @@ function CopilotContent() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleDirectSend(queryText: string) {
+    const userMsg: Message = {
+      id: "u-" + Date.now(),
+      role: "user",
+      content: queryText,
+    };
+
+    const newHistory = [...messages, userMsg];
+    setMessages(newHistory);
+    await executeDirectQuery(queryText, newHistory);
   }
 
   async function handleSend(e?: React.FormEvent) {
@@ -208,7 +235,7 @@ function CopilotContent() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          patient_id: user?.id || "demo-patient",
+          patient_id: (user?.role === "patient" && user?.id) ? user.id : "patient-ramesh",
           question: prevUserMsg?.content || "",
           answer: msg.content,
           rating,
@@ -341,9 +368,19 @@ function CopilotContent() {
         ))}
 
         {loading && (
-          <div className="flex items-center gap-3 bg-[var(--bg-muted)] border border-[var(--border)] text-[var(--fg-muted)] p-4 rounded-2xl max-w-[60%] animate-pulse">
-            <Sparkles className="w-4 h-4 text-[var(--accent)] animate-spin" />
-            <span className="text-xs font-mono">Consulting medical reference...</span>
+          <div className="flex items-start gap-3 bg-[var(--bg-muted)] border border-[var(--border)] p-4 rounded-2xl max-w-[85%] sm:max-w-[70%] shadow-sm animate-pulse">
+            <div className="w-8 h-8 rounded-xl bg-blue-600/10 dark:bg-blue-400/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400 animate-spin" />
+            </div>
+            <div className="space-y-1.5 flex-1 min-w-0">
+              <p className="text-xs sm:text-sm font-bold text-[var(--fg)]">
+                Sanjeevani Copilot is analyzing your prescription history...
+              </p>
+              <p className="text-[11px] text-[var(--fg-muted)] font-mono flex items-center gap-1.5">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-500 animate-ping" />
+                Cross-referencing drug interactions, active dosages & clinical guardrails...
+              </p>
+            </div>
           </div>
         )}
         <div ref={scrollRef} />
@@ -372,9 +409,10 @@ function CopilotContent() {
         <input
           type="text"
           value={input}
+          disabled={loading}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask anything about your medications, timing, or food safety..."
-          className="flex-1 bg-transparent text-sm sm:text-base py-2 px-2 focus:outline-none"
+          placeholder={loading ? "Sanjeevani Copilot is thinking..." : "Ask anything about your medications, timing, or food safety..."}
+          className="flex-1 bg-transparent text-sm sm:text-base py-2 px-2 focus:outline-none disabled:opacity-50"
         />
         <button
           type="submit"
@@ -382,7 +420,7 @@ function CopilotContent() {
           aria-label="Send message"
           className="w-10 h-10 rounded-full bg-[var(--accent)] text-[var(--accent-foreground)] flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-40 shadow-sm"
         >
-          <Send className="w-4 h-4" />
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
         </button>
       </form>
     </div>

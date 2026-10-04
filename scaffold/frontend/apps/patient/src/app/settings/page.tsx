@@ -350,7 +350,7 @@ export default function SettingsPage() {
           )}
 
           {/* 3. DOCTOR CREDENTIALS TAB */}
-          {activeTab === "credentials" && (
+          {activeTab === "credentials" && user?.role === "doctor" && (
             <form onSubmit={handleSaveCredentials} className="glass-card p-6 border border-[var(--border)] rounded-2xl space-y-4">
               <div className="flex items-center gap-3 border-b border-[var(--border)] pb-4">
                 <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-300 dark:border-blue-800 flex items-center justify-center text-blue-600">
@@ -432,7 +432,7 @@ export default function SettingsPage() {
           )}
 
           {/* 4. CARE TEAM & SPECIALISTS TAB */}
-          {activeTab === "care_team" && (
+          {activeTab === "care_team" && (user?.role === "patient" || !user?.role) && (
             <div className="glass-card p-6 border border-[var(--border)] rounded-2xl space-y-4">
               <div className="flex items-center justify-between border-b border-[var(--border)] pb-4">
                 <div className="flex items-center gap-3">
@@ -502,7 +502,7 @@ export default function SettingsPage() {
           )}
 
           {/* 5. STAFF AVAILABILITY TAB */}
-          {activeTab === "availability" && (
+          {activeTab === "availability" && user?.role && user.role !== "patient" && (
             <div className="glass-card p-6 border border-[var(--border)] rounded-2xl space-y-4">
               <div className="flex items-center gap-3 border-b border-[var(--border)] pb-4">
                 <div className="w-10 h-10 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 flex items-center justify-center text-amber-600">

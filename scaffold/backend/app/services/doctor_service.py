@@ -1,5 +1,5 @@
-﻿"""
-Sanjeevani â€” Doctor Service (In-Memory Demo Data)
+"""
+Sanjeevani  -  Doctor Service (In-Memory Demo Data)
 ===================================================
 Provides all doctor-facing business logic with seeded demo data.
 Mirrors the PatientService pattern for consistency.
@@ -33,7 +33,7 @@ def _days_ago(n: int) -> str:
 
 class DoctorService:
     def __init__(self):
-        # â”€â”€ Demo patients â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # -- Demo patients ----------------------------------------------
         self.patients = {
             "patient-ramesh": {
                 "id": "patient-ramesh",
@@ -77,12 +77,12 @@ class DoctorService:
             },
         }
 
-        # â”€â”€ Doctor queue (acuity-sorted) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # -- Doctor queue (acuity-sorted) --------------------------------
         self.queue = [
             {
                 "id": "q-1",
                 "patient_id": "patient-vikram",
-                "doctor_id": "demo-doctor",
+                "doctor_id": "doc-sharma-1",
                 "token_number": 14,
                 "status": "waiting",
                 "queued_at": "2026-08-16T08:45:00Z",
@@ -97,14 +97,14 @@ class DoctorService:
             {
                 "id": "q-2",
                 "patient_id": "patient-sita",
-                "doctor_id": "demo-doctor",
+                "doctor_id": "doc-sharma-1",
                 "token_number": 12,
                 "status": "waiting",
                 "queued_at": "2026-08-16T09:15:00Z",
                 "patients": self.patients["patient-sita"],
                 "chief_complaints": {
                     "id": "cc-2",
-                    "text": "High fever (102Â°F) for 3 days, persistent cough with yellow sputum",
+                    "text": "High fever (102°F) for 3 days, persistent cough with yellow sputum",
                     "severity_level": 2,
                     "severity_source": "nlp_model",
                 },
@@ -112,7 +112,7 @@ class DoctorService:
             {
                 "id": "q-3",
                 "patient_id": "patient-ramesh",
-                "doctor_id": "demo-doctor",
+                "doctor_id": "doc-sharma-1",
                 "token_number": 9,
                 "status": "waiting",
                 "queued_at": "2026-08-16T09:30:00Z",
@@ -127,7 +127,7 @@ class DoctorService:
             {
                 "id": "q-4",
                 "patient_id": "patient-priya",
-                "doctor_id": "demo-doctor",
+                "doctor_id": "doc-rai-1",
                 "token_number": 16,
                 "status": "waiting",
                 "queued_at": "2026-08-16T10:00:00Z",
@@ -142,7 +142,7 @@ class DoctorService:
             {
                 "id": "q-5",
                 "patient_id": "patient-anil",
-                "doctor_id": "demo-doctor",
+                "doctor_id": "doc-rai-1",
                 "token_number": 18,
                 "status": "waiting",
                 "queued_at": "2026-08-16T10:30:00Z",
@@ -156,7 +156,7 @@ class DoctorService:
             },
         ]
 
-        # â”€â”€ Active prescriptions (this doctor) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # -- Active prescriptions (this doctor) --------------------------
         self.my_prescriptions = {
             "patient-ramesh": [
                 {
@@ -197,7 +197,7 @@ class DoctorService:
             ],
         }
 
-        # â”€â”€ Active prescriptions (other doctors â†’ cross-doctor view) â”€â”€â”€â”€â”€
+        # -- Active prescriptions (other doctors -> cross-doctor view) -----
         self.other_prescriptions = {
             "patient-ramesh": [
                 {
@@ -249,7 +249,7 @@ class DoctorService:
             ],
         }
 
-        # â”€â”€ Allergy profiles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # -- Allergy profiles ----------------------------------------------
         self.allergies = {
             "patient-ramesh": [
                 {
@@ -281,12 +281,12 @@ class DoctorService:
                     "reported_by_patient": True,
                     "confirmed_by_doctor": True,
                     "confirmed_by_doctor_name": "Dr. Gupta",
-                    "notes": "Severe reaction to Bactrim â€” anaphylactic risk",
+                    "notes": "Severe reaction to Bactrim  -  anaphylactic risk",
                 },
             ],
         }
 
-        # â”€â”€ Symptom logs (30-day window) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # -- Symptom logs (30-day window) ----------------------------------
         self.symptom_logs = {
             "patient-ramesh": [
                 {"date": _days_ago(1), "feeling_score": 3, "energy": 2, "mood": 3, "sleep": 4,
@@ -316,15 +316,15 @@ class DoctorService:
             ],
         }
 
-        # â”€â”€ Smart alerts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # -- Smart alerts --------------------------------------------------
         self.smart_alerts = {
             "patient-ramesh": [
                 {
                     "id": "alert-1",
                     "type": "missed_dose_escalation",
                     "severity": "warning",
-                    "title": "Missed Dose Escalation â€” Metformin",
-                    "message": "Patient missed Metformin evening dose on Aug 13 (2 hrs past due). Caregiver Priya was notified; son called patient â†’ dose eventually taken.",
+                    "title": "Missed Dose Escalation  -  Metformin",
+                    "message": "Patient missed Metformin evening dose on Aug 13 (2 hrs past due). Caregiver Priya was notified; son called patient -> dose eventually taken.",
                     "created_at": _days_ago(3),
                     "acknowledged": False,
                 },
@@ -332,7 +332,7 @@ class DoctorService:
                     "id": "alert-2",
                     "type": "lab_due",
                     "severity": "info",
-                    "title": "Lab Re-Check Due â€” HbA1c",
+                    "title": "Lab Re-Check Due  -  HbA1c",
                     "message": "Last HbA1c test was 3 months ago (Aug 10). Patient hasn't scheduled re-check yet. Consider reminding during this visit.",
                     "created_at": _days_ago(0),
                     "acknowledged": False,
@@ -341,8 +341,8 @@ class DoctorService:
                     "id": "alert-3",
                     "type": "symptom_streak",
                     "severity": "warning",
-                    "title": "Low Energy Streak â€” 6 of 30 Days",
-                    "message": "Patient reported low energy (â‰¤2) on 6 of the last 30 days, mostly after Noveron evening dose. Consider dosage adjustment.",
+                    "title": "Low Energy Streak - 6 of 30 Days",
+                    "message": "Patient reported low energy (<=2) on 6 of the last 30 days, mostly after Noveron evening dose. Consider dosage adjustment.",
                     "created_at": _days_ago(1),
                     "acknowledged": False,
                 },
@@ -352,15 +352,15 @@ class DoctorService:
                     "id": "alert-4",
                     "type": "symptom_streak",
                     "severity": "critical",
-                    "title": "Persistent Fever â€” 3 Consecutive Days",
-                    "message": "Patient has reported feeling score â‰¤2 for 3 consecutive days with persistent fever. Requires clinical evaluation.",
+                    "title": "Persistent Fever - 3 Consecutive Days",
+                    "message": "Patient has reported feeling score <= 2 for 3 consecutive days with persistent fever. Requires clinical evaluation.",
                     "created_at": _days_ago(0),
                     "acknowledged": False,
                 },
             ],
         }
 
-        # â”€â”€ Caregiver audit (who marked doses) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # -- Caregiver audit (who marked doses) ---------------------------
         self.caregiver_audit = {
             "patient-ramesh": {
                 "caregivers": [
@@ -384,7 +384,7 @@ class DoctorService:
             },
         }
 
-        # â”€â”€ Refill requests (pending for this doctor) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # -- Refill requests (pending for this doctor) ---------------------
         self.refill_requests = [
             {
                 "id": "refill-1",
@@ -398,7 +398,7 @@ class DoctorService:
                 "refill_quantity": 10,
                 "refills_available": 2,
                 "max_refills": 3,
-                "request_notes": "Running low, going on trip next week â€” need sooner",
+                "request_notes": "Running low, going on trip next week  -  need sooner",
                 "requested_at": _days_ago(1),
                 "requested_by_role": "patient",
                 "status": "pending",
@@ -424,7 +424,7 @@ class DoctorService:
             },
         ]
 
-        # â”€â”€ Visit prep insights (copilot refusals + patterns) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # -- Visit prep insights (copilot refusals + patterns) -------------
         self.visit_prep = {
             "patient-ramesh": {
                 "copilot_refusals": [
@@ -439,15 +439,15 @@ class DoctorService:
                     {"pattern": "Low energy correlated with skipped morning doses", "frequency": "3 of 7 skip days had low energy", "suggestion": "Adherence improvement may reduce fatigue."},
                 ],
                 "suggested_topics": [
-                    "Address dizziness â€” patient asked Copilot about seriousness",
-                    "Reinforce Metformin adherence â€” patient asked about stopping",
+                    "Address dizziness  -  patient asked Copilot about seriousness",
+                    "Reinforce Metformin adherence  -  patient asked about stopping",
                     "Schedule HbA1c re-check (3 months overdue)",
                     "Discuss Noveron refill timing (3 days remaining)",
                 ],
             },
         }
 
-        # â”€â”€ Comprehensive Multi-Category Medical Records & Documents â”€â”€â”€â”€â”€â”€â”€â”€
+        # -- Comprehensive Multi-Category Medical Records & Documents --------
         self.medical_records = {
             "patient-ramesh": [
                 {
@@ -502,8 +502,8 @@ class DoctorService:
                     "summary": "Complete hemogram in healthy normal ranges. Normal platelet count, normal WBC, no active infection.",
                     "findings": [
                         {"label": "Hemoglobin (Hb)", "value": "13.5 g/dL", "normal_range": "13.5 - 17.5 g/dL", "status": "normal"},
-                        {"label": "WBC Count", "value": "7,200 /ÂµL", "normal_range": "4,500 - 11,000 /ÂµL", "status": "normal"},
-                        {"label": "Platelet Count", "value": "240,000 /ÂµL", "normal_range": "150,000 - 450,000 /ÂµL", "status": "normal"},
+                        {"label": "WBC Count", "value": "7,200 /µL", "normal_range": "4,500 - 11,000 /µL", "status": "normal"},
+                        {"label": "Platelet Count", "value": "240,000 /µL", "normal_range": "150,000 - 450,000 /µL", "status": "normal"},
                         {"label": "ESR", "value": "12 mm/hr", "normal_range": "0 - 15 mm/hr", "status": "normal"},
                     ],
                     "plain_language": "Blood counts, oxygen capacity, and immune cells are in a completely healthy normal range.",
@@ -578,7 +578,7 @@ class DoctorService:
                     "file_type": "Clinical Discharge PDF",
                     "summary": "Planned observational admission for coronary evaluation. Uneventful 48h stay. Discharged hemodynamically stable.",
                     "findings": [
-                        {"label": "Admission Diagnosis", "value": "Unstable Angina â€” Rule out NSTEMI (Troponin I Negative x 2)"},
+                        {"label": "Admission Diagnosis", "value": "Unstable Angina – Rule out NSTEMI (Troponin I Negative x 2)"},
                         {"label": "Coronary Angiography", "value": "Prior LAD stent widely patent with TIMI-3 distal flow"},
                         {"label": "Discharge Medication", "value": "Warfarin 5mg, Metformin 500mg, Atorvastatin 40mg, Pantoprazole 40mg"},
                     ],
@@ -608,7 +608,7 @@ class DoctorService:
             ]
         }
 
-        # â”€â”€ Scans & OCR Data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # -- Scans & OCR Data ----------------------------------------------
         self.scans = {
             "patient-ramesh": {
                 "prescription_scan": {
@@ -634,7 +634,7 @@ class DoctorService:
             }
         }
 
-        # â”€â”€ Diagnostic Orders â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # -- Diagnostic Orders ---------------------------------------------
         self.diagnostic_orders = {
             "patient-ramesh": [
                 {
@@ -676,15 +676,15 @@ class DoctorService:
             ]
         }
 
-        # â”€â”€ Verification log (append-only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # -- Verification log (append-only) --------------------------------
         self.verification_logs = []
 
-        # â”€â”€ Follow-up appointments â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # -- Follow-up appointments ----------------------------------------
         self.follow_ups = []
 
-        # â”€â”€ Draft prescriptions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # -- Draft prescriptions -------------------------------------------
 
-        # ?? Patient Documents (Multi-Document Store, Spec 12) ????????????????
+        # - Patient Documents (Multi-Document Store, Spec 12) --------
         self.patient_documents = [
             # --- Ramesh Kumar (patient-ramesh) ---
             {
@@ -843,7 +843,7 @@ class DoctorService:
             },
         ]
 
-        # ?? Cross-Doctor Prescription Timeline ???????????????????????????????
+        # - Cross-Doctor Prescription Timeline ---------------?
         self.prescriptions_timeline = {
             "patient-ramesh": [
                 {"id": "rx-timeline-1", "doctor_name": "Dr. Rai", "doctor_specialty": "General Medicine", "medicine_name": "Gabapin NT 100mg", "dosage": "1-0-1", "status": "verified", "verified_at": _days_ago(5)},
@@ -861,7 +861,7 @@ class DoctorService:
             ],
         }
 
-        # ?? Lab Trends (chartable series) ????????????????????????????????????
+        # - Lab Trends (chartable series) ------------------
         self.lab_trends = {
             "patient-ramesh": [
                 {
@@ -901,10 +901,184 @@ class DoctorService:
             ],
         }
 
-        # ?? Document Access Log (audit trail) ?????????????????????????????????
+        # - Document Access Log (audit trail) ----------------?
         self.document_access_log = []
 
         self.draft_prescriptions = {}
+        self.soap_notes: dict[str, dict] = {}
+        self.follow_ups = []
+        self.verification_logs = []
+
+        # Scans & X-Ray Analysis (Side-by-Side OCR & X-ray Canvas)
+        self.scans = {
+            "patient-ramesh": {
+                "prescription_scan": {
+                    "scan_id": "scan-rx-ramesh-101",
+                    "uploaded_at": _days_ago(1),
+                    "image_url": "/api/placeholder/scan/rx-ramesh.jpg",
+                    "clinic_name": "Sanjeevani Diabetes & Metabolic Care",
+                    "doctor_name": "Dr. Nitin Sharma, MD",
+                    "ocr_fields": [
+                        {
+                            "medication_id": "med-metformin",
+                            "name": "Metformin",
+                            "dosage": "500mg",
+                            "frequency": "2-0-2",
+                            "duration_days": 30,
+                            "confidence": 0.94,
+                            "condition_tag": "DIABETES",
+                            "doctor_edited": False,
+                        },
+                        {
+                            "medication_id": "med-noveron",
+                            "name": "Noveron",
+                            "dosage": "500mg",
+                            "frequency": "1-0-1",
+                            "duration_days": 10,
+                            "confidence": 0.88,
+                            "condition_tag": "HEART CARE",
+                            "doctor_edited": False,
+                        },
+                    ],
+                },
+                "xray_scan": {
+                    "scan_id": "scan-xray-ramesh-201",
+                    "uploaded_at": _days_ago(2),
+                    "anatomical_region": "Left Wrist / Forearm AP & Lateral",
+                    "image_url": "/api/placeholder/scan/xray-wrist.jpg",
+                    "detections": [
+                        {
+                            "label": "fracture",
+                            "confidence": 0.92,
+                            "box": {"x": 140, "y": 95, "w": 75, "h": 50},
+                            "anatomical_site": "Left distal radius fracture (non-displaced)",
+                        },
+                        {
+                            "label": "boneanomaly",
+                            "confidence": 0.78,
+                            "box": {"x": 210, "y": 160, "w": 45, "h": 40},
+                            "anatomical_site": "Mild localized osteopenia",
+                        },
+                    ],
+                },
+            },
+            "patient-vikram": {
+                "prescription_scan": {
+                    "scan_id": "scan-rx-vikram-102",
+                    "uploaded_at": _days_ago(0),
+                    "image_url": "/api/placeholder/scan/rx-vikram.jpg",
+                    "clinic_name": "Apex Heart & Vascular Institute",
+                    "doctor_name": "Dr. V. K. Rai, DM (Cardio)",
+                    "ocr_fields": [
+                        {
+                            "medication_id": "med-atenolol",
+                            "name": "Atenolol",
+                            "dosage": "50mg",
+                            "frequency": "1-0-0",
+                            "duration_days": 30,
+                            "confidence": 0.96,
+                            "condition_tag": "HYPERTENSION",
+                            "doctor_edited": False,
+                        },
+                    ],
+                },
+                "xray_scan": {
+                    "scan_id": "scan-xray-vikram-202",
+                    "uploaded_at": _days_ago(0),
+                    "anatomical_region": "Chest PA View",
+                    "image_url": "/api/placeholder/scan/xray-chest.jpg",
+                    "detections": [
+                        {
+                            "label": "cardiomegaly",
+                            "confidence": 0.89,
+                            "box": {"x": 110, "y": 120, "w": 180, "h": 140},
+                            "anatomical_site": "Enlarged cardiac silhouette (CTR > 0.55)",
+                        },
+                    ],
+                },
+            },
+            "patient-sita": {
+                "prescription_scan": {
+                    "scan_id": "scan-rx-sita-103",
+                    "uploaded_at": _days_ago(2),
+                    "image_url": "/api/placeholder/scan/rx-sita.jpg",
+                    "clinic_name": "City Pulmonology & Chest Clinic",
+                    "doctor_name": "Dr. A. Khan, MD (Chest)",
+                    "ocr_fields": [
+                        {
+                            "medication_id": "med-pcm",
+                            "name": "Paracetamol",
+                            "dosage": "500mg",
+                            "frequency": "1-1-1",
+                            "duration_days": 5,
+                            "confidence": 0.92,
+                            "condition_tag": "FEVER",
+                            "doctor_edited": False,
+                        },
+                    ],
+                },
+                "xray_scan": {
+                    "scan_id": "scan-xray-sita-203",
+                    "uploaded_at": _days_ago(1),
+                    "anatomical_region": "Chest PA View",
+                    "image_url": "/api/placeholder/scan/xray-chest-sita.jpg",
+                    "detections": [
+                        {
+                            "label": "consolidation",
+                            "confidence": 0.84,
+                            "box": {"x": 160, "y": 140, "w": 90, "h": 80},
+                            "anatomical_site": "Right middle lobe patchy consolidation (consistent with pneumonia)",
+                        },
+                    ],
+                },
+            },
+        }
+
+        # Diagnostic Orders (Lab Tests)
+        self.diagnostic_orders = {
+            "patient-ramesh": [
+                {
+                    "id": "order-lab-1",
+                    "test_name": "Complete Blood Count (CBC)",
+                    "category": "Hematology",
+                    "status": "results_ready",
+                    "ordered_at": _days_ago(3),
+                    "ordered_by": "Dr. Nitin Sharma",
+                    "doctor_summary": "Hb 13.8 g/dL (Normal), WBC 7,200 /mcL (Normal), Platelets 240,000 /mcL",
+                    "patient_summary": "Your blood counts and infection markers are completely within normal healthy range.",
+                },
+                {
+                    "id": "order-lab-2",
+                    "test_name": "HbA1c (Glycated Hemoglobin)",
+                    "category": "Diabetic Profile",
+                    "status": "pending_draw",
+                    "ordered_at": _days_ago(0),
+                    "ordered_by": "Dr. Nitin Sharma",
+                    "notes": "Fast for 8 hours prior to morning sample draw.",
+                },
+                {
+                    "id": "order-lab-3",
+                    "test_name": "Fasting Lipid Profile",
+                    "category": "Biochemistry",
+                    "status": "analyzing",
+                    "ordered_at": _days_ago(1),
+                    "ordered_by": "Dr. Nitin Sharma",
+                    "notes": "Lipid panel sent to pathology lab.",
+                },
+            ],
+            "patient-vikram": [
+                {
+                    "id": "order-lab-4",
+                    "test_name": "Serum Troponin I & CK-MB",
+                    "category": "Cardiac Biomarkers",
+                    "status": "results_ready",
+                    "ordered_at": _days_ago(0),
+                    "ordered_by": "Dr. Nitin Sharma",
+                    "doctor_summary": "Troponin I: 0.08 ng/mL (Borderline Elevated), CK-MB: 24 U/L",
+                    "patient_summary": "Slightly elevated cardiac enzyme markers. Doctor is monitoring cardiac stability.",
+                },
+            ],
+        }
 
     # =====================================================================
     # QUEUE
@@ -912,10 +1086,12 @@ class DoctorService:
 
     def get_queue(self, doctor_id: str) -> dict:
         """Return acuity-sorted queue for a doctor."""
-        if doctor_id in ("all", "demo-doctor", "doc-sharma-1", ""):
+        if doctor_id in ("all", ""):
             doc_queue = [q for q in self.queue if q["status"] == "waiting"]
+        elif doctor_id in ("demo-doctor", "doc-sharma-1"):
+            doc_queue = [q for q in self.queue if (q.get("doctor_id") in ("demo-doctor", "doc-sharma-1")) and q["status"] == "waiting"]
         else:
-            doc_queue = [q for q in self.queue if (q.get("doctor_id") == doctor_id or q.get("doctor_id") == "demo-doctor") and q["status"] == "waiting"]
+            doc_queue = [q for q in self.queue if q.get("doctor_id") == doctor_id and q["status"] == "waiting"]
 
         # Sort by severity DESC, then queued_at ASC
         doc_queue.sort(key=lambda q: (
@@ -1038,6 +1214,152 @@ class DoctorService:
         }
         self.verification_logs.append(log_entry)
 
+        # BUG-DR-RX-02 FIX: Implement full clinical fan-out
+        patient_id = final_state.get("patient_id")
+        medications = final_state.get("medications", [])
+        notes = final_state.get("notes", "")
+
+        # 1. Update doctor queue item to "completed"
+        if patient_id:
+            for q in self.queue:
+                if q.get("patient_id") == patient_id and q.get("status") == "waiting":
+                    q["status"] = "completed"
+                    q["completed_at"] = log_entry["signed_at"]
+
+        # Resolve doctor display name
+        doctor_name = "Dr. Nitin Sharma"
+        doctor_map = {
+            "doc-sharma-1": "Dr. Nitin Sharma",
+            "doc-patel-1": "Dr. Priya Patel",
+            "doc-verma-1": "Dr. Rajesh Verma",
+            "doc-sharma-cardio": "Dr. Rohit Sharma",
+            "doc-gupta-neuro": "Dr. Kavita Gupta",
+        }
+        for k, v in doctor_map.items():
+            if doctor_id and k in doctor_id:
+                doctor_name = v
+                break
+
+        # 2. Fan-out to Patient Service (schedule_items + vault_documents)
+        if patient_id and medications:
+            try:
+                from app.services.patient_service import patient_service
+                
+                # Insert into Vault
+                vault_doc = {
+                    "id": prescription_id,
+                    "patient_id": patient_id,
+                    "primary_doctor_id": doctor_id,
+                    "title": f"Rx Clinical Prescription - {doctor_name}",
+                    "category": "prescriptions",
+                    "doctor_name": doctor_name,
+                    "status": "verified",
+                    "date": datetime.date.today().strftime("%b %d, %Y"),
+                    "summary": f"Verified prescription signed by {doctor_name}. Contains {len(medications)} medication(s).",
+                    "file_url": "",
+                    "pinned": True,
+                    "patient_notes": notes,
+                    "medicines": [
+                        {
+                            "name": m.get("name", ""),
+                            "dosage": m.get("dosage", ""),
+                            "frequency": m.get("frequency", "1-0-1"),
+                            "duration": f"{m.get('duration_days', 7)} days",
+                            "conditionTag": m.get("condition_tag") or "CLINICAL RX",
+                        }
+                        for m in medications
+                    ],
+                    "protocol_hash": protocol_hash,
+                }
+                patient_service.vault_documents.insert(0, vault_doc)
+
+                # Append to schedule_items
+                for med in medications:
+                    med_name = med.get("name", "").strip()
+                    if not med_name:
+                        continue
+                    freq = med.get("frequency", "1-0-1")
+                    duration = int(med.get("duration_days", 7))
+                    times = ["08:00 AM"]
+                    if freq == "1-0-0":
+                        times = ["08:00 AM"]
+                    elif freq == "0-1-0":
+                        times = ["01:00 PM"]
+                    elif freq == "0-0-1":
+                        times = ["08:00 PM"]
+                    elif freq == "1-0-1":
+                        times = ["08:00 AM", "08:00 PM"]
+                    elif freq == "1-1-1":
+                        times = ["08:00 AM", "01:00 PM", "08:00 PM"]
+
+                    for t in times:
+                        patient_service.schedule_items.append({
+                            "prescription_item_id": f"item-{uuid.uuid4().hex[:6]}",
+                            "patient_id": patient_id,
+                            "time": t,
+                            "medicine": med_name,
+                            "condition": med.get("condition_tag") or "GENERAL RX",
+                            "doctor": doctor_name,
+                            "taken": False,
+                            "criticality_tier": "important",
+                            "acknowledgment_state": "none",
+                            "start_date": datetime.date.today().isoformat(),
+                            "duration_days": duration,
+                        })
+
+                # Log to patient activity timeline
+                patient_service.add_log(
+                    patient_id=patient_id,
+                    event_type="PRESCRIPTION_VERIFIED",
+                    title=f"Prescription Signed by {doctor_name}",
+                    details=f"Doctor verified {len(medications)} medication(s). Forwarded to Dispensary.",
+                    actor=doctor_name,
+                )
+            except Exception as e:
+                print(f"Error syncing patient schedule & vault in verify_prescription: {e}")
+
+        # 3. Fan-out to Central Pharmacy queue
+        if patient_id and medications:
+            try:
+                from app.routers.pharmacy import add_to_pharmacy_queue
+                patient_info = self.patients.get(patient_id, {})
+                safety_lock = None
+                if acknowledged_flags:
+                    safety_lock = {
+                        "flag_id": acknowledged_flags[0].get("flag_id", "flag-override"),
+                        "has_override": True,
+                        "interaction_warning": "Precaution acknowledged during doctor sign-off",
+                        "severity": "moderate",
+                        "doctor_override_reason": "Clinical override authorized by attending physician",
+                        "acknowledged_at": log_entry["signed_at"],
+                    }
+
+                add_to_pharmacy_queue({
+                    "id": f"disp-{prescription_id}",
+                    "prescription_id": prescription_id,
+                    "patient_id": patient_id,
+                    "patient_name": patient_info.get("full_name", "Patient"),
+                    "age": patient_info.get("age", 45),
+                    "gender": patient_info.get("gender", "Unknown"),
+                    "doctor_name": doctor_name,
+                    "verified_at": log_entry["signed_at"],
+                    "safety_lock": safety_lock,
+                    "items": [
+                        {
+                            "name": m.get("name", ""),
+                            "dosage": m.get("dosage", ""),
+                            "frequency": m.get("frequency", ""),
+                            "days": int(m.get("duration_days", 7)),
+                            "qty": int(m.get("duration_days", 7)) * 2,
+                        }
+                        for m in medications
+                    ],
+                    "is_refill": False,
+                    "dispensed": False,
+                })
+            except Exception as e:
+                print(f"Error appending to pharmacy queue: {e}")
+
         return {
             "status": "verified",
             "protocol_hash": protocol_hash,
@@ -1078,7 +1400,7 @@ class DoctorService:
         return {"error": f"Refill {refill_id} not found"}
 
     # =====================================================================
-    # PATIENT CONTEXT â€” Symptoms, Caregivers, Allergies, Visit Prep
+    # PATIENT CONTEXT  -  Symptoms, Caregivers, Allergies, Visit Prep
     # =====================================================================
 
     def get_symptoms(self, patient_id: str, days: int = 30) -> dict:
@@ -1101,177 +1423,6 @@ class DoctorService:
             "alert_count": len(alerts),
             "alerts": alerts,
         }
-
-    def get_caregiver_audit(self, patient_id: str) -> dict:
-        """Get caregiver dose-marking audit for a patient."""
-        # â”€â”€ Scans & X-Ray Analysis (Side-by-Side OCR & X-ray Canvas) â”€â”€â”€â”€â”€â”€
-        self.scans = {
-            "patient-ramesh": {
-                "prescription_scan": {
-                    "scan_id": "scan-rx-ramesh-101",
-                    "uploaded_at": _days_ago(1),
-                    "image_url": "/api/placeholder/scan/rx-ramesh.jpg",
-                    "ocr_fields": [
-                        {
-                            "medication_id": "med-metformin",
-                            "name": "Metformin",
-                            "dosage": "500mg",
-                            "frequency": "2-0-2",
-                            "duration_days": 30,
-                            "confidence": 0.94,
-                            "condition_tag": "DIABETES",
-                            "doctor_edited": False,
-                        },
-                        {
-                            "medication_id": "med-noveron",
-                            "name": "Noveron",
-                            "dosage": "500mg",
-                            "frequency": "1-0-1",
-                            "duration_days": 10,
-                            "confidence": 0.88,
-                            "condition_tag": "HEART CARE",
-                            "doctor_edited": False,
-                        },
-                    ],
-                },
-                "xray_scan": {
-                    "scan_id": "scan-xray-ramesh-201",
-                    "uploaded_at": _days_ago(2),
-                    "anatomical_region": "Left Wrist / Forearm AP & Lateral",
-                    "image_url": "/api/placeholder/scan/xray-wrist.jpg",
-                    "detections": [
-                        {
-                            "label": "fracture",
-                            "confidence": 0.92,
-                            "box": {"x": 140, "y": 95, "w": 75, "h": 50},
-                            "anatomical_site": "Left distal radius fracture (non-displaced)",
-                        },
-                        {
-                            "label": "boneanomaly",
-                            "confidence": 0.78,
-                            "box": {"x": 210, "y": 160, "w": 45, "h": 40},
-                            "anatomical_site": "Mild localized osteopenia",
-                        },
-                    ],
-                },
-            },
-            "patient-vikram": {
-                "prescription_scan": {
-                    "scan_id": "scan-rx-vikram-102",
-                    "uploaded_at": _days_ago(0),
-                    "image_url": "/api/placeholder/scan/rx-vikram.jpg",
-                    "ocr_fields": [
-                        {
-                            "medication_id": "med-atenolol",
-                            "name": "Atenolol",
-                            "dosage": "50mg",
-                            "frequency": "1-0-0",
-                            "duration_days": 30,
-                            "confidence": 0.96,
-                            "condition_tag": "HYPERTENSION",
-                            "doctor_edited": False,
-                        },
-                    ],
-                },
-                "xray_scan": {
-                    "scan_id": "scan-xray-vikram-202",
-                    "uploaded_at": _days_ago(0),
-                    "anatomical_region": "Chest PA View",
-                    "image_url": "/api/placeholder/scan/xray-chest.jpg",
-                    "detections": [
-                        {
-                            "label": "cardiomegaly",
-                            "confidence": 0.89,
-                            "box": {"x": 110, "y": 120, "w": 180, "h": 140},
-                            "anatomical_site": "Enlarged cardiac silhouette (CTR > 0.55)",
-                        },
-                    ],
-                },
-            },
-            "patient-sita": {
-                "prescription_scan": {
-                    "scan_id": "scan-rx-sita-103",
-                    "uploaded_at": _days_ago(2),
-                    "image_url": "/api/placeholder/scan/rx-sita.jpg",
-                    "ocr_fields": [
-                        {
-                            "medication_id": "med-pcm",
-                            "name": "Paracetamol",
-                            "dosage": "500mg",
-                            "frequency": "1-1-1",
-                            "duration_days": 5,
-                            "confidence": 0.92,
-                            "condition_tag": "FEVER",
-                            "doctor_edited": False,
-                        },
-                    ],
-                },
-                "xray_scan": {
-                    "scan_id": "scan-xray-sita-203",
-                    "uploaded_at": _days_ago(1),
-                    "anatomical_region": "Chest PA View",
-                    "image_url": "/api/placeholder/scan/xray-chest-sita.jpg",
-                    "detections": [
-                        {
-                            "label": "consolidation",
-                            "confidence": 0.84,
-                            "box": {"x": 160, "y": 140, "w": 90, "h": 80},
-                            "anatomical_site": "Right middle lobe patchy consolidation (consistent with pneumonia)",
-                        },
-                    ],
-                },
-            },
-        }
-
-        # â”€â”€ Diagnostic Orders (Lab Tests) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        self.diagnostic_orders = {
-            "patient-ramesh": [
-                {
-                    "id": "order-lab-1",
-                    "test_name": "Complete Blood Count (CBC)",
-                    "category": "Hematology",
-                    "status": "results_ready",
-                    "ordered_at": _days_ago(3),
-                    "ordered_by": "Dr. Nitin Sharma",
-                    "doctor_summary": "Hb 13.8 g/dL (Normal), WBC 7,200 /mcL (Normal), Platelets 240,000 /mcL",
-                    "patient_summary": "Your blood counts and infection markers are completely within normal healthy range.",
-                },
-                {
-                    "id": "order-lab-2",
-                    "test_name": "HbA1c (Glycated Hemoglobin)",
-                    "category": "Diabetic Profile",
-                    "status": "pending_draw",
-                    "ordered_at": _days_ago(0),
-                    "ordered_by": "Dr. Nitin Sharma",
-                    "notes": "Fast for 8 hours prior to morning sample draw.",
-                },
-                {
-                    "id": "order-lab-3",
-                    "test_name": "Fasting Lipid Profile",
-                    "category": "Biochemistry",
-                    "status": "analyzing",
-                    "ordered_at": _days_ago(1),
-                    "ordered_by": "Dr. Nitin Sharma",
-                    "notes": "Lipid panel sent to pathology lab.",
-                },
-            ],
-            "patient-vikram": [
-                {
-                    "id": "order-lab-4",
-                    "test_name": "Serum Troponin I & CK-MB",
-                    "category": "Cardiac Biomarkers",
-                    "status": "results_ready",
-                    "ordered_at": _days_ago(0),
-                    "ordered_by": "Dr. Nitin Sharma",
-                    "doctor_summary": "Troponin I: 0.08 ng/mL (Borderline Elevated), CK-MB: 24 U/L",
-                    "patient_summary": "Slightly elevated cardiac enzyme markers. Doctor is monitoring cardiac stability.",
-                },
-            ],
-        }
-
-        # â”€â”€ Follow-ups & Verification Logs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        self.follow_ups = []
-        self.verification_logs = []
 
     def get_caregiver_audit(self, patient_id: str) -> dict:
         """Get caregiver dose-marking audit for a patient."""
@@ -1300,10 +1451,43 @@ class DoctorService:
 
     def get_scans(self, patient_id: str) -> dict:
         """Get raw prescription scan and X-ray analysis for a patient."""
-        return self.scans.get(patient_id, {
-            "prescription_scan": None,
-            "xray_scan": None,
-        })
+        if patient_id in self.scans:
+            return self.scans[patient_id]
+        return {
+            "prescription_scan": {
+                "scan_id": f"scan-rx-{patient_id}",
+                "uploaded_at": _days_ago(1),
+                "image_url": "/api/placeholder/scan/rx-general.jpg",
+                "clinic_name": "General Clinical Consultation",
+                "doctor_name": "Attending Physician",
+                "ocr_fields": [
+                    {
+                        "medication_id": "med-gen-1",
+                        "name": "General Clinical Rx",
+                        "dosage": "500mg",
+                        "frequency": "1-0-1",
+                        "duration_days": 10,
+                        "confidence": 0.92,
+                        "condition_tag": "GENERAL",
+                        "doctor_edited": False,
+                    }
+                ],
+            },
+            "xray_scan": {
+                "scan_id": f"scan-xray-{patient_id}",
+                "uploaded_at": _days_ago(1),
+                "anatomical_region": "Chest PA View",
+                "image_url": "/api/placeholder/scan/xray-chest.jpg",
+                "detections": [
+                    {
+                        "label": "normal",
+                        "confidence": 0.94,
+                        "box": {"x": 120, "y": 90, "w": 180, "h": 140},
+                        "anatomical_site": "Clear bilateral lung fields, normal cardiothoracic ratio",
+                    }
+                ],
+            },
+        }
 
     def get_diagnostic_orders(self, patient_id: str) -> list[dict]:
         """Get diagnostic lab orders for a patient."""
@@ -1334,29 +1518,111 @@ class DoctorService:
         return {"status": "created", "order": new_order}
 
     # =====================================================================
-    # DICTATION (mock SOAP)
+    # DICTATION & AMBIENT SOAP (BUG-DR-SOAP-01 & BUG-DR-SOAP-02)
     # =====================================================================
 
-    def process_dictation(self, prescription_id: str) -> dict:
-        """Mock SOAP note generation from dictation."""
+    def get_soap_note(self, patient_id: str) -> dict:
+        """Fetch saved or generate clinical draft SOAP note for a specific patient."""
+        if patient_id in self.soap_notes:
+            return self.soap_notes[patient_id].get("soap_note", {})
+
+        patient = self.patients.get(patient_id)
+        if not patient:
+            for q in self.queue:
+                if q.get("patient_id") == patient_id:
+                    patient = q.get("patients", {})
+                    break
+
+        if patient_id == "patient-vikram":
+            return {
+                "S": "46M presenting with complaints of intermittent chest tightness on exertion for 1 week. Denies syncope or palpitations. Known dyslipidemia.",
+                "O": "BP 142/90 mmHg, HR 82 bpm, RR 18, SpO2 97% on room air. CVS: S1S2 normal, no murmurs. Lungs: clear bilaterally. Peripheral pulses palpable.",
+                "A": "1. Stage 1 Essential Hypertension.\n2. Exertional Angina - rule out CAD.\n3. Hyperlipidemia.",
+                "P": "1. Tab Telmisartan 40mg (1-0-0) daily morning.\n2. Tab Atorvastatin 10mg (0-0-1) daily night.\n3. Cardiology referral for 2D Echocardiogram and treadmill test.\n4. Emergency warning signs (chest pain radiating to arm/jaw) counseled.",
+            }
+        elif patient_id == "patient-sita":
+            return {
+                "S": "62F presenting with acute fever (102°F) and persistent productive cough with yellowish sputum for 3 days. Generalized weakness and loss of appetite.",
+                "O": "Temp 101.4°F, BP 124/78 mmHg, HR 96 bpm, SpO2 95% on room air. Chest: right lower zone crepitations and scattered rhonchi. Throat mildly congested.",
+                "A": "1. Community-Acquired Acute Bronchitis / Lower Respiratory Tract Infection.\n2. Pyrexia of infectious origin.",
+                "P": "1. Tab Amoxicillin-Clavulanate 625mg (1-0-1) for 5 days.\n2. Tab Paracetamol 650mg (SOS) for fever > 100°F.\n3. Chest X-Ray PA view.\n4. Warm saline gargles, steam inhalation, and oral hydration advised.",
+            }
+        elif patient_id in ("patient-ramesh", "demo-patient"):
+            return {
+                "S": "58M presenting for diabetes follow-up. C/O occasional dizziness, especially after evening Noveron dose. Blood sugars stable around 140-160 mg/dL fasting. No chest pain, no shortness of breath.",
+                "O": "BP 130/85 mmHg, HR 78 bpm regular, RR 16, SpO2 98% RA. General: well-nourished, no acute distress. Lungs: clear bilaterally. Abdomen: soft, non-tender. Foot pulses intact.",
+                "A": "1. Type 2 Diabetes Mellitus - stable control.\n2. Episodic Postprandial Dizziness - likely mild orthostatic effect or evening Noveron timing.\n3. Cardiovascular health stable.",
+                "P": "1. Continue Metformin 500mg (1-0-1).\n2. Monitor blood pressure morning & evening.\n3. Order HbA1c, fasting lipid profile, and serum creatinine.\n4. Follow-up in 4 weeks or sooner if dizziness worsens.",
+            }
+        else:
+            name = patient.get("full_name", "Patient") if patient else "Patient"
+            age = patient.get("age", 45) if patient else 45
+            gender = "M" if (patient and patient.get("gender") == "Male") else "F"
+            return {
+                "S": f"{age}{gender} presenting for clinical consultation and comprehensive health evaluation.",
+                "O": "Vitals stable. BP within normal limits. Chest clear, heart sounds normal, abdomen soft.",
+                "A": "1. Primary diagnostic evaluation in progress.",
+                "P": "1. Prescribe supportive medical therapy.\n2. Advise standard diagnostic baseline panel.\n3. Review in outpatient clinic in 1 week.",
+            }
+
+    def save_soap_note(
+        self,
+        patient_id: str,
+        doctor_id: str,
+        soap_note: dict,
+        transcript: str = "",
+    ) -> dict:
+        """Persist SOAP note into memory store and audit log."""
+        entry = {
+            "soap_note": soap_note,
+            "transcript": transcript,
+            "doctor_id": doctor_id,
+            "saved_at": _now_iso(),
+        }
+        self.soap_notes[patient_id] = entry
+
+        try:
+            from app.services.patient_service import patient_service
+            patient_service.add_log(
+                patient_id=patient_id,
+                event_type="CLINICAL_NOTE_SAVED",
+                title="Clinical SOAP Note Recorded",
+                details=f"Physician recorded ambient SOAP consultation note. Assessment summary: {soap_note.get('A', '')[:60]}",
+                actor="Attending Physician",
+            )
+        except Exception as e:
+            print(f"Error adding log for soap note: {e}")
+
+        return {
+            "status": "saved",
+            "patient_id": patient_id,
+            "saved_at": entry["saved_at"],
+        }
+
+    def process_dictation(self, prescription_id: str = "", patient_id: str | None = None) -> dict:
+        """SOAP note generation from ambient dictation."""
+        if not patient_id and prescription_id.startswith("rx-"):
+            candidate = prescription_id.replace("rx-", "")
+            if candidate in self.patients or candidate.startswith("patient-"):
+                patient_id = candidate
+
+        effective_patient = patient_id or "patient-ramesh"
+        note = self.get_soap_note(effective_patient)
+
+        transcript = ""
+        if effective_patient == "patient-vikram":
+            transcript = "Patient Vikram Singh, 46-year-old male presenting with intermittent central chest tightness and dyspnea on exertion. BP 142/90, HR 82. Plan: initiate Telmisartan 40mg daily, continue statin therapy, order 2D echocardiogram."
+        elif effective_patient == "patient-sita":
+            transcript = "Patient Sita Devi, 62-year-old female presenting with high grade fever up to 102 degrees F and productive cough for 3 days. Crepitations in right lower zone. Plan: start Amoxicillin 500mg thrice daily, Paracetamol 650mg SOS."
+        else:
+            transcript = "Patient Ramesh Kumar, 58 year old male presenting for diabetes follow-up. Reports occasional dizziness especially after evening Noveron dose. Blood sugar levels stable around 140-160 fasting. Plan to continue current Metformin regimen and check HbA1c."
+
         return {
             "status": "completed",
             "prescription_id": prescription_id,
-            "transcript": (
-                "Patient Ramesh Kumar, 58 year old male presenting for diabetes follow-up. "
-                "Reports occasional dizziness especially after evening Noveron dose. "
-                "Blood sugar levels have been stable around 140-160 fasting. "
-                "Currently on Metformin 500mg twice daily and Noveron 500mg twice daily. "
-                "Physical exam unremarkable, BP 130/85, pulse 78 regular. "
-                "Plan to continue current regimen, consider reducing Noveron evening dose "
-                "if dizziness persists. Schedule HbA1c recheck."
-            ),
-            "soap_note": {
-                "S": "58M presenting for diabetes follow-up. C/O occasional dizziness, especially after evening Noveron dose. Blood sugars stable 140-160mg/dL fasting. No chest pain, no SOB, no polyuria.",
-                "O": "BP 130/85 mmHg, HR 78 bpm regular, RR 16, SpO2 98% RA. General appearance: well-nourished, no acute distress. CVS: S1S2 normal, no murmur. Lungs: clear bilateral. Abdomen: soft, non-tender.",
-                "A": "1. Type 2 Diabetes Mellitus â€” controlled on current regimen\n2. Dizziness â€” possibly medication-related (Noveron evening dose)\n3. Cardiovascular risk â€” on anticoagulation via cardiology",
-                "P": "1. Continue Metformin 500mg 2-0-2\n2. Consider reducing Noveron to 500mg 1-0-0 (morning only) if dizziness persists beyond 1 week\n3. Order HbA1c, fasting lipid panel, serum creatinine\n4. Follow-up in 2 weeks\n5. Patient counseled on medication adherence importance",
-            },
+            "patient_id": effective_patient,
+            "transcript": transcript,
+            "soap_note": note,
         }
 
     # =====================================================================

@@ -1,0 +1,670 @@
+Scanned 25 files. Found 167 lines with non-ASCII characters:
+
+scaffold/backend/app\routers\copilot.py:51:
+  Content: # Feature F — Language-Aware Guardrail: translated trigger phrases for regional languages
+  Chars: U+2014 (—)
+
+scaffold/backend/app\routers\copilot.py:53:
+  Content: "hi": ["मुझे क्या लेना चाहिए", "क्या यह है", "निदान", "मुझे क्या हुआ है", "सीने में दर्द", "दवाई बताओ", "बीमारी बताओ", "क्या बीमारी है"],
+  Chars: U+092F (य), U+094D (्), U+092E (म), U+0913 (ओ), U+0928 (न), U+0930 (र), U+091A (च), U+0932 (ल), U+091D (झ), U+0947 (े), U+0915 (क), U+093F (ि), U+0940 (ी), U+0938 (स), U+0948 (ै), U+0906 (आ), U+093E (ा), U+090F (ए), U+0941 (ु), U+092C (ब), U+0924 (त), U+0939 (ह), U+0908 (ई), U+0926 (द), U+0935 (व), U+0902 (ं)
+
+scaffold/backend/app\routers\copilot.py:54:
+  Content: "te": ["నేను ఏమి తీసుకోవాలి", "ఇది ఏమిటి", "రోగ నిర్ధారణ", "నాకు ఏమైంది", "ఛాతీ నొప్పి"],
+  Chars: U+0C3E (ా), U+0C23 (ణ), U+0C40 (ీ), U+0C38 (స), U+0C24 (త), U+0C35 (వ), U+0C2A (ప), U+0C07 (ఇ), U+0C32 (ల), U+0C2E (మ), U+0C41 (ు), U+0C1B (ఛ), U+0C4B (ో), U+0C26 (ద), U+0C27 (ధ), U+0C48 (ై), U+0C15 (క), U+0C47 (ే), U+0C1F (ట), U+0C28 (న), U+0C4A (ొ), U+0C02 (ం), U+0C3F (ి), U+0C4D (్), U+0C0F (ఏ), U+0C17 (గ), U+0C30 (ర)
+
+scaffold/backend/app\routers\copilot.py:55:
+  Content: "ta": ["நான் என்ன எடுக்க வேண்டும்", "இது என்ன", "நோய் கண்டறிதல்", "எனக்கு என்ன ஆச்சு", "நெஞ்சு வலி"],
+  Chars: U+0BAE (ம), U+0B8E (எ), U+0BC6 (ெ), U+0B9A (ச), U+0B9F (ட), U+0BB1 (ற), U+0BBF (ி), U+0BC7 (ே), U+0BAF (ய), U+0BB2 (ல), U+0BBE (ா), U+0BA4 (த), U+0BA9 (ன), U+0BCB (ோ), U+0BA3 (ண), U+0BCD (்), U+0B9E (ஞ), U+0BC1 (ு), U+0B86 (ஆ), U+0BB5 (வ), U+0B87 (இ), U+0B95 (க), U+0BA8 (ந)
+
+scaffold/backend/app\routers\copilot.py:56:
+  Content: "kn": ["ನಾನು ಏನು ತೆಗೆದುಕೊಳ್ಳಬೇಕು", "ಇದು ಏನು", "ರೋಗ ನಿರ್ಣಯ", "ನನಗೇನಾಗಿದೆ", "ಎದೆ ನೋವು"],
+  Chars: U+0C87 (ಇ), U+0CA3 (ಣ), U+0CC1 (ು), U+0CCD (್), U+0CBF (ಿ), U+0CBE (ಾ), U+0C95 (ಕ), U+0CA6 (ದ), U+0CAC (ಬ), U+0CA8 (ನ), U+0CB5 (ವ), U+0CB0 (ರ), U+0CAF (ಯ), U+0CC6 (ೆ), U+0CCA (ೊ), U+0CCB (ೋ), U+0C97 (ಗ), U+0C8F (ಏ), U+0CA4 (ತ), U+0C8E (ಎ), U+0CB3 (ಳ), U+0CC7 (ೇ)
+
+scaffold/backend/app\routers\copilot.py:57:
+  Content: "mr": ["मी काय घ्यावे", "हे आहे का", "निदान", "मला काय झाले", "छातीत दुखणे"],
+  Chars: U+092F (य), U+094D (्), U+092E (म), U+0928 (न), U+0923 (ण), U+0932 (ल), U+091D (झ), U+0947 (े), U+0915 (क), U+093F (ि), U+0918 (घ), U+0940 (ी), U+0906 (आ), U+093E (ा), U+0941 (ु), U+091B (छ), U+0924 (त), U+0939 (ह), U+0916 (ख), U+0935 (व), U+0926 (द)
+
+scaffold/backend/app\routers\copilot.py:65:
+  Content: # Feature C — Heuristic for personal-context questions
+  Chars: U+2014 (—)
+
+scaffold/backend/app\routers\copilot.py:89:
+  Content: # Feature A — Tag each vault doc with a stable [DOC:id] reference for source attribution
+  Chars: U+2014 (—)
+
+scaffold/backend/app\routers\copilot.py:97:
+  Content: f"[DOC:{doc_id}] {doc_title} — Category: {doc.get('category')}, Doctor: {doc.get('doctor_name')}, Summary: {doc.get('summary', '')}, Notes: {doc.get('patient_notes', '')}"
+  Chars: U+2014 (—)
+
+scaffold/backend/app\routers\copilot.py:232:
+  Content: # Feature A — Source Attribution: extract [DOC:xxx] citations and validate
+  Chars: U+2014 (—)
+
+scaffold/backend/app\routers\copilot.py:262:
+  Content: # ── Feature E — Multi-Turn Safety Persistence ──
+  Chars: U+2014 (—), U+2500 (─)
+
+scaffold/backend/app\routers\copilot.py:272:
+  Content: # Feature F — Check regional-language triggers against latest message
+  Chars: U+2014 (—)
+
+scaffold/backend/app\routers\copilot.py:282:
+  Content: # Log the refusal (unlocks §8 Visit Prep)
+  Chars: U+00A7 (§)
+
+scaffold/backend/app\routers\copilot.py:289:
+  Content: # Feature D — Ask-My-Doctor Escalation
+  Chars: U+2014 (—)
+
+scaffold/backend/app\routers\copilot.py:299:
+  Content: "prefill_text": f"Patient asked Sanjivini: \"{payload.question}\" — requesting guidance.",
+  Chars: U+2014 (—)
+
+scaffold/backend/app\routers\copilot.py:310:
+  Content: # ── Feature C — Confidence-Scoped Empty Context ──
+  Chars: U+2014 (—), U+2500 (─)
+
+scaffold/backend/app\routers\copilot.py:602:
+  Content: patient_notes = " · ".join(notes_parts) if notes_parts else "Scanned physical prescription record."
+  Chars: U+00B7 (·)
+
+scaffold/backend/app\routers\copilot.py:648:
+  Content: "title": title or "Scanned Prescription — Pediatric Care",
+  Chars: U+2014 (—)
+
+scaffold/backend/app\routers\copilot.py:872:
+  Content: "1. 'title': Extract the Clinic / Hospital name (e.g. Scanned Prescription — MANIKANTA NEURO CENTRE or Yogana Hospital).\n"
+  Chars: U+2014 (—)
+
+scaffold/backend/app\routers\copilot.py:1122:
+  Content: "title": f"Scanned Prescription — {clinic_title}" if clinic_title != "Scanned Prescription Intake" else (f"Prescription — {doc_title}" if doc_title != "Attending Physician" else "Scanned Prescription"),
+  Chars: U+2014 (—)
+
+scaffold/backend/app\routers\copilot.py:1137:
+  Content: # ── Drug Class Family Reference Mapping for §5 Allergy Checking ──
+  Chars: U+00A7 (§), U+2500 (─)
+
+scaffold/backend/app\routers\copilot.py:1195:
+  Content: # §5: Cross-check against Allergy & Known Reaction Profile
+  Chars: U+00A7 (§)
+
+scaffold/backend/app\routers\copilot.py:1213:
+  Content: message = f"⚠️ ALLERGY WARNING: Scanned product matches your declared allergy profile ({alg_details}). Do not consume without explicit physician approval."
+  Chars: U+26A0 (⚠), U+FE0F (️)
+
+scaffold/backend/app\routers\copilot.py:1280:
+  Content: "'title' (e.g. Lumbar Spine MRI Scan — Radiology Report),\n"
+  Chars: U+2014 (—)
+
+scaffold/backend/app\routers\copilot.py:1341:
+  Content: # ── Critical Value & Confidence Post-Processing ──
+  Chars: U+2500 (─)
+
+scaffold/backend/app\routers\copilot.py:1371:
+  Content: "⚠️ Clinical Attention Needed: One or more parameters or observations may require prompt physician review ("
+  Chars: U+26A0 (⚠), U+FE0F (️)
+
+scaffold/backend/app\routers\copilot.py:1440:
+  Content: # ── Smart Rule-Based Fallback using Real OCR Text ──
+  Chars: U+2500 (─)
+
+scaffold/backend/app\routers\copilot.py:1472:
+  Content: final_title = f"{category.replace('_', ' ').title()} — {final_doc_name}" if extracted_doctor else f"Scanned {category.replace('_', ' ').title()} Record"
+  Chars: U+2014 (—)
+
+scaffold/backend/app\routers\copilot.py:1583:
+  Content: # ════════════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\copilot.py:1584:
+  Content: # Phase 1 & 2 — New API Endpoints
+  Chars: U+2014 (—)
+
+scaffold/backend/app\routers\copilot.py:1585:
+  Content: # ════════════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\copilot.py:1587:
+  Content: # ── Feature G: Copilot Feedback (👍👎) ──
+  Chars: U+1F44E (👎), U+1F44D (👍), U+2500 (─)
+
+scaffold/backend/app\routers\copilot.py:1608:
+  Content: # ── §5: Allergy & Known Reaction Profile ──
+  Chars: U+00A7 (§), U+2500 (─)
+
+scaffold/backend/app\routers\copilot.py:1639:
+  Content: # ── §2: Symptom & Side-Effect Journal ──
+  Chars: U+00A7 (§), U+2500 (─)
+
+scaffold/backend/app\routers\copilot.py:1663:
+  Content: # ── §1: Refill & Running-Out Intelligence ──
+  Chars: U+00A7 (§), U+2500 (─)
+
+scaffold/backend/app\routers\copilot.py:1690:
+  Content: # ── BUG-REM-01: Clinical Staff Reminders Persistence ──
+  Chars: U+2500 (─)
+
+scaffold/backend/app\routers\doctor.py:321:
+  Content: # FULL PATIENT RECORD (Spec 12 — Multi-Document Access)
+  Chars: U+2014 (—)
+
+scaffold/backend/app\routers\doctor.py:333:
+  Content: Full Patient Record endpoint — returns the patient's ENTIRE medical history
+  Chars: U+2014 (—)
+
+scaffold/backend/app\routers\doctor.py:494:
+  Content: "answer": "Last HbA1c was 6.4% on Aug 14, 2026, down from 7.8% recorded 6 months ago — showing a stable improving metabolic control trajectory on current Metformin 500mg (1-0-1).",
+  Chars: U+2014 (—)
+
+scaffold/backend/app\routers\doctor.py:502:
+  Content: "answer": "Patient logged 6 episodes of mild-to-moderate dizziness in the last 30 days, most frequently 1–2 hours following evening doses of Noveron / Gabapin NT.",
+  Chars: U+2013 (–)
+
+scaffold/backend/app\routers\doctor.py:517:
+  Content: # X-RAY ANALYSIS (Existing — Preserved)
+  Chars: U+2014 (—)
+
+scaffold/backend/app\routers\doctor.py:596:
+  Content: Never returns hardcoded/seeded fake defaults — if a day has no symptom log,
+  Chars: U+2014 (—)
+
+scaffold/backend/app\routers\doctor.py:652:
+  Content: # Merge into one day-by-day series, oldest → newest
+  Chars: U+2192 (→)
+
+scaffold/backend/app\routers\doctor_crm.py:2:
+  Content: Sanjeevani — Doctor CRM API Router (Spec Part C)
+  Chars: U+2014 (—)
+
+scaffold/backend/app\routers\lab.py:2:
+  Content: Sanjeevani — Lab Router (Spec 15)
+  Chars: U+2014 (—)
+
+scaffold/backend/app\routers\patients.py:1:
+  Content: ﻿from fastapi import APIRouter
+  Chars: U+FEFF (﻿)
+
+scaffold/backend/app\routers\patients.py:81:
+  Content: # PATIENT DOCUMENT UPLOAD (Spec 12 — Patient Self-Upload)
+  Chars: U+2014 (—)
+
+scaffold/backend/app\routers\pharmacy.py:2:
+  Content: Sanjeevani — Pharmacy Router (Production)
+  Chars: U+2014 (—)
+
+scaffold/backend/app\routers\pharmacy.py:19:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\pharmacy.py:21:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\pharmacy.py:166:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\pharmacy.py:167:
+  Content: # 2. Dispense Prescription (PH-3) — previous section header kept below
+  Chars: U+2014 (—)
+
+scaffold/backend/app\routers\pharmacy.py:168:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\pharmacy.py:171:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\pharmacy.py:173:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\pharmacy.py:234:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\pharmacy.py:236:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\pharmacy.py:277:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\pharmacy.py:279:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\pharmacy.py:332:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\pharmacy.py:334:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\pharmacy.py:375:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\pharmacy.py:377:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\pharmacy.py:406:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\pharmacy.py:408:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\reception.py:2:
+  Content: Sanjeevani — Reception Router
+  Chars: U+2014 (—)
+
+scaffold/backend/app\routers\reception.py:17:
+  Content: # ─── Severity Classification (AI-4: NLP Triage) ───
+  Chars: U+2500 (─)
+
+scaffold/backend/app\routers\reception.py:55:
+  Content: # ─── Mock Doctors (fallback when Supabase unavailable) ───
+  Chars: U+2500 (─)
+
+scaffold/backend/app\routers\reception.py:82:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\reception.py:84:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\reception.py:158:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\reception.py:160:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\reception.py:304:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\reception.py:306:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\reception.py:318:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\reception.py:320:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\reception.py:417:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\reception.py:419:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\reception.py:475:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\reception.py:477:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\reception.py:563:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\reception.py:565:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\reception.py:597:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\reception.py:599:
+  Content: # ═══════════════════════════════════════════════════════════════
+  Chars: U+2550 (═)
+
+scaffold/backend/app\routers\settings.py:2:
+  Content: Sanjeevani — Settings & Profile Router (Spec 15)
+  Chars: U+2014 (—)
+
+scaffold/backend/app\routers\uploads.py:25:
+  Content: "badge": "UNVERIFIED — NEEDS DOCTOR SIGN-OFF",
+  Chars: U+2014 (—)
+
+scaffold/backend/app\services\crm_service.py:2:
+  Content: Sanjeevani — Doctor CRM Service (Production Implementation)
+  Chars: U+2014 (—)
+
+scaffold/backend/app\services\crm_service.py:195:
+  Content: "event_summary": "Moved care stage from Consultation → Active Treatment",
+  Chars: U+2192 (→)
+
+scaffold/backend/app\services\crm_service.py:285:
+  Content: "event_summary": f"Moved care stage: {from_name} → {to_name}" + (f" ({reason})" if reason else ""),
+  Chars: U+2192 (→)
+
+scaffold/backend/app\services\doctor_service.py:107:
+  Content: "text": "High fever (102°F) for 3 days, persistent cough with yellow sputum",
+  Chars: U+00B0 (°)
+
+scaffold/backend/app\services\doctor_service.py:505:
+  Content: {"label": "WBC Count", "value": "7,200 /µL", "normal_range": "4,500 - 11,000 /µL", "status": "normal"},
+  Chars: U+00B5 (µ)
+
+scaffold/backend/app\services\doctor_service.py:506:
+  Content: {"label": "Platelet Count", "value": "240,000 /µL", "normal_range": "150,000 - 450,000 /µL", "status": "normal"},
+  Chars: U+00B5 (µ)
+
+scaffold/backend/app\services\doctor_service.py:581:
+  Content: {"label": "Admission Diagnosis", "value": "Unstable Angina – Rule out NSTEMI (Troponin I Negative x 2)"},
+  Chars: U+2013 (–)
+
+scaffold/backend/app\services\doctor_service.py:693:
+  Content: "title": "CBC — Complete Blood Count",
+  Chars: U+2014 (—)
+
+scaffold/backend/app\services\doctor_service.py:701:
+  Content: "title": "HbA1c — Feb 2025",
+  Chars: U+2014 (—)
+
+scaffold/backend/app\services\doctor_service.py:709:
+  Content: "title": "HbA1c — May 2025",
+  Chars: U+2014 (—)
+
+scaffold/backend/app\services\doctor_service.py:717:
+  Content: "title": "HbA1c — Aug 2025",
+  Chars: U+2014 (—)
+
+scaffold/backend/app\services\doctor_service.py:725:
+  Content: "title": "HbA1c — Feb 2026",
+  Chars: U+2014 (—)
+
+scaffold/backend/app\services\doctor_service.py:733:
+  Content: "title": "CBC — Aug 2026",
+  Chars: U+2014 (—)
+
+scaffold/backend/app\services\doctor_service.py:741:
+  Content: "title": "Chest X-Ray — Dr. Rai",
+  Chars: U+2014 (—)
+
+scaffold/backend/app\services\doctor_service.py:749:
+  Content: "title": "Lumbar MRI — Jul 2026",
+  Chars: U+2014 (—)
+
+scaffold/backend/app\services\doctor_service.py:765:
+  Content: "title": "Rx — Metformin 500mg — Dr. Sharma",
+  Chars: U+2014 (—)
+
+scaffold/backend/app\services\doctor_service.py:773:
+  Content: "title": "Rx — Warfarin 5mg — Dr. Rai",
+  Chars: U+2014 (—)
+
+scaffold/backend/app\services\doctor_service.py:781:
+  Content: "title": "Rx — Gabapin NT 100mg — Dr. Rai",
+  Chars: U+2014 (—)
+
+scaffold/backend/app\services\doctor_service.py:789:
+  Content: "title": "Influenza Vaccine — 2025",
+  Chars: U+2014 (—)
+
+scaffold/backend/app\services\doctor_service.py:814:
+  Content: "title": "Chest X-Ray — Cardiac Eval",
+  Chars: U+2014 (—)
+
+scaffold/backend/app\services\doctor_service.py:822:
+  Content: "title": "Rx — Aspirin 150mg — Dr. Sharma",
+  Chars: U+2014 (—)
+
+scaffold/backend/app\services\doctor_service.py:839:
+  Content: "title": "Previous Hospital Discharge — Dengue 2024",
+  Chars: U+2014 (—)
+
+scaffold/backend/app\services\doctor_service.py:1545:
+  Content: "S": "62F presenting with acute fever (102°F) and persistent productive cough with yellowish sputum for 3 days. Generalized weakness and loss of appetite.",
+  Chars: U+00B0 (°)
+
+scaffold/backend/app\services\doctor_service.py:1546:
+  Content: "O": "Temp 101.4°F, BP 124/78 mmHg, HR 96 bpm, SpO2 95% on room air. Chest: right lower zone crepitations and scattered rhonchi. Throat mildly congested.",
+  Chars: U+00B0 (°)
+
+scaffold/backend/app\services\doctor_service.py:1548:
+  Content: "P": "1. Tab Amoxicillin-Clavulanate 625mg (1-0-1) for 5 days.\n2. Tab Paracetamol 650mg (SOS) for fever > 100°F.\n3. Chest X-Ray PA view.\n4. Warm saline gargles, steam inhalation, and oral hydration advised.",
+  Chars: U+00B0 (°)
+
+scaffold/backend/app\services\doctor_service.py:1677:
+  Content: # FULL PATIENT RECORD (Spec 12 — Multi-Document Access)
+  Chars: U+2014 (—)
+
+scaffold/backend/app\services\doctor_service.py:1689:
+  Content: Returns a patient's COMPLETE medical record — every prescription from
+  Chars: U+2014 (—)
+
+scaffold/backend/app\services\doctor_service.py:1691:
+  Content: allergy — in one call. Per Spec 12 section B.3.
+  Chars: U+2014 (—)
+
+scaffold/backend/app\services\guardrail_service.py:2:
+  Content: Sanjeevani — Pharmacological Guardrail Service
+  Chars: U+2014 (—)
+
+scaffold/backend/app\services\guardrail_service.py:5:
+  Content: 1. Drug–drug interactions (known pairs with clinical messages)
+  Chars: U+2013 (–)
+
+scaffold/backend/app\services\guardrail_service.py:6:
+  Content: 2. Drug–allergy cross-reference (beta-lactam family, sulfa, etc.)
+  Chars: U+2013 (–)
+
+scaffold/backend/app\services\guardrail_service.py:127:
+  Content: # Allergy class mapping — allergen → family of drugs to flag
+  Chars: U+2192 (→), U+2014 (—)
+
+scaffold/backend/app\services\lab_intelligence_service.py:102:
+  Content: "unit": "mL/min/1.73m²",
+  Chars: U+00B2 (²)
+
+scaffold/backend/app\services\lab_intelligence_service.py:110:
+  Content: # ── LR-1: Auto-flagging of Abnormal & Critical Values ──
+  Chars: U+2500 (─)
+
+scaffold/backend/app\services\lab_intelligence_service.py:181:
+  Content: # ── LR-2: Plain-Language Summary Draft Generator ──
+  Chars: U+2500 (─)
+
+scaffold/backend/app\services\lab_intelligence_service.py:202:
+  Content: # ── LR-3: Cross-Report Trend Detection ──
+  Chars: U+2500 (─)
+
+scaffold/backend/app\services\lab_intelligence_service.py:244:
+  Content: history_str = " → ".join([f"{p['value_str']}" for p in sorted_pts])
+  Chars: U+2192 (→)
+
+scaffold/backend/app\services\lab_intelligence_service.py:255:
+  Content: # ── LR-5: Recheck Interval Suggestion ──
+  Chars: U+2500 (─)
+
+scaffold/backend/app\services\lab_intelligence_service.py:294:
+  Content: # ── LR-6: Duplicate / Redundant Test Detection at Order Time ──
+  Chars: U+2500 (─)
+
+scaffold/backend/app\services\lab_intelligence_service.py:322:
+  Content: # ── LR-8: Multi-Parameter Pattern Insights (Doctor-Facing Only) ──
+  Chars: U+2500 (─)
+
+scaffold/backend/app\services\patient_service.py:122:
+  Content: "brand_price": "₹240",
+  Chars: U+20B9 (₹)
+
+scaffold/backend/app\services\patient_service.py:123:
+  Content: "generic_price": "₹95",
+  Chars: U+20B9 (₹)
+
+scaffold/backend/app\services\patient_service.py:136:
+  Content: "brand_price": "₹190",
+  Chars: U+20B9 (₹)
+
+scaffold/backend/app\services\patient_service.py:137:
+  Content: "generic_price": "₹60",
+  Chars: U+20B9 (₹)
+
+scaffold/backend/app\services\patient_service.py:175:
+  Content: "brand_price": "₹140",
+  Chars: U+20B9 (₹)
+
+scaffold/backend/app\services\patient_service.py:176:
+  Content: "generic_price": "₹45",
+  Chars: U+20B9 (₹)
+
+scaffold/backend/app\services\patient_service.py:189:
+  Content: "brand_price": "₹160",
+  Chars: U+20B9 (₹)
+
+scaffold/backend/app\services\patient_service.py:190:
+  Content: "generic_price": "₹55",
+  Chars: U+20B9 (₹)
+
+scaffold/backend/app\services\patient_service.py:228:
+  Content: "brand_price": "₹90",
+  Chars: U+20B9 (₹)
+
+scaffold/backend/app\services\patient_service.py:229:
+  Content: "generic_price": "₹30",
+  Chars: U+20B9 (₹)
+
+scaffold/backend/app\services\patient_service.py:251:
+  Content: "summary": "Archived — likely no longer relevant (5-day acute course completed in 2024).",
+  Chars: U+2014 (—)
+
+scaffold/backend/app\services\patient_service.py:268:
+  Content: "brand_price": "₹110",
+  Chars: U+20B9 (₹)
+
+scaffold/backend/app\services\patient_service.py:269:
+  Content: "generic_price": "₹40",
+  Chars: U+20B9 (₹)
+
+scaffold/backend/app\services\patient_service.py:326:
+  Content: "reviewed_by_doctor_note": "Reviewed by Dr. Sharma: Downward trajectory confirmed (7.8% → 7.2% → 6.9%). Metformin titrated to 1000mg. Recheck HbA1c in 3 months.",
+  Chars: U+2192 (→)
+
+scaffold/backend/app\services\patient_service.py:420:
+  Content: "title": "Lumbar Spine MRI Scan — Diagnostic Radiology Report",
+  Chars: U+2014 (—)
+
+scaffold/backend/app\services\patient_service.py:520:
+  Content: # ── Phase 1 & 2 Data Stores ──
+  Chars: U+2500 (─)
+
+scaffold/backend/app\services\patient_service.py:522:
+  Content: self.copilot_feedback = []          # Feature G: 👍👎
+  Chars: U+1F44E (👎), U+1F44D (👍)
+
+scaffold/backend/app\services\patient_service.py:523:
+  Content: self.allergy_profile = []           # §5: Allergy profile
+  Chars: U+00A7 (§)
+
+scaffold/backend/app\services\patient_service.py:524:
+  Content: self.symptom_logs = []              # §2: Symptom journal
+  Chars: U+00A7 (§)
+
+scaffold/backend/app\services\patient_service.py:525:
+  Content: self.refill_requests = []           # §1: Refill requests
+  Chars: U+00A7 (§)
+
+scaffold/backend/app\services\patient_service.py:706:
+  Content: "title": f"Scanned Prescription — {doctor_name}",
+  Chars: U+2014 (—)
+
+scaffold/backend/app\services\patient_service.py:840:
+  Content: # ── A2: Snooze & Explicit Skip Actions ──
+  Chars: U+2500 (─)
+
+scaffold/backend/app\services\patient_service.py:878:
+  Content: # ── A1 & A3: Criticality & Anti-Pileup Escalation Status ──
+  Chars: U+2500 (─)
+
+scaffold/backend/app\services\patient_service.py:905:
+  Content: # ── Helper: Parse duration string into days ──
+  Chars: U+2500 (─)
+
+scaffold/backend/app\services\patient_service.py:924:
+  Content: # ── Copilot Refusal Logging ──
+  Chars: U+2500 (─)
+
+scaffold/backend/app\services\patient_service.py:939:
+  Content: # ── Feature G: Copilot Feedback (👍👎) ──
+  Chars: U+1F44E (👎), U+1F44D (👍), U+2500 (─)
+
+scaffold/backend/app\services\patient_service.py:953:
+  Content: # ── §5: Allergy & Known Reaction Profile ──
+  Chars: U+00A7 (§), U+2500 (─)
+
+scaffold/backend/app\services\patient_service.py:982:
+  Content: # ── §2 & Update 5: Symptom & Wellbeing Journal ──
+  Chars: U+00A7 (§), U+2500 (─)
+
+scaffold/backend/app\services\patient_service.py:1056:
+  Content: # ── B4: Wellbeing vs. Adherence Dual-Trend Correlation ──
+  Chars: U+2500 (─)
+
+scaffold/backend/app\services\patient_service.py:1079:
+  Content: # ── §1: Refill & Running-Out Intelligence ──
+  Chars: U+00A7 (§), U+2500 (─)
+
+scaffold/backend/app\services\patient_service.py:1142:
+  Content: # ── §8.8: Visit Prep Assistant Aggregation ──
+  Chars: U+00A7 (§), U+2500 (─)
+
+scaffold/backend/app\services\patient_service.py:1211:
+  Content: # ── Dosing & Reminders Calendar Layer (Spec PV-10 / §6.4) ──
+  Chars: U+00A7 (§), U+2500 (─)
+
+scaffold/backend/app\services\settings_service.py:2:
+  Content: Sanjeevani — Settings Service (Spec 15)
+  Chars: U+2014 (—)
+
+scaffold/backend/app\services\vault_service.py:27:
+  Content: # ── VA-1: Auto-categorization ──
+  Chars: U+2500 (─)
+
+scaffold/backend/app\services\vault_service.py:57:
+  Content: # ── VA-3: Auto-linking related documents ──
+  Chars: U+2500 (─)
+
+scaffold/backend/app\services\vault_service.py:61:
+  Content: Finds documents from same patient within ±14 days with matching doctor or condition tag.
+  Chars: U+00B1 (±)
+
+scaffold/backend/app\services\vault_service.py:102:
+  Content: # ── VA-2: Duplicate Detection ──
+  Chars: U+2500 (─)
+
+scaffold/backend/app\services\vault_service.py:136:
+  Content: # ── VA-5: Prescription Comparison Across Visits ──
+  Chars: U+2500 (─)
+
+scaffold/backend/app\services\vault_service.py:207:
+  Content: # ── VA-9: Expiry & Relevance Decay ──
+  Chars: U+2500 (─)
+
+scaffold/backend/app\services\vault_service.py:233:
+  Content: # ── Master AI Insights Aggregator ──
+  Chars: U+2500 (─)
+
+scaffold/backend/app\services\vault_service.py:252:
+  Content: # ── VA-7: Smart Vault Search ──
+  Chars: U+2500 (─)
+

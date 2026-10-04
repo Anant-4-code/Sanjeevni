@@ -10,8 +10,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+import uuid
 from typing import Optional
-from fastapi import APIRouter, Query, UploadFile, File, Form
+from fastapi import APIRouter, Query, UploadFile, File, Form, Request
 from pydantic import BaseModel
 from app.services.patient_service import patient_service
 
@@ -128,31 +129,41 @@ def query_copilot_llm(question: str, patient_id: str, history: list[dict] | None
 
     openrouter_key = os.getenv("OPENROUTER_API_KEY", "").strip()
 
-    # 1. Try Local Ollama LLM Models FIRST (llama3.2:3b, qwen2.5:7b, gemma3:latest)
-    ollama_models = ["llama3.2:3b", "qwen2.5:7b", "gemma3:latest", "gemma3:4b"]
-    for o_model in ollama_models:
-        try:
-            o_payload = {
-                "model": o_model,
-                "prompt": f"{system_prompt}\n\n{conversation_context}User Question: {question}\n\nCopilot Response:",
-                "stream": False,
-            }
-            o_req = urllib.request.Request(
-                "http://localhost:11434/api/generate",
-                data=json.dumps(o_payload).encode("utf-8"),
-                headers={"Content-Type": "application/json"},
-                method="POST",
-            )
-            with urllib.request.urlopen(o_req, timeout=12) as response:
-                o_res = json.loads(response.read().decode("utf-8"))
-                ans = o_res.get("response", "").strip()
-                if ans and "cannot provide medical advice" not in ans.lower():
-                    print(f"Local Ollama Copilot ({o_model}) answered successfully.")
-                    sources = _extract_source_citations(ans, vault_doc_map)
-                    clean_answer = _strip_doc_tags(ans)
-                    return {"answer": clean_answer, "sources": sources, "llm_tier": f"ollama/{o_model}"}
-        except Exception as e:
-            print(f"Local Ollama Copilot query with {o_model} failed: {e}")
+    # 1. Try Local Ollama LLM Models FIRST (llama3.2:3b, qwen2.5:7b, gemma3:latest) if Ollama is running
+    ollama_online = False
+    try:
+        check_req = urllib.request.Request("http://localhost:11434/api/tags", method="GET")
+        with urllib.request.urlopen(check_req, timeout=1.0) as check_res:
+            if check_res.status == 200:
+                ollama_online = True
+    except Exception:
+        ollama_online = False
+
+    if ollama_online:
+        ollama_models = ["llama3.2:3b", "qwen2.5:7b", "gemma3:latest", "gemma3:4b"]
+        for o_model in ollama_models:
+            try:
+                o_payload = {
+                    "model": o_model,
+                    "prompt": f"{system_prompt}\n\n{conversation_context}User Question: {question}\n\nCopilot Response:",
+                    "stream": False,
+                }
+                o_req = urllib.request.Request(
+                    "http://localhost:11434/api/generate",
+                    data=json.dumps(o_payload).encode("utf-8"),
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                with urllib.request.urlopen(o_req, timeout=12) as response:
+                    o_res = json.loads(response.read().decode("utf-8"))
+                    ans = o_res.get("response", "").strip()
+                    if ans and "cannot provide medical advice" not in ans.lower():
+                        print(f"Local Ollama Copilot ({o_model}) answered successfully.")
+                        sources = _extract_source_citations(ans, vault_doc_map)
+                        clean_answer = _strip_doc_tags(ans)
+                        return {"answer": clean_answer, "sources": sources, "llm_tier": f"ollama/{o_model}"}
+            except Exception as e:
+                print(f"Local Ollama Copilot query with {o_model} failed: {e}")
 
     # 2. OpenRouter API Fallback
     if openrouter_key:
@@ -535,6 +546,20 @@ async def get_patient_calendar_day(patient_id: str, day: str):
         return data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch day schedule: {str(e)}")
+
+
+class ShiftReminderPayload(BaseModel):
+    new_time: str = "09:00 PM"
+
+
+@router.post("/{patient_id}/shift-reminder")
+async def shift_patient_reminder(patient_id: str, payload: Optional[ShiftReminderPayload] = None):
+    try:
+        new_time = payload.new_time if payload else "09:00 PM"
+        res = patient_service.shift_reminder(patient_id, new_time)
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to shift reminder: {str(e)}")
 
 
 @router.get("/{patient_id}/logs")
@@ -1219,6 +1244,7 @@ class DigitalPrescriptionRequest(BaseModel):
     medicines: list[dict]
     patient_notes: Optional[str] = ""
     file_url: Optional[str] = ""
+    primary_doctor_id: Optional[str] = None
 
 
 @router.post("/create-digital-prescription")
@@ -1230,6 +1256,7 @@ async def create_digital_prescription(payload: DigitalPrescriptionRequest):
         medicines=payload.medicines,
         patient_notes=payload.patient_notes or "",
         file_url=payload.file_url or "",
+        primary_doctor_id=payload.primary_doctor_id,
     )
     return {"status": "success", "prescription": result}
 
@@ -1554,8 +1581,8 @@ async def save_document_to_vault(payload: SaveDocumentVaultRequest):
 
 
 @router.post("/health-passport")
-async def health_passport(payload: PassportRequest):
-    token = f"jwt-passport-{payload.patient_id}-scope"
+async def health_passport(payload: PassportRequest, request: Request):
+    token = f"jwt-passport-{payload.patient_id}-scope-{uuid.uuid4().hex[:6]}"
     patient_service.add_log(
         patient_id=payload.patient_id,
         event_type="PASSPORT_MINTED",
@@ -1563,7 +1590,8 @@ async def health_passport(payload: PassportRequest):
         details="Generated 5-minute single-use JWT access token for physician consultation.",
         actor="Health Passport Engine",
     )
-    return {"token": token, "qr_url": f"https://app.sanjeevani.health/api/passport/{token}"}
+    base_url = str(request.base_url).rstrip("/")
+    return {"token": token, "qr_url": f"{base_url}/api/passport/{token}"}
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -1671,4 +1699,21 @@ async def create_refill_request(payload: RefillRequest):
 async def get_refill_requests(patient_id: str):
     items = patient_service.get_refill_requests(patient_id)
     return {"requests": items, "count": len(items)}
+
+
+# ── BUG-REM-01: Clinical Staff Reminders Persistence ──
+
+class ReminderStatusUpdate(BaseModel):
+    status: str
+
+@router.get("/{patient_id}/reminders")
+async def get_patient_reminders(patient_id: str):
+    reminders = patient_service.get_reminders(patient_id)
+    return {"reminders": reminders, "count": len(reminders)}
+
+@router.patch("/reminders/{reminder_id}")
+@router.patch("/{patient_id}/reminders/{reminder_id}")
+async def update_reminder_status(reminder_id: str, payload: ReminderStatusUpdate, patient_id: Optional[str] = None):
+    updated = patient_service.update_reminder_status(reminder_id, payload.status)
+    return {"status": "success", "reminder": updated}
 

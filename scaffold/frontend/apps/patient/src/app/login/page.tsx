@@ -1,14 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { Stethoscope, User, Activity, Pill, FlaskConical, Shield, ArrowRight, Zap } from "lucide-react";
 
 export default function Login() {
-  const router = useRouter();
   const supabase = createClient();
   const { login } = useAuth();
 
@@ -82,61 +81,82 @@ export default function Login() {
     const cleanEmail = targetEmail.trim().toLowerCase();
 
     try {
+      // ── DEMO / OFFLINE PATH ──────────────────────────────────────────────────
+      // For @sanjeevani.com demo accounts we skip the Supabase round-trip entirely.
+      // This makes quick-login instant and avoids auth failures when the accounts
+      // don't exist in the Supabase project yet.
+      const demoMatch = QUICK_ROLES.find((r) => r.email === cleanEmail);
+      if (demoMatch || forceRole) {
+        const userRole = forceRole || demoMatch?.role || "patient";
+        const nameMap: Record<string, string> = {
+          doctor:       "Dr. Nitin Sharma",
+          patient:      "Ramesh Kumar",
+          receptionist: "Priya Desk",
+          pharmacist:   "Anil Verma, RPh",
+          lab_tech:     "Suresh Pathak",
+          admin:        "Hospital Administrator",
+        };
+
+        login({
+          id: `user-${userRole}`,
+          full_name: nameMap[userRole] || userRole,
+          email: cleanEmail,
+          phone: "+91 98765 43210",
+          role: userRole as any,
+          is_verified: true,
+        });
+
+        // Use a full navigation (window.location) instead of router.push so the
+        // browser sends the freshly-set cookie in the very next HTTP request that
+        // the middleware intercepts.
+        const destMap: Record<string, string> = {
+          doctor:       "/doctor",
+          receptionist: "/reception",
+          pharmacist:   "/pharmacy",
+          lab_tech:     "/lab",
+          admin:        "/doctor",
+          patient:      "/dashboard",
+        };
+        window.location.href = destMap[userRole] ?? "/dashboard";
+        return;
+      }
+
+      // ── PRODUCTION SUPABASE PATH ─────────────────────────────────────────────
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: cleanEmail,
         password: targetPass,
       });
 
-      let user = data?.user;
-      let userRole = forceRole || user?.user_metadata?.role || "patient";
-      let fullName = user?.user_metadata?.full_name || (userRole === "doctor" ? "Dr. Nitin Sharma" : "Ramesh Kumar");
-      let phone = user?.user_metadata?.phone || "+91 98765 43210";
-
-      // If backend mock mode is needed when offline
-      if (authError && cleanEmail.includes("@sanjeevani.com")) {
-        // Fallback for fast demo
-        const matched = QUICK_ROLES.find((r) => r.email === cleanEmail);
-        if (matched) {
-          userRole = matched.role;
-        }
-      } else if (authError) {
+      if (authError) {
         setError(authError.message);
         setLoading(false);
         return;
       }
 
-      // Sync local app auth context session
+      const user = data?.user;
+      const userRole = user?.user_metadata?.role || "patient";
+      const fullName = user?.user_metadata?.full_name || userRole;
+      const phone = user?.user_metadata?.phone || "";
+
       login({
         id: user?.id || `user-${userRole}`,
         full_name: fullName,
         email: cleanEmail,
-        phone: phone,
+        phone,
         role: userRole as any,
         is_verified: true,
       });
 
-      // Role-based routing within the unified Next.js web application
-      switch (userRole) {
-        case "doctor":
-          router.push("/doctor");
-          break;
-        case "receptionist":
-          router.push("/reception");
-          break;
-        case "pharmacist":
-          router.push("/pharmacy");
-          break;
-        case "lab_tech":
-          router.push("/lab");
-          break;
-        case "admin":
-          router.push("/doctor");
-          break;
-        case "patient":
-        default:
-          router.push("/dashboard");
-          break;
-      }
+      const destMap: Record<string, string> = {
+        doctor:       "/doctor",
+        receptionist: "/reception",
+        pharmacist:   "/pharmacy",
+        lab_tech:     "/lab",
+        admin:        "/doctor",
+        patient:      "/dashboard",
+      };
+      window.location.href = destMap[userRole] ?? "/dashboard";
+
     } catch (err: any) {
       setError(err.message || "Login authentication failed.");
     } finally {

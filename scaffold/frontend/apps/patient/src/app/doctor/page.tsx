@@ -39,6 +39,20 @@ interface QueueItem {
   };
 }
 
+function cleanComplaintText(text?: string): string {
+  if (!text) return "";
+  return text
+    .replace(/102A\?AF/g, "102°F")
+    .replace(/A\?AF/g, "°F")
+    .replace(/Â°/g, "°")
+    .replace(/Â·/g, "·")
+    .replace(/â–/g, "●")
+    .replace(/â€”/g, "—")
+    .replace(/â€“/g, "–")
+    .replace(/\?\?F/g, "°F")
+    .replace(/\?\?/g, " - ");
+}
+
 export default function DoctorQueuePage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -228,7 +242,7 @@ export default function DoctorQueuePage() {
 
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <Link
-                    href={`/doctor/patient/${patient.patient_id}/timeline`}
+                    href={`/doctor/patient/${patient.patient_id}`}
                     className="px-3 py-1.5 text-xs font-bold rounded-lg bg-[#0F172A] text-white dark:bg-white dark:text-[#0F172A] hover:opacity-90 transition-opacity"
                   >
                     Review Chart
@@ -354,7 +368,7 @@ export default function DoctorQueuePage() {
                 return (
                   <Link
                     key={item.id}
-                    href={`/doctor/patient/${item.patient_id}/timeline`}
+                    href={`/doctor/patient/${item.patient_id}`}
                     className="block bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] hover:border-[#0F172A] dark:hover:border-white rounded-2xl p-5 shadow-xs hover:shadow-md transition-all group"
                   >
                     <div className="flex items-start justify-between gap-4">
@@ -378,7 +392,7 @@ export default function DoctorQueuePage() {
                           </div>
 
                           <p className="text-xs text-[#64748B] dark:text-gray-300 mt-1 line-clamp-1">
-                            <strong className="text-[#0F172A] dark:text-gray-200">Complaint:</strong> {item.chief_complaints?.text}
+                            <strong className="text-[#0F172A] dark:text-gray-200">Complaint:</strong> {cleanComplaintText(item.chief_complaints?.text)}
                           </p>
 
                           <div className="flex items-center gap-3 text-[10px] text-[#64748B] dark:text-gray-400 mt-2 font-mono">

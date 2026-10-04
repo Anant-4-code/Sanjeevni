@@ -74,23 +74,70 @@ export default function RemindersPage() {
   const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
 
   useEffect(() => {
-    const pid = user?.id || "demo-patient";
+    const pid = (user?.role === "patient" && user?.id) ? user.id : "patient-ramesh";
     fetch(`${API_BASE}/patient/${pid}/timeline`)
       .then((r) => r.json())
       .then((d) => setSchedule(d.schedule || []))
       .catch(() => {});
+
+    // BUG-REM-01 FIX: Fetch from backend and restore persisted dismissal/snooze statuses
+    fetch(`${API_BASE}/patient/${pid}/reminders`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.reminders && Array.isArray(d.reminders)) {
+          setReminders(d.reminders);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        try {
+          const saved = localStorage.getItem("sanjeevani_staff_reminders_status");
+          if (saved) {
+            const statusMap = JSON.parse(saved) as Record<string, "dismissed" | "snoozed">;
+            setReminders((prev) =>
+              prev.map((r) => (statusMap[r.id] ? { ...r, status: statusMap[r.id] } : r))
+            );
+          }
+        } catch {}
+      });
   }, [user?.id]);
 
   function handleDismiss(id: string) {
-    setReminders((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status: "dismissed" } : r))
-    );
+    setReminders((prev) => {
+      const next = prev.map((r) => (r.id === id ? { ...r, status: "dismissed" as const } : r));
+      try {
+        const saved = JSON.parse(localStorage.getItem("sanjeevani_staff_reminders_status") || "{}");
+        saved[id] = "dismissed";
+        localStorage.setItem("sanjeevani_staff_reminders_status", JSON.stringify(saved));
+      } catch {}
+      return next;
+    });
+
+    // BUG-REM-01: Dispatch PATCH to backend API
+    fetch(`${API_BASE}/patient/reminders/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "dismissed" }),
+    }).catch(() => {});
   }
 
   function handleSnooze(id: string) {
-    setReminders((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status: "snoozed" } : r))
-    );
+    setReminders((prev) => {
+      const next = prev.map((r) => (r.id === id ? { ...r, status: "snoozed" as const } : r));
+      try {
+        const saved = JSON.parse(localStorage.getItem("sanjeevani_staff_reminders_status") || "{}");
+        saved[id] = "snoozed";
+        localStorage.setItem("sanjeevani_staff_reminders_status", JSON.stringify(saved));
+      } catch {}
+      return next;
+    });
+
+    // BUG-REM-01: Dispatch PATCH to backend API
+    fetch(`${API_BASE}/patient/reminders/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "snoozed" }),
+    }).catch(() => {});
   }
 
   // A4: Generate Rich .ICS Calendar File
