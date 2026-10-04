@@ -24,6 +24,8 @@
 | BUG-NAV-01 | Navbar role switcher leaks staff access | ✅ **FIXED** (Role switcher dropdown completely removed from `Navbar.tsx`) |
 | BUG-NAV-02 | Missing Mobile Navigation Drawer | ✅ **FIXED** (Mobile hamburger drawer + bottom PWA bar in `Navbar.tsx`) |
 | BUG-NAV-03 | React Hydration Mismatch (`<div>` inside `<a>`) | ✅ **FIXED** (Replaced block-level `<div>` tags with inline `<span>` elements across `Navbar.tsx`, `RoleHeader.tsx`, and `login/page.tsx`) |
+| BUG-NAV-04 | Patient Navbar Leaked onto `/auth/*` (Verify Email) Screens | ✅ **FIXED** (Added `pathname.startsWith("/auth")` to `isNonPatientRoute` in `Navbar.tsx`) |
+| BUG-AUTH-01 | Email Verification Callback Hardcoded to Patient Dashboard | ✅ **FIXED** (Added role-based route dispatcher `homeMap` and Edge cookie synchronization in `auth/callback/page.tsx`) |
 | BUG-DASH-01 | Hardcoded `patient-ramesh` vs `demo-patient` ID mismatch | ✅ **FIXED** (Unified patient matching in `patient_service.py` & `dashboard/page.tsx`) |
 | BUG-DASH-02 | UTF-8 Mojibake in dashboard source comments | ✅ **FIXED** (Clean UTF-8 characters across `dashboard/page.tsx`) |
 | BUG-DASH-03 | Photo upload uses DataURL instead of multipart | ✅ **FIXED** (Multipart `FormData` POST to `/api/upload` in `dashboard/page.tsx`) |
@@ -55,6 +57,7 @@
 | BUG-BE-02 | Missing CORS origin support for alternate ports | ✅ **FIXED** (Explicit allowed origins and regex in `main.py`) |
 | BUG-UI-01 | Inconsistent color systems (CSS vars vs hardcoded hex) | ✅ **FIXED** (Full dark/light CSS token definitions in `globals.css`) |
 | BUG-UI-02 | Horizontal scroll overflow on doctor sub-navigation (mobile) | ✅ **FIXED** (`overflow-x-auto no-scrollbar` in `layout.tsx`) |
+| BUG-UI-03 | Code Syntax Artifacts (`//`, `[]`) in Auth, Registration, Vault, and Settings Views | ✅ **FIXED** (Replaced with clean Swiss editorial em-dashes and colons across all views) |
 
 ---
 
@@ -314,6 +317,74 @@ This document provides a line-by-line, component-by-component, and endpoint-by-e
   ```
 - **Location:** [`Navbar.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/components/Navbar.tsx#L97-L106), [`RoleHeader.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/components/RoleHeader.tsx#L122-L130), [`login/page.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/app/login/page.tsx#L176-L182)
 - **Description:** Next.js and browser HTML parsers treat block-level `<div>` elements inside anchor `<a>` tags strictly during SSR reconciliation. Replaced all nested `<div>` badges with styled inline `<span>` tags, eliminating hydration mismatches. Verified with 0 runtime errors on live page navigation.
+
+#### BUG-NAV-04: Patient Navbar Leaked onto `/auth/*` (Verify Email) Screens ✅ FIXED
+- **Fix Status:** ✅ **FIXED** — Commit `653c4a1` | [`Navbar.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/components/Navbar.tsx#L63-L75)
+- **Fix Applied:**
+  ```tsx
+  // Added pathname.startsWith("/auth") to the route exclusion guard:
+  const isNonPatientRoute =
+    pathname === "/" ||
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/doctor") ||
+    pathname.startsWith("/reception") ||
+    pathname.startsWith("/pharmacy") ||
+    pathname.startsWith("/lab");
+
+  if (isNonPatientRoute) {
+    return null;
+  }
+  ```
+- **Location:** [`Navbar.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/components/Navbar.tsx#L63-L75)
+- **Description:** Unverified and registered users on `/auth/verify-email` and `/auth/callback` were seeing the full patient shell navigation bar (Home, Vault, Reminders, Copilot, Passport, Logs) at the top of the auth screen before their email/identity was verified. Added `/auth` route exclusion so Navbar correctly returns `null`. Verified via browser subagent with zero navbar presence on `/auth/verify-email`.
+
+#### BUG-AUTH-01: Email Verification Callback Hardcoded to Patient Dashboard ✅ FIXED
+- **Fix Status:** ✅ **FIXED** — Commit `653c4a1` | [`auth/callback/page.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/app/auth/callback/page.tsx#L30-L55)
+- **Fix Applied:**
+  ```tsx
+  // Dynamic role-based redirection + session cookie synchronization
+  const userMeta = data.session.user?.user_metadata || {};
+  const role = userMeta.role || "patient";
+  const homeMap: Record<string, string> = {
+    patient: "/dashboard",
+    doctor: "/doctor",
+    receptionist: "/reception",
+    pharmacist: "/pharmacy",
+    lab_tech: "/lab",
+    admin: "/doctor",
+  };
+  const targetUrl = homeMap[role] || "/dashboard";
+
+  // Sync session to localStorage & Edge middleware cookie
+  document.cookie = `sanjeevani_session_role=${role}; path=/; SameSite=Strict`;
+  localStorage.setItem("sanjeevani_user_session", JSON.stringify({
+    id: data.session.user.id,
+    full_name: userMeta.full_name || data.session.user.email?.split("@")[0] || "User",
+    email: data.session.user.email,
+    phone: userMeta.phone || "",
+    role: role,
+    is_verified: true,
+  }));
+  setTimeout(() => router.replace(targetUrl), 1500);
+  ```
+- **Location:** [`auth/callback/page.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/app/auth/callback/page.tsx#L30-L55)
+- **Description:** Previously, email verification redirected all users to `/dashboard` (patient portal) regardless of whether they registered as a Doctor, Pharmacist, Receptionist, or Lab Tech, triggering role middleware conflicts. It now routes users directly to their designated workspace and writes the `sanjeevani_session_role` cookie for Edge middleware validation.
+
+#### BUG-UI-03: Code Syntax Artifacts (`//`, `[]`) Leaking in Auth, Vault, and Settings Views ✅ FIXED
+- **Fix Status:** ✅ **FIXED** — Commit `653c4a1` | [`register/page.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/app/register/page.tsx), [`verify-email/page.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/app/auth/verify-email/page.tsx), [`RoleHeader.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/components/RoleHeader.tsx), [`SettingsLayout.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/components/settings/SettingsLayout.tsx)
+- **Fix Applied:** Replaced developer code comment syntax (`02 // User Registration`, `NOTICE // Staff role...`, `PHYSICIAN // COMMAND`) with Swiss editorial em-dashes (`02 — User Registration`, `NOTICE — Staff role...`, `PHYSICIAN — COMMAND`) across:
+  - [`register/page.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/app/register/page.tsx#L153-L157)
+  - [`auth/verify-email/page.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/app/auth/verify-email/page.tsx#L67-L136)
+  - [`auth/callback/page.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/app/auth/callback/page.tsx#L58-L62)
+  - [`RoleHeader.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/components/RoleHeader.tsx#L30-L62)
+  - [`reminders/page.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/app/reminders/page.tsx#L190-L195)
+  - [`vault/[category]/page.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/app/vault/[category]/page.tsx#L145-L149)
+  - [`vault/lab-reports/page.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/app/vault/lab-reports/page.tsx#L137-L141)
+  - [`vault/folders/new/page.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/app/vault/folders/new/page.tsx#L60-L64)
+  - [`SettingsLayout.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/components/settings/SettingsLayout.tsx#L80-L84)
+- **Description:** Eradicated pseudo-code artifacts across all platform views to maintain clean editorial typography throughout the entire user journey.
 
 ---
 
