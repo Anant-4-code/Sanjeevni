@@ -3,56 +3,39 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
-  Activity,
-  Stethoscope,
-  User,
-  Users,
-  Pill,
-  FlaskConical,
   ArrowRight,
-  Shield,
-  Clock,
-  Sparkles,
-  CheckCircle2,
-  FileText,
+  ArrowUpRight,
+  Plus,
+  Minus,
+  Check,
   Moon,
   Sun,
   Menu,
   X,
-  CheckCircle,
-  Building2,
-  Network,
-  Layers,
-  Lock,
-  Share2,
-  Zap,
-  TrendingUp,
-  AlertTriangle,
-  HeartPulse,
-  QrCode,
-  Calendar,
-  ChevronRight,
-  Play,
-  RotateCcw,
-  Check,
-  Eye,
-  Database,
-  Sliders,
-  Send,
-  Camera,
+  Activity,
+  Shield,
+  Terminal,
+  Clock,
+  Sparkles,
+  Search,
 } from "lucide-react";
 
-/* ── Editorial Section Eyebrow ── */
-function Eyebrow({ index, label }: { index: string; label: string }) {
+/* ── EDITORIAL EYEBROW COMPONENT ── */
+function SectionEyebrow({ index, label }: { index: string; label: string }) {
   return (
-    <p className="text-xs font-mono uppercase tracking-[0.25em] text-[var(--fg-muted)] flex items-center gap-2 mb-3">
-      <span className="w-1.5 h-1.5 rounded-full bg-[var(--sanjeevani)] shadow-xs shadow-[var(--sanjeevani)]" />
-      {index} // {label}
-    </p>
+    <div className="flex items-center gap-3 mb-6">
+      <span className="font-mono text-[11px] font-bold tracking-[0.25em] text-[var(--fg-muted)]">
+        {index} //
+      </span>
+      <span className="font-mono text-[11px] font-bold tracking-[0.2em] uppercase text-[var(--fg-muted)]">
+        {label}
+      </span>
+      <div className="h-px flex-1 bg-[var(--border)] max-w-xs" />
+    </div>
   );
 }
 
-/* ── Section 10: Fully Functional Clinic Access Form ── */
+/* ── CLINIC ACCESS INTAKE FORM (SWISS EDITORIAL ARCHITECTURE) ── */
 function ClinicAccessForm() {
   const [name, setName] = useState("");
   const [contact, setContact] = useState("");
@@ -66,7 +49,7 @@ function ClinicAccessForm() {
     setError("");
 
     if (!name.trim() || name.trim().length < 2) {
-      setError("Please enter your full name (at least 2 characters).");
+      setError("Please enter your full name (minimum 2 characters).");
       return;
     }
     const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -85,14 +68,14 @@ function ClinicAccessForm() {
         body: JSON.stringify({ name: name.trim(), contact: contact.trim(), clinic: clinic.trim() }),
       });
       if (!res.ok) {
-        let msg = "Request failed. Please try again.";
+        let msg = "Submission error. Please retry.";
         try { const d = await res.json(); msg = d?.detail || d?.message || msg; } catch {}
         setError(msg);
         return;
       }
       setSubmitted(true);
     } catch {
-      // Offline fallback: still acknowledge client intent smoothly
+      // Offline fallback resilience
       setSubmitted(true);
     } finally {
       setLoading(false);
@@ -101,94 +84,99 @@ function ClinicAccessForm() {
 
   if (submitted) {
     return (
-      <div className="p-8 rounded-3xl border border-[var(--border)] bg-[var(--bg-elevated)] flex flex-col items-center justify-center text-center gap-4 min-h-[260px] animate-in fade-in">
-        <div className="w-14 h-14 rounded-full bg-[var(--safe-bg)] border border-[var(--safe-border)] flex items-center justify-center text-[var(--safe)]">
-          <CheckCircle className="w-7 h-7" />
+      <div className="border border-[var(--border)] p-8 sm:p-12 space-y-6">
+        <div className="font-mono text-xs uppercase tracking-widest text-[var(--fg-muted)] flex items-center gap-2">
+          <span className="w-2 h-2 bg-[var(--fg)]" />
+          REGISTRATION RECORD LOGGED
         </div>
-        <div>
-          <p className="font-display font-bold text-xl text-[var(--fg)]">Ecosystem Access Requested</p>
-          <p className="text-xs text-[var(--fg-muted)] mt-1.5 max-w-sm leading-relaxed">
-            Thank you, <strong>{name}</strong>. Our clinical integration team will contact <strong>{contact}</strong> within 24 hours to connect your facility to the Sanjeevani Care Mesh.
-          </p>
-        </div>
+        <h3 className="font-display text-2xl sm:text-3xl font-black uppercase tracking-tight">
+          Request Received
+        </h3>
+        <p className="text-sm font-sans text-[var(--fg-muted)] max-w-md leading-relaxed">
+          Record logged for <strong>{name}</strong>. Our clinical integration team will contact{" "}
+          <strong>{contact}</strong> within 24 hours to schedule deployment.
+        </p>
         <button
           onClick={() => { setSubmitted(false); setName(""); setContact(""); setClinic(""); }}
-          className="text-xs font-mono underline text-[var(--sanjeevani)] hover:opacity-80 transition-opacity mt-2"
+          className="font-mono text-xs uppercase tracking-widest underline underline-offset-4 hover:opacity-70 transition-opacity"
         >
-          Submit another facility request
+          [ Submit Another Clinic Request ]
         </button>
       </div>
     );
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-4 p-8 rounded-3xl border border-[var(--border)] bg-[var(--bg-elevated)] shadow-sm"
-      noValidate
-    >
-      <div className="mb-2">
-        <h3 className="font-display text-xl font-bold">Connect Your Facility</h3>
-        <p className="text-xs text-[var(--fg-muted)] mt-0.5">
-          Join leading hospitals, diagnostic labs, and clinics operating on Sanjeevani.
-        </p>
+    <form onSubmit={handleSubmit} className="border border-[var(--border)] p-8 sm:p-12 space-y-8" noValidate>
+      <div className="border-b border-[var(--border)] pb-4 flex items-center justify-between">
+        <span className="font-mono text-xs uppercase tracking-widest text-[var(--fg-muted)]">
+          CLINICAL INTAKE DISPATCH
+        </span>
+        <span className="font-mono text-xs text-[var(--fg-muted)]">SECURE // ENCRYPTED</span>
       </div>
 
-      <label className="block">
-        <span className="text-[11px] uppercase font-mono tracking-wider text-[var(--fg-muted)] font-semibold">Full Name *</span>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Dr. Rajesh Sharma"
-          required
-          className="mt-1.5 w-full border border-[var(--border)] bg-transparent px-4 py-3 text-sm focus:outline-none focus:border-[var(--sanjeevani)] rounded-xl transition-colors text-[var(--fg)]"
-        />
-      </label>
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <label className="block font-mono text-[11px] uppercase tracking-widest text-[var(--fg-muted)]">
+            01 // Full Name &amp; Title *
+          </label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Dr. Rajesh Sharma"
+            required
+            className="w-full bg-transparent border-b border-[var(--border)] pb-3 pt-1 font-sans text-base sm:text-lg focus:outline-none focus:border-[var(--fg)] transition-colors rounded-none placeholder:text-[var(--fg-muted)]/40"
+          />
+        </div>
 
-      <label className="block">
-        <span className="text-[11px] uppercase font-mono tracking-wider text-[var(--fg-muted)] font-semibold">Work Email or Phone *</span>
-        <input
-          type="text"
-          value={contact}
-          onChange={(e) => setContact(e.target.value)}
-          placeholder="doctor@hospital.org or +91 98765 43210"
-          required
-          className="mt-1.5 w-full border border-[var(--border)] bg-transparent px-4 py-3 text-sm focus:outline-none focus:border-[var(--sanjeevani)] rounded-xl transition-colors text-[var(--fg)]"
-        />
-      </label>
+        <div className="space-y-2">
+          <label className="block font-mono text-[11px] uppercase tracking-widest text-[var(--fg-muted)]">
+            02 // Institutional Email or Direct Phone *
+          </label>
+          <input
+            type="text"
+            value={contact}
+            onChange={(e) => setContact(e.target.value)}
+            placeholder="doctor@hospital.org or +91 98765 43210"
+            required
+            className="w-full bg-transparent border-b border-[var(--border)] pb-3 pt-1 font-sans text-base sm:text-lg focus:outline-none focus:border-[var(--fg)] transition-colors rounded-none placeholder:text-[var(--fg-muted)]/40"
+          />
+        </div>
 
-      <label className="block">
-        <span className="text-[11px] uppercase font-mono tracking-wider text-[var(--fg-muted)] font-semibold">Clinic / Hospital / Laboratory Name</span>
-        <input
-          type="text"
-          value={clinic}
-          onChange={(e) => setClinic(e.target.value)}
-          placeholder="Apollo Health City / Metropolis Labs"
-          className="mt-1.5 w-full border border-[var(--border)] bg-transparent px-4 py-3 text-sm focus:outline-none focus:border-[var(--sanjeevani)] rounded-xl transition-colors text-[var(--fg)]"
-        />
-      </label>
+        <div className="space-y-2">
+          <label className="block font-mono text-[11px] uppercase tracking-widest text-[var(--fg-muted)]">
+            03 // Hospital, Clinic, or Practice Name
+          </label>
+          <input
+            type="text"
+            value={clinic}
+            onChange={(e) => setClinic(e.target.value)}
+            placeholder="Apex Cardiology &amp; Multi-Speciality Clinic"
+            className="w-full bg-transparent border-b border-[var(--border)] pb-3 pt-1 font-sans text-base sm:text-lg focus:outline-none focus:border-[var(--fg)] transition-colors rounded-none placeholder:text-[var(--fg-muted)]/40"
+          />
+        </div>
+      </div>
 
       {error && (
-        <div className="flex items-center gap-2 p-3 text-xs bg-[var(--warn-bg)] border border-[var(--warn-border)] text-[var(--warn)] rounded-xl">
-          <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-          <span>{error}</span>
+        <div className="border border-[var(--fg)] p-3 font-mono text-xs uppercase tracking-wider text-[var(--fg)]">
+          [!] Error: {error}
         </div>
       )}
 
       <button
         type="submit"
         disabled={loading}
-        className="w-full mt-2 rounded-xl bg-[var(--sanjeevani)] text-[#0B1715] py-3.5 px-6 font-bold text-xs uppercase tracking-widest hover:opacity-95 disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-sm font-display cursor-pointer"
+        className="w-full sm:w-auto px-8 py-4 bg-[var(--fg)] text-[var(--bg)] font-mono text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity flex items-center justify-center gap-3 cursor-pointer rounded-none disabled:opacity-50"
       >
         {loading ? (
           <>
-            <span className="w-3.5 h-3.5 border-2 border-[#0B1715] border-t-transparent rounded-full animate-spin" />
-            Connecting Network…
+            <span className="animate-pulse">DISPATCHING TELEMETRY...</span>
           </>
         ) : (
           <>
-            Request Ecosystem Access <ArrowRight className="w-4 h-4" />
+            <span>REQUEST CLINIC ACCESS</span>
+            <ArrowRight className="w-4 h-4" />
           </>
         )}
       </button>
@@ -196,1120 +184,213 @@ function ClinicAccessForm() {
   );
 }
 
-/* ── 01: Hero Living Healthcare Network Visual ── */
-function HeroLivingNetwork() {
-  const [activeNode, setActiveNode] = useState<"patient" | "doctor" | "lab" | "pharmacy" | "clinic" | "core">("core");
+/* ── ABSTRACT TYPOGRAPHIC CONVERGENCE VISUALIZATION ── */
+function EcosystemConvergence() {
+  const [activeNode, setActiveNode] = useState<string>("PATIENT");
 
-  const NODE_DETAILS: Record<string, {
-    title: string;
-    roleTag: string;
-    status: string;
-    flow: string;
-    telemetry: string;
-    metrics: [string, string][];
-    accent: string;
-  }> = {
-    core: {
-      title: "Sanjeevani Mesh Core",
-      roleTag: "NEURAL HEALTH NETWORK",
-      status: "Operational • 12 Active Flow Channels",
-      flow: "Routing bidirectional clinical telemetry between 5 stakeholders with zero fragmented drops.",
-      telemetry: "Instant SHA-256 state consensus • Automated cross-specialty guardrail resolution.",
-      metrics: [
-        ["Mesh Throughput", "Real-time"],
-        ["Interoperability", "FHIR / ABDM"],
-        ["Security Level", "Zero-Trust RBAC"],
-      ],
-      accent: "text-[var(--sanjeevani)]",
-    },
-    patient: {
-      title: "Patient (Ramesh Kumar)",
-      roleTag: "CARE RECIPIENT",
-      status: "Active Regimen • 100% Adherence",
-      flow: "Receives verified dosing schedule, automatic refill alerts, and holds single-use QR health passport.",
-      telemetry: "Dose intake logged at 08:00 AM • Metformin 500mg taken • Zero adverse symptom flags.",
-      metrics: [
-        ["Current Adherence", "100%"],
-        ["Next Dose", "08:00 PM"],
-        ["Encrypted Vault", "14 Records"],
-      ],
-      accent: "text-emerald-500",
-    },
-    doctor: {
-      title: "Doctor (Dr. Nitin Sharma)",
-      roleTag: "ATTENDING PHYSICIAN",
-      status: "Room 402 • 3 Patients in Triage",
-      flow: "Reviews 360° longitudinal chart, records ambient SOAP dictation, and digitally verifies prescriptions.",
-      telemetry: "Acuity triage verified: Sita Devi (Severe Bronchitis) • Warfarin cross-check evaluated safe.",
-      metrics: [
-        ["Queue Count", "3 Waiting"],
-        ["Guardrail Active", "0 Conflicts"],
-        ["Consultation", "Live"],
-      ],
-      accent: "text-blue-500",
-    },
-    lab: {
-      title: "Diagnostics & Pathology",
-      roleTag: "DIAGNOSTIC WORKBENCH",
-      status: "Metropolis Lab #4 • Results Ready",
-      flow: "Draws blood, processes HbA1c & Lipid panels, and drafts AI-7 plain-language explanations for patients.",
-      telemetry: "HbA1c test completed (6.9%) • Downward trend detected • Auto-escalated to Dr. Sharma.",
-      metrics: [
-        ["Sample Status", "Verified"],
-        ["AI-7 Summary", "Drafted"],
-        ["Delivery to EHR", "Instant"],
-      ],
-      accent: "text-purple-500",
-    },
-    pharmacy: {
-      title: "Dispensary Pharmacy",
-      roleTag: "SAFETY-LOCK FULFILLMENT",
-      status: "Dispensary Desk 2 • Safety Cleared",
-      flow: "Receives doctor orders cryptographically, checks cross-drug conflicts, and decrements live inventory.",
-      telemetry: "Order #RX-RAMESH-2026 dispensed • Safety-override lock verified • Barcode verified.",
-      metrics: [
-        ["Verified Stream", "4 Orders"],
-        ["Safety Override", "Authorized"],
-        ["Stock Velocity", "Automated"],
-      ],
-      accent: "text-amber-500",
-    },
-    clinic: {
-      title: "Clinic & Hospital Front Desk",
-      roleTag: "RECEPTION & CARE TEAMS",
-      status: "Main Counter • AI-4 Triage Online",
-      flow: "Classifies walk-in severity in 60s, assigns priority tokens, and routes files to correct physician.",
-      telemetry: "Token #14 issued to acute chest pain patient • Priority escalated • Wait time estimated 8 min.",
-      metrics: [
-        ["Intake Time", "< 60s"],
-        ["Triage AI-4", "Active"],
-        ["Routing", "Automated"],
-      ],
-      accent: "text-cyan-500",
-    },
-  };
-
-  const current = NODE_DETAILS[activeNode] || NODE_DETAILS.core;
-
-  return (
-    <div className="w-full relative rounded-3xl border border-[var(--border)] bg-[var(--bg-elevated)] p-6 md:p-8 overflow-hidden shadow-xl">
-      {/* Background Subtle Radial Grid */}
-      <div className="absolute inset-0 bg-dot-grid opacity-30 pointer-events-none" />
-
-      {/* Network Header Status Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--border)] pb-4 mb-6 relative z-10">
-        <div className="flex items-center gap-3">
-          <div className="w-3 h-3 rounded-full bg-[var(--sanjeevani)] animate-ping" />
-          <span className="font-mono text-xs font-bold uppercase tracking-widest text-[var(--fg)]">
-            LIVING HEALTHCARE ECOSYSTEM // INTERACTIVE MESH
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] font-mono text-[var(--fg-muted)]">Hover or click any node to inspect telemetry</span>
-        </div>
-      </div>
-
-      {/* Main Interactive Network Topology Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
-        {/* Left / Center: Spatial Node System (SVG Graph) */}
-        <div className="lg:col-span-7 flex flex-col items-center justify-center relative min-h-[380px] sm:min-h-[440px]">
-          <svg
-            className="w-full h-full max-w-[540px] aspect-square"
-            viewBox="0 0 540 500"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            {/* Connecting Lines */}
-            {/* Core to Patient */}
-            <line
-              x1="270" y1="250" x2="80" y2="250"
-              stroke={activeNode === "patient" ? "var(--sanjeevani)" : "var(--border)"}
-              strokeWidth={activeNode === "patient" ? "3" : "1.5"}
-              className="animate-dash-flow transition-colors"
-            />
-            {/* Core to Doctor */}
-            <line
-              x1="270" y1="250" x2="460" y2="250"
-              stroke={activeNode === "doctor" ? "var(--sanjeevani)" : "var(--border)"}
-              strokeWidth={activeNode === "doctor" ? "3" : "1.5"}
-              className="animate-dash-flow transition-colors"
-            />
-            {/* Core to Lab */}
-            <line
-              x1="270" y1="250" x2="270" y2="70"
-              stroke={activeNode === "lab" ? "var(--sanjeevani)" : "var(--border)"}
-              strokeWidth={activeNode === "lab" ? "3" : "1.5"}
-              className="animate-dash-flow transition-colors"
-            />
-            {/* Core to Pharmacy */}
-            <line
-              x1="270" y1="250" x2="270" y2="430"
-              stroke={activeNode === "pharmacy" ? "var(--sanjeevani)" : "var(--border)"}
-              strokeWidth={activeNode === "pharmacy" ? "3" : "1.5"}
-              className="animate-dash-flow transition-colors"
-            />
-            {/* Diagonal Care Handoff Links */}
-            <line
-              x1="80" y1="250" x2="270" y2="70"
-              stroke="var(--border)"
-              strokeDasharray="4 4"
-              strokeWidth="1"
-              opacity="0.4"
-            />
-            <line
-              x1="460" y1="250" x2="270" y2="70"
-              stroke="var(--border)"
-              strokeDasharray="4 4"
-              strokeWidth="1"
-              opacity="0.4"
-            />
-            <line
-              x1="460" y1="250" x2="270" y2="430"
-              stroke="var(--border)"
-              strokeDasharray="4 4"
-              strokeWidth="1"
-              opacity="0.4"
-            />
-            <line
-              x1="80" y1="250" x2="270" y2="430"
-              stroke="var(--border)"
-              strokeDasharray="4 4"
-              strokeWidth="1"
-              opacity="0.4"
-            />
-
-            {/* Orbit Glow Circle for Sanjeevani Hub */}
-            <circle
-              cx="270" cy="250" r="76"
-              stroke="var(--sanjeevani)"
-              strokeWidth="1.5"
-              strokeDasharray="8 6"
-              className="animate-dash-flow opacity-60"
-            />
-            <circle
-              cx="270" cy="250" r="110"
-              stroke="var(--border)"
-              strokeWidth="1"
-              opacity="0.3"
-            />
-
-            {/* Center Core Hub: SANJEEVANI */}
-            <g
-              className="cursor-pointer group"
-              onClick={() => setActiveNode("core")}
-              onMouseEnter={() => setActiveNode("core")}
-            >
-              <circle
-                cx="270" cy="250" r="48"
-                fill="var(--bg-elevated)"
-                stroke="var(--sanjeevani)"
-                strokeWidth={activeNode === "core" ? "3.5" : "2"}
-                className="transition-all animate-signal-glow"
-              />
-              <circle cx="270" cy="250" r="40" fill="var(--sanjeevani)" fillOpacity="0.1" />
-              <text x="270" y="244" textAnchor="middle" fill="var(--fg)" className="font-display font-black text-xs tracking-wider">
-                SANJEEVANI
-              </text>
-              <text x="270" y="260" textAnchor="middle" fill="var(--sanjeevani)" className="font-mono font-bold text-[9px] tracking-widest">
-                HEALTH MESH
-              </text>
-            </g>
-
-            {/* Node: PATIENT (Left) */}
-            <g
-              className="cursor-pointer group"
-              onClick={() => setActiveNode("patient")}
-              onMouseEnter={() => setActiveNode("patient")}
-            >
-              <circle
-                cx="80" cy="250" r="36"
-                fill="var(--bg-elevated)"
-                stroke={activeNode === "patient" ? "#10B981" : "var(--border)"}
-                strokeWidth={activeNode === "patient" ? "3" : "1.5"}
-                className="transition-all"
-              />
-              <circle cx="80" cy="250" r="28" fill="#10B981" fillOpacity={activeNode === "patient" ? "0.2" : "0.06"} />
-              <text x="80" y="247" textAnchor="middle" fill="var(--fg)" className="font-display font-bold text-[11px]">
-                PATIENT
-              </text>
-              <text x="80" y="261" textAnchor="middle" fill="var(--fg-muted)" className="font-mono text-[8px] uppercase">
-                Adherence
-              </text>
-            </g>
-
-            {/* Node: DOCTOR (Right) */}
-            <g
-              className="cursor-pointer group"
-              onClick={() => setActiveNode("doctor")}
-              onMouseEnter={() => setActiveNode("doctor")}
-            >
-              <circle
-                cx="460" cy="250" r="36"
-                fill="var(--bg-elevated)"
-                stroke={activeNode === "doctor" ? "#3B82F6" : "var(--border)"}
-                strokeWidth={activeNode === "doctor" ? "3" : "1.5"}
-                className="transition-all"
-              />
-              <circle cx="460" cy="250" r="28" fill="#3B82F6" fillOpacity={activeNode === "doctor" ? "0.2" : "0.06"} />
-              <text x="460" y="247" textAnchor="middle" fill="var(--fg)" className="font-display font-bold text-[11px]">
-                DOCTOR
-              </text>
-              <text x="460" y="261" textAnchor="middle" fill="var(--fg-muted)" className="font-mono text-[8px] uppercase">
-                Triage &amp; Rx
-              </text>
-            </g>
-
-            {/* Node: LAB (Top) */}
-            <g
-              className="cursor-pointer group"
-              onClick={() => setActiveNode("lab")}
-              onMouseEnter={() => setActiveNode("lab")}
-            >
-              <circle
-                cx="270" cy="70" r="36"
-                fill="var(--bg-elevated)"
-                stroke={activeNode === "lab" ? "#A855F7" : "var(--border)"}
-                strokeWidth={activeNode === "lab" ? "3" : "1.5"}
-                className="transition-all"
-              />
-              <circle cx="270" cy="70" r="28" fill="#A855F7" fillOpacity={activeNode === "lab" ? "0.2" : "0.06"} />
-              <text x="270" y="67" textAnchor="middle" fill="var(--fg)" className="font-display font-bold text-[11px]">
-                LABORATORY
-              </text>
-              <text x="270" y="81" textAnchor="middle" fill="var(--fg-muted)" className="font-mono text-[8px] uppercase">
-                Diagnostics
-              </text>
-            </g>
-
-            {/* Node: PHARMACY (Bottom) */}
-            <g
-              className="cursor-pointer group"
-              onClick={() => setActiveNode("pharmacy")}
-              onMouseEnter={() => setActiveNode("pharmacy")}
-            >
-              <circle
-                cx="270" cy="430" r="36"
-                fill="var(--bg-elevated)"
-                stroke={activeNode === "pharmacy" ? "#F59E0B" : "var(--border)"}
-                strokeWidth={activeNode === "pharmacy" ? "3" : "1.5"}
-                className="transition-all"
-              />
-              <circle cx="270" cy="430" r="28" fill="#F59E0B" fillOpacity={activeNode === "pharmacy" ? "0.2" : "0.06"} />
-              <text x="270" y="427" textAnchor="middle" fill="var(--fg)" className="font-display font-bold text-[11px]">
-                PHARMACY
-              </text>
-              <text x="270" y="441" textAnchor="middle" fill="var(--fg-muted)" className="font-mono text-[8px] uppercase">
-                Safety Locks
-              </text>
-            </g>
-
-            {/* Satellite Node: CLINIC / CARE TEAMS */}
-            <g
-              className="cursor-pointer group"
-              onClick={() => setActiveNode("clinic")}
-              onMouseEnter={() => setActiveNode("clinic")}
-            >
-              <circle
-                cx="130" cy="90" r="24"
-                fill="var(--bg-elevated)"
-                stroke={activeNode === "clinic" ? "#06B6D4" : "var(--border)"}
-                strokeWidth="1.5"
-              />
-              <text x="130" y="93" textAnchor="middle" fill="var(--fg)" className="font-display font-bold text-[9px]">
-                CLINIC
-              </text>
-            </g>
-
-            <g
-              className="cursor-pointer group"
-              onClick={() => setActiveNode("clinic")}
-              onMouseEnter={() => setActiveNode("clinic")}
-            >
-              <circle
-                cx="410" cy="410" r="24"
-                fill="var(--bg-elevated)"
-                stroke={activeNode === "clinic" ? "#06B6D4" : "var(--border)"}
-                strokeWidth="1.5"
-              />
-              <text x="410" y="413" textAnchor="middle" fill="var(--fg)" className="font-display font-bold text-[9px]">
-                CARE TEAM
-              </text>
-            </g>
-          </svg>
-        </div>
-
-        {/* Right: Live Interactive Telemetry Inspector */}
-        <div className="lg:col-span-5 bg-[var(--bg)]/80 border border-[var(--border)] rounded-2xl p-6 backdrop-blur-md flex flex-col justify-between space-y-6">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--fg)]">
-                {current.roleTag}
-              </span>
-              <span className="text-[10px] font-mono text-[var(--safe)] flex items-center gap-1.5 font-bold">
-                <span className="w-2 h-2 rounded-full bg-[var(--safe)]" /> LIVE TELEMETRY
-              </span>
-            </div>
-
-            <h3 className="font-display text-2xl font-black text-[var(--fg)] tracking-tight">
-              {current.title}
-            </h3>
-
-            <p className="text-xs font-mono text-[var(--sanjeevani)] font-bold">
-              {current.status}
-            </p>
-
-            <p className="text-xs text-[var(--fg-muted)] leading-relaxed">
-              {current.flow}
-            </p>
-
-            <div className="p-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)]/60 space-y-1">
-              <p className="text-[10px] font-mono uppercase tracking-wider text-[var(--fg-muted)] font-bold">Clinical Handoff Event</p>
-              <p className="text-xs text-[var(--fg)] font-medium leading-snug">{current.telemetry}</p>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-2 border-t border-[var(--border)] pt-4">
-              {current.metrics.map(([label, val]) => (
-                <div key={label} className="text-center">
-                  <div className="text-[10px] font-mono uppercase text-[var(--fg-muted)]">{label}</div>
-                  <div className="font-display font-bold text-xs text-[var(--fg)] mt-0.5">{val}</div>
-                </div>
-              ))}
-            </div>
-
-            <Link
-              href={
-                activeNode === "doctor" ? "/doctor" :
-                activeNode === "pharmacy" ? "/pharmacy" :
-                activeNode === "lab" ? "/lab" :
-                activeNode === "clinic" ? "/reception" : "/dashboard"
-              }
-              className="w-full py-3 px-4 rounded-xl bg-[var(--fg)] text-[var(--bg)] font-display font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
-            >
-              <span>Inspect {current.title.split(" ")[0]} Workspace</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── 02: Fragmentation vs Connected Comparison ── */
-function FragmentationComparison() {
-  const [mode, setMode] = useState<"fragmented" | "connected">("connected");
-
-  const HANDOFFS = [
-    {
-      pair: "Patient ── Doctor",
-      problem: "Paper slips lost, zero longitudinal continuity, manual intake delay (>45 mins).",
-      connected: "Instant ABDM QR registration, auto-triage severity token, 360° chart history.",
-      saving: "92% faster intake",
-    },
-    {
-      pair: "Doctor ── Lab & Imaging",
-      problem: "Printed paper slips, faxed reports, patient walks physical films between offices.",
-      connected: "Structured digital requisition, automated critical alert escalation, side-by-side DICOM viewing.",
-      saving: "Zero lost diagnostics",
-    },
-    {
-      pair: "Doctor ── Pharmacy",
-      problem: "Illegible handwriting, unflagged contraindications, duplicate brand dispenses.",
-      connected: "Cryptographic SHA-256 prescription stream, real-time safety-lock contraindication shield.",
-      saving: "100% verified orders",
-    },
-    {
-      pair: "Pharmacy ── Patient",
-      problem: "Patient forgets instructions, takes conflicting OTC pills, 54% dose non-adherence.",
-      connected: "WhatsApp Zero-Install daily dosing reminders, OTC safety scanner, running-out refill intelligence.",
-      saving: "89% adherence uplift",
-    },
-    {
-      pair: "Patient ── Care Team",
-      problem: "Siloed specialists unaware of concurrent prescriptions from other clinics.",
-      connected: "Multi-doctor regimen merge, family caregiver transparency, unified medication timeline.",
-      saving: "Full care team alignment",
-    },
+  const nodes = [
+    { id: "PATIENT", role: "Primary Sovereign", desc: "Digital Health Passport, self-governed record vault, daily adherence schedule." },
+    { id: "DOCTOR", role: "Clinical Authority", desc: "Acuity triage queue, pharmacological guardrails, ambient SOAP dictation." },
+    { id: "LABORATORY", role: "Diagnostic Signal", desc: "Machine test orders, out-of-range critical value flags, direct report ingestion." },
+    { id: "PHARMACY", role: "Dispensary Verification", desc: "Safety-lock enforcement, drug-drug contraindication cross-check, inventory ledger." },
+    { id: "HOSPITAL", role: "Institutional Infrastructure", desc: "Front desk triage token queue, inpatient discharge protocol, multi-physician merge." },
   ];
 
   return (
-    <div className="w-full space-y-8">
-      {/* Switcher Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--border)] pb-6">
-        <div>
-          <h3 className="font-display text-2xl font-bold">
-            Healthcare is Connected in Theory. In Practice, Workflows Break.
-          </h3>
-          <p className="text-xs text-[var(--fg-muted)] mt-1">
-            See how Sanjeevani resolves traditional clinical disconnects into one seamless care mesh.
-          </p>
+    <div className="border border-[var(--border)] p-6 sm:p-12 space-y-8 bg-[var(--bg)]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--border)] pb-4 gap-2">
+        <span className="font-mono text-xs uppercase tracking-widest text-[var(--fg-muted)]">
+          TELEMETRY // CONVERGENCE CHOREOGRAPHY
+        </span>
+        <span className="font-mono text-[11px] text-[var(--fg-muted)]">
+          ACTIVE PARTICIPANT: <strong className="text-[var(--fg)]">{activeNode}</strong>
+        </span>
+      </div>
+
+      {/* Convergence Architecture Diagram */}
+      <div className="relative py-8 sm:py-16 flex flex-col items-center justify-center">
+        {/* Horizontal & Vertical Axis Hairlines */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-full h-px bg-[var(--border)]" />
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="h-full w-px bg-[var(--border)]" />
         </div>
 
-        <div className="flex items-center gap-1.5 p-1 rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] self-start sm:self-auto">
-          <button
-            onClick={() => setMode("fragmented")}
-            className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
-              mode === "fragmented"
-                ? "bg-[var(--warn)] text-white shadow-xs"
-                : "text-[var(--fg-muted)] hover:text-[var(--fg)]"
-            }`}
-          >
-            Fragmented Reality
-          </button>
-          <button
-            onClick={() => setMode("connected")}
-            className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
-              mode === "connected"
-                ? "bg-[var(--sanjeevani)] text-[#0B1715] shadow-xs"
-                : "text-[var(--fg-muted)] hover:text-[var(--fg)]"
-            }`}
-          >
-            Sanjeevani Connected Mesh
-          </button>
+        {/* Central Core: SANJEEVANI */}
+        <div className="relative z-10 bg-[var(--fg)] text-[var(--bg)] px-8 py-5 text-center shadow-xl border border-[var(--fg)]">
+          <div className="font-mono text-[9px] uppercase tracking-[0.3em] opacity-70 mb-1">
+            UNIFIED CLINICAL BACKBONE
+          </div>
+          <div className="font-display text-2xl sm:text-4xl font-black uppercase tracking-tight">
+            SANJEEVANI
+          </div>
+          <div className="font-mono text-[10px] tracking-widest mt-1 opacity-80">
+            SHA-256 MESH // ISO-27001
+          </div>
+        </div>
+
+        {/* Satellite Nodes */}
+        <div className="w-full grid grid-cols-2 sm:grid-cols-5 gap-3 mt-8 sm:mt-12 relative z-10">
+          {nodes.map((node) => {
+            const isSelected = activeNode === node.id;
+            return (
+              <button
+                key={node.id}
+                onClick={() => setActiveNode(node.id)}
+                onMouseEnter={() => setActiveNode(node.id)}
+                className={`p-4 text-left transition-all border rounded-none cursor-pointer ${
+                  isSelected
+                    ? "bg-[var(--fg)] text-[var(--bg)] border-[var(--fg)] shadow-md"
+                    : "bg-[var(--bg)] text-[var(--fg)] border-[var(--border)] hover:border-[var(--fg)]"
+                }`}
+              >
+                <div className="font-mono text-[10px] uppercase tracking-widest opacity-60 mb-1">
+                  0{nodes.indexOf(node) + 1} //
+                </div>
+                <div className="font-display text-sm sm:text-base font-bold tracking-tight">
+                  {node.id}
+                </div>
+                <div className="font-mono text-[10px] mt-2 line-clamp-1 opacity-70">
+                  {node.role}
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Grid of 5 Handoffs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {HANDOFFS.map((item, idx) => (
-          <div
-            key={item.pair}
-            className={`p-6 rounded-2xl border transition-all duration-300 flex flex-col justify-between ${
-              mode === "connected"
-                ? "border-[var(--border)] bg-[var(--bg-elevated)] hover:border-[var(--sanjeevani)] shadow-sm"
-                : "border-[var(--warn-border)] bg-[var(--warn-bg)]/30"
-            }`}
-          >
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <span className="font-mono text-xs font-bold text-[var(--fg)] tracking-wider">
-                  0{idx + 1} // {item.pair}
-                </span>
-                <span
-                  className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
-                    mode === "connected"
-                      ? "border-[var(--safe-border)] bg-[var(--safe-bg)] text-[var(--safe)]"
-                      : "border-[var(--warn-border)] bg-[var(--warn-bg)] text-[var(--warn)]"
-                  }`}
-                >
-                  {mode === "connected" ? "CONNECTED" : "BROKEN LINK"}
-                </span>
-              </div>
-
-              <p className="text-xs leading-relaxed text-[var(--fg)]">
-                {mode === "connected" ? item.connected : item.problem}
-              </p>
-            </div>
-
-            <div className="mt-6 pt-4 border-t border-[var(--border)] flex items-center justify-between text-[11px] font-mono">
-              <span className="text-[var(--fg-muted)]">Ecosystem Metric</span>
-              <span className={`font-bold ${mode === "connected" ? "text-[var(--sanjeevani)]" : "text-[var(--warn)]"}`}>
-                {mode === "connected" ? item.saving : "High Clinical Risk"}
-              </span>
-            </div>
-          </div>
-        ))}
+      {/* Active Node Detail Dossier */}
+      <div className="border-t border-[var(--border)] pt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <span className="font-mono text-[10px] uppercase tracking-widest text-[var(--fg-muted)] block mb-1">
+            PROTOCOL SPECIFICATION FOR {activeNode}
+          </span>
+          <p className="font-sans text-sm sm:text-base font-medium max-w-2xl leading-relaxed">
+            {nodes.find((n) => n.id === activeNode)?.desc}
+          </p>
+        </div>
+        <Link
+          href="/login"
+          className="font-mono text-xs uppercase tracking-widest font-bold inline-flex items-center gap-2 hover:opacity-70 transition-opacity shrink-0"
+        >
+          [ ACCESS {activeNode} CONSOLE → ]
+        </Link>
       </div>
     </div>
   );
 }
 
-/* ── 04: The 6-Stage Care Journey ── */
-function CareJourneyStory() {
-  const [activeStage, setActiveStage] = useState(0);
+/* ── INTERACTIVE JOURNEY SEQUENCER ── */
+function PatientJourneySequencer() {
+  const [activeStep, setActiveStep] = useState(3); // Start on Prescribe
 
-  const STAGES = [
+  const steps = [
     {
       num: "01",
-      title: "DISCOVER & INTAKE",
-      headline: "Patient Enters the Healthcare Ecosystem",
-      actor: "Patient & Front Desk",
-      desc: "Patient arrives via QR passport or mobile WhatsApp link. AI-4 triage evaluates chief complaints, assigns emergency severity rating, and dispatches to the correct physician queue in <60 seconds.",
-      flowNodes: ["Patient Check-in", "AI Severity Token", "Doctor Queue Routing"],
-      metric: "< 60s Intake Velocity",
+      id: "DISCOVER",
+      label: "Zero-Install Patient Entry",
+      time: "Minute 00",
+      description: "Patient accesses their complete medical vault and care plan via SMS/WhatsApp PWA link without app store friction or account setup delay.",
+      telemetry: "ABDM ID: 91-8472-1082-99 // AUTH: ZERO-KNOWLEDGE PASSPORT",
     },
     {
       num: "02",
-      title: "CONSULTATION",
-      headline: "Physician Consultation & Ambient Dictation",
-      actor: "Doctor & Patient",
-      desc: "The attending physician consults Ramesh Kumar with full 360° longitudinal medical history. Ambient microphone captures clinical conversation, extracting structured Subjective, Objective, Assessment, and Plan (SOAP) records.",
-      flowNodes: ["Acuity Queue", "Longitudinal Timeline", "Ambient Voice SOAP"],
-      metric: "Zero Clinical Notes Lost",
+      id: "CONSULT",
+      label: "Clinical Triage & History",
+      time: "Minute 04",
+      description: "Front-desk intake dynamically streams patient vital telemetry and AI severity scoring directly to the attending physician's live triage queue.",
+      telemetry: "TRIAGE SEVERITY: LEVEL 2 // COMPLAINT: POSTPRANDIAL DIZZINESS",
     },
     {
       num: "03",
-      title: "DIAGNOSTICS & LABS",
-      headline: "Automated Abnormal Flagging & YOLOv7 Imaging",
-      actor: "Doctor & Diagnostic Lab",
-      desc: "Doctor orders HbA1c panel and chest X-ray directly from the chart. Laboratory runs samples, YOLOv7 identifies lung consolidations, and AI-7 drafts plain-language summaries directly into patient's vault.",
-      flowNodes: ["Order Requisition", "Biomarker Flags", "Plain-Language Report"],
-      metric: "Instant Lab Delivery",
+      id: "DIAGNOSE",
+      label: "Multimodal Lab & Imaging",
+      time: "Minute 12",
+      description: "Digital test orders route directly to the diagnostic workbench. Critical values (HbA1c, eGFR) auto-flag and append to the physician's review canvas.",
+      telemetry: "BIOMARKER: HBA1C 7.2% -> 6.9% // RADIOLOGY: X-RAY CLEAR",
     },
     {
       num: "04",
-      title: "PRESCRIBE & GUARDRAILS",
-      headline: "Cross-Specialty Pharmacological Safety Shield",
-      actor: "Doctor & Clinical Pharmacy",
-      desc: "Doctor prescribes Metformin and Telmisartan. Sanjeevani runs real-time 300ms contraindication checks across all active prescriptions and patient allergies. Doctor digitally signs with SHA-256 hash.",
-      flowNodes: ["Multi-Rx Conflict Check", "Allergy Guardrails", "Cryptographic Sign-off"],
-      metric: "100% Contraindication Intercept",
+      id: "PRESCRIBE",
+      label: "Guardrail Verification",
+      time: "Minute 18",
+      description: "Doctor drafts structured medication regimen. Real-time inference checks cross-specialist contraindications and cryptographically signs with SHA-256.",
+      telemetry: "REGIMEN: METFORMIN 500MG (1-0-1) // INTERACTION: ZERO CONFLICT",
     },
     {
       num: "05",
-      title: "DISPENSE & FULFILLMENT",
-      headline: "Central Pharmacy Safety Lock & Inventory Sync",
-      actor: "Pharmacist & Patient",
-      desc: "Verified prescription order arrives in the dispensary queue. Pharmacist confirms dosage, reviews clinical safety locks, and marks dispense. Inventory decrements automatically across hospital wards.",
-      flowNodes: ["Dispensary Queue", "Safety-Lock Verification", "Auto Stock Decrement"],
-      metric: "Zero Misread Scripts",
+      id: "DISPENSE",
+      label: "Dispensary Safety Lock",
+      time: "Minute 25",
+      description: "Verified prescription arrives in the Central Pharmacy queue. Pharmacist validates safety lock, dispenses physical medication, and syncs inventory.",
+      telemetry: "PHARMACY DISPENSE LOG: DISP-2026-88 // INVENTORY: -30 UNITS",
     },
     {
       num: "06",
-      title: "FOLLOW-UP & ADHERENCE",
-      headline: "Closed-Loop Patient Adherence & Refill Intelligence",
-      actor: "Patient & Care Team",
-      desc: "Medication schedule syncs to patient's daily dashboard with audio guidance in regional languages. Running-out intelligence alerts pharmacy before supply expires, completing the care loop.",
-      flowNodes: ["Daily Dose Tracker", "Gentle Symptom Journal", "Proactive Refill Triggers"],
-      metric: "89% Adherence Retention",
+      id: "FOLLOW UP",
+      label: "Autonomous Adherence Loop",
+      time: "Day 01 - 30",
+      description: "Patient daily schedule updates immediately. Missed dose escalation triggers smart caregiver nudges, symptom tracking, and proactive 14-day refill alerts.",
+      telemetry: "COMPLIANCE: 100% // NEXT APPOINTMENT: +14 DAYS AUTOMATED",
     },
   ];
 
-  const current = STAGES[activeStage];
-
   return (
-    <div className="w-full space-y-8">
-      {/* Stage Step Bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-        {STAGES.map((s, idx) => (
-          <button
-            key={s.num}
-            onClick={() => setActiveStage(idx)}
-            className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
-              activeStage === idx
-                ? "bg-[var(--bg-elevated)] border-[var(--sanjeevani)] shadow-md"
-                : "border-[var(--border)] bg-[var(--bg)] hover:bg-[var(--bg-elevated)]"
-            }`}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <span className="font-mono text-xs font-bold text-[var(--sanjeevani)]">{s.num}</span>
-              {activeStage === idx && <span className="w-2 h-2 rounded-full bg-[var(--sanjeevani)] animate-pulse" />}
-            </div>
-            <div className="font-display font-bold text-xs text-[var(--fg)] truncate">{s.title}</div>
-          </button>
-        ))}
-      </div>
-
-      {/* Active Stage Deep-Dive Card */}
-      <div className="p-8 rounded-3xl border border-[var(--border)] bg-[var(--bg-elevated)] grid grid-cols-1 lg:grid-cols-12 gap-8 items-center shadow-lg">
-        <div className="lg:col-span-7 space-y-4">
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-xs font-bold text-[var(--sanjeevani)] uppercase tracking-widest">
-              STAGE {current.num} // {current.actor}
-            </span>
-          </div>
-
-          <h3 className="font-display text-2xl sm:text-3xl font-black text-[var(--fg)] tracking-tight">
-            {current.headline}
-          </h3>
-
-          <p className="text-xs sm:text-sm text-[var(--fg-muted)] leading-relaxed max-w-xl">
-            {current.desc}
-          </p>
-
-          {/* Flow Steps Pills */}
-          <div className="pt-2">
-            <p className="text-[10px] font-mono uppercase tracking-wider text-[var(--fg-muted)] mb-2 font-bold">
-              Automated Data Handoffs
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              {current.flowNodes.map((node, i) => (
-                <div key={node} className="flex items-center gap-2">
-                  <span className="px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-xs font-semibold text-[var(--fg)]">
-                    {node}
-                  </span>
-                  {i < current.flowNodes.length - 1 && (
-                    <ArrowRight className="w-3.5 h-3.5 text-[var(--fg-muted)]" />
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Stage Metric Cockpit */}
-        <div className="lg:col-span-5 bg-[var(--bg)] border border-[var(--border)] p-6 rounded-2xl space-y-4">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--fg-muted)] font-bold block">
-            STAGE OUTCOME TELEMETRY
-          </span>
-          <div className="font-display text-2xl font-black text-[var(--sanjeevani)]">
-            {current.metric}
-          </div>
-          <p className="text-xs text-[var(--fg-muted)] leading-relaxed">
-            Eliminates fragmentation at stage {current.num}, ensuring zero data degradation as clinical information transitions between medical personnel.
-          </p>
-
-          <div className="pt-4 border-t border-[var(--border)] flex items-center justify-between text-xs font-mono">
+    <div className="space-y-8">
+      {/* Horizontal Step Bar */}
+      <div className="grid grid-cols-2 sm:grid-cols-6 border-t border-b border-[var(--border)]">
+        {steps.map((step, idx) => {
+          const isActive = idx === activeStep;
+          return (
             <button
-              onClick={() => setActiveStage((prev) => (prev > 0 ? prev - 1 : STAGES.length - 1))}
-              className="text-[var(--fg-muted)] hover:text-[var(--fg)] flex items-center gap-1"
-            >
-              ← Previous Stage
-            </button>
-            <button
-              onClick={() => setActiveStage((prev) => (prev < STAGES.length - 1 ? prev + 1 : 0))}
-              className="text-[var(--sanjeevani)] font-bold flex items-center gap-1"
-            >
-              Next Stage →
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── 05: Ecosystem Stakeholders ("ONE PLATFORM. MANY ROLES.") ── */
-function EcosystemStakeholders() {
-  const [activeRole, setActiveRole] = useState(0);
-
-  const ROLES = [
-    {
-      role: "PATIENTS",
-      summary: "Understand your care, manage your health journey, and stay connected with your healthcare team.",
-      panelTitle: "MY HEALTH // PATIENT PORTAL",
-      panelDesc: "Unified daily dosing checklist, single-use 5-minute QR passport, and self-sovereign health vault.",
-      bullets: [
-        "Zero-Install PWA: WhatsApp delivery, regional voice prompts",
-        "Symptom Journal: B1 photo attachment for visible symptoms",
-        "Refill Intelligence: Proactive alerts before medication runs out",
-      ],
-      link: "/dashboard",
-      buttonText: "Launch Patient Portal",
-      accent: "text-emerald-500",
-      stats: [["Adherence Rate", "100%"], ["Encrypted Vault", "Active"], ["QR Passport", "Valid 5m"]],
-    },
-    {
-      role: "DOCTORS",
-      summary: "One workspace for consultations, records, diagnostics, prescriptions, and follow-ups.",
-      panelTitle: "PHYSICIAN COMMAND CENTER",
-      panelDesc: "Acuity-sorted consultation queue, 360° longitudinal timeline, ambient SOAP voice capture, and contraindication engine.",
-      bullets: [
-        "Acuity Queue: High fever, cardiac, and diabetic triage",
-        "Pharmacological Guardrail: Instant multi-doctor cross-checks",
-        "Side-by-Side OCR: YOLOv7 X-Ray review & verified sign-off",
-      ],
-      link: "/doctor",
-      buttonText: "Open Doctor Workspace",
-      accent: "text-blue-500",
-      stats: [["Queue Acuity", "3 Patients"], ["Guardrails", "300ms SLA"], ["Dictation", "SOAP AI"]],
-    },
-    {
-      role: "LABORATORIES",
-      summary: "Move diagnostic information from testing to the care team without fragmented workflows.",
-      panelTitle: "PATHOLOGY & DIAGNOSTIC WORKBENCH",
-      panelDesc: "Structured doctor orders, automated abnormal value detection, and AI plain-language summaries for patients.",
-      bullets: [
-        "Order Stream: Digital requests arrive directly from clinic charts",
-        "AI-7 Summary Draft: Plain-language biomarker translation",
-        "Vault Publishing: Direct cryptographic synchronization",
-      ],
-      link: "/lab",
-      buttonText: "Open Lab Workbench",
-      accent: "text-purple-500",
-      stats: [["Orders Pending", "2 Active"], ["AI-7 Drafts", "Enabled"], ["Turnaround", "Real-time"]],
-    },
-    {
-      role: "PHARMACIES",
-      summary: "Connect prescriptions, medication fulfillment, and patient care with cryptographic safety locks.",
-      panelTitle: "CENTRAL DISPENSARY CONSOLE",
-      panelDesc: "Verified prescription queue, doctor safety-lock audit enforcement, and live ward inventory decrementing.",
-      bullets: [
-        "Digital Queue: SHA-256 verified doctor prescriptions",
-        "Safety Lock: Prevents dispensing severe interactions without doctor override",
-        "Inventory Forecast: Auto-purchase recommendations on low stock",
-      ],
-      link: "/pharmacy",
-      buttonText: "Open Pharmacy Console",
-      accent: "text-amber-500",
-      stats: [["Dispense Queue", "Ready"], ["Safety Lock", "Enforced"], ["Stock Level", "Synced"]],
-    },
-    {
-      role: "CLINICS & HOSPITALS",
-      summary: "Coordinate people, information, and clinical workflows across the entire organization.",
-      panelTitle: "RECEPTION & FACILITY INTAKE",
-      panelDesc: "AI-4 automated triage classification, fast walk-in registration in under 60 seconds, and department routing.",
-      bullets: [
-        "Fast Intake: Registers walk-ins in < 60 seconds",
-        "AI-4 Triage: Keyword & clinical acuity classification",
-        "Smart Routing: Automatically routes patients to available specialist queues",
-      ],
-      link: "/reception",
-      buttonText: "Open Reception Desk",
-      accent: "text-cyan-500",
-      stats: [["Intake SLA", "< 60s"], ["Wait Prediction", "Automated"], ["Queue Sync", "Live"]],
-    },
-    {
-      role: "CARE TEAMS",
-      summary: "Keep every specialist, nurse, and family caregiver involved in a patient's journey aligned.",
-      panelTitle: "CARE COORDINATION MESH",
-      panelDesc: "Cross-specialty communication, family adherence visibility, and automated clinical escalation notifications.",
-      bullets: [
-        "Multi-Specialist Merge: Integrates endocrinology, cardiology & general meds",
-        "Caregiver Audit: Family alerts on consecutive missed doses",
-        "Unified Timeline: Single chronological clinical source of truth",
-      ],
-      link: "/doctor/crm",
-      buttonText: "Explore Care Coordination",
-      accent: "text-rose-500",
-      stats: [["Specialists", "Unified"], ["Escalation", "Tier 1-3"], ["Audit Log", "SHA-256"]],
-    },
-  ];
-
-  const current = ROLES[activeRole];
-
-  return (
-    <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-      {/* Left: Typographic Stakeholder List */}
-      <div className="lg:col-span-6 space-y-2">
-        {ROLES.map((r, idx) => (
-          <div
-            key={r.role}
-            onMouseEnter={() => setActiveRole(idx)}
-            onClick={() => setActiveRole(idx)}
-            className={`p-5 rounded-2xl transition-all cursor-pointer border ${
-              activeRole === idx
-                ? "bg-[var(--bg-elevated)] border-[var(--sanjeevani)] shadow-md"
-                : "border-transparent hover:border-[var(--border)] hover:bg-[var(--bg-elevated)]/60"
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <h4 className="font-display text-2xl sm:text-3xl font-black text-[var(--fg)] tracking-tight">
-                {r.role}
-              </h4>
-              <span className="font-mono text-xs font-bold text-[var(--sanjeevani)]">
-                {activeRole === idx ? "ACTIVE // 0" + (idx + 1) : "0" + (idx + 1)}
-              </span>
-            </div>
-            <p className="text-xs text-[var(--fg-muted)] mt-1.5 leading-relaxed font-medium">
-              {r.summary}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      {/* Right: Interactive Role Workspace Visualizer */}
-      <div className="lg:col-span-6 sticky top-24">
-        <div className="p-8 rounded-3xl border border-[var(--border)] bg-[var(--bg-elevated)] shadow-xl space-y-6">
-          <div className="flex items-center justify-between border-b border-[var(--border)] pb-4">
-            <span className="font-mono text-xs font-bold uppercase tracking-wider text-[var(--sanjeevani)]">
-              {current.panelTitle}
-            </span>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full border border-[var(--border)] bg-[var(--bg)] font-bold">
-              ROLE WORKSPACE
-            </span>
-          </div>
-
-          <p className="text-xs text-[var(--fg-muted)] leading-relaxed">
-            {current.panelDesc}
-          </p>
-
-          <div className="space-y-3">
-            <p className="text-[10px] font-mono uppercase tracking-wider text-[var(--fg-muted)] font-bold">
-              Key Workflow Capabilities
-            </p>
-            <ul className="space-y-2">
-              {current.bullets.map((b) => (
-                <li key={b} className="text-xs text-[var(--fg)] flex items-start gap-2 leading-relaxed">
-                  <CheckCircle2 className="w-4 h-4 text-[var(--sanjeevani)] flex-shrink-0 mt-0.5" />
-                  <span>{b}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2 border-t border-[var(--border)] pt-4">
-            {current.stats.map(([k, v]) => (
-              <div key={k} className="p-2.5 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-center">
-                <div className="text-[10px] font-mono uppercase text-[var(--fg-muted)]">{k}</div>
-                <div className="font-display font-bold text-xs text-[var(--fg)] mt-0.5">{v}</div>
-              </div>
-            ))}
-          </div>
-
-          <Link
-            href={current.link}
-            className="w-full py-3.5 px-6 rounded-xl bg-[var(--sanjeevani)] text-[#0B1715] font-display font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:opacity-95 transition-opacity cursor-pointer shadow-sm"
-          >
-            <span>{current.buttonText}</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── 06: The Intelligence Layer ── */
-function IntelligenceLayer() {
-  const CAPABILITIES = [
-    {
-      idx: "01",
-      title: "Prescription Intelligence",
-      tagline: "Digitization, translation & multi-specialist protocol synthesis",
-      details: "Translates illegible physical doctor slips into structured FHIR records. Detects conflicting brand titrations and unifies multiple specialist regimens into a single dosing timeline.",
-      tech: "BioMistral + Optical Engine",
-    },
-    {
-      idx: "02",
-      title: "Diagnostic Intelligence",
-      tagline: "YOLOv7 X-Ray pathology bounding & abnormal biomarker escalation",
-      details: "Performs real-time bounding box detection on chest X-rays and MRI plates. Flags critical lab biomarker deviations (e.g. HbA1c > 9.0%, eGFR < 60) directly into the physician triage queue.",
-      tech: "YOLOv7 + Lab Classifier",
-    },
-    {
-      idx: "03",
-      title: "Medication Intelligence",
-      tagline: "Pharmacological contraindication check & anti-pileup rescheduling",
-      details: "Evaluates drug-drug interactions and known allergen profiles in 300ms. Dynamically shifts reminders if doses are snoozed or taken late to prevent harmful medication stacking.",
-      tech: "Guardrail Matrix Engine",
-    },
-    {
-      idx: "04",
-      title: "Clinical Document Intelligence",
-      tagline: "Ambient SOAP dictation & cross-report clinical trend detection",
-      details: "Listens to natural doctor-patient consultations to draft structured Subjective, Objective, Assessment & Plan records with zero manual transcription overhead.",
-      tech: "Ambient Clinical NLP",
-    },
-    {
-      idx: "05",
-      title: "Patient Engagement Intelligence",
-      tagline: "Zero-install PWA, regional voice prompts & gentle non-logging nudges",
-      details: "Delivers care instructions through WhatsApp with high audio clarity in regional Indian languages. Gentle non-logging prompts respect patient boundaries with 7-day alert suppression.",
-      tech: "PWA Care Engine",
-    },
-    {
-      idx: "06",
-      title: "Care Coordination Intelligence",
-      tagline: "Single-use cryptographic QR passport & immutable SHA-256 logs",
-      details: "Enables patients to grant time-bounded 5-minute read access to any new consulting physician. Every doctor verification is hashed into an append-only audit trail.",
-      tech: "Cryptographic Mesh",
-    },
-  ];
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {CAPABILITIES.map((cap) => (
-        <div
-          key={cap.idx}
-          className="p-6 rounded-3xl border border-[var(--border)] bg-[var(--bg-elevated)] flex flex-col justify-between hover:border-[var(--sanjeevani)] transition-all shadow-sm"
-        >
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <span className="font-mono text-xs font-bold text-[var(--sanjeevani)]">{cap.idx} // CAPABILITY</span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full border border-[var(--border)] bg-[var(--bg)] font-bold text-[var(--fg-muted)]">
-                {cap.tech}
-              </span>
-            </div>
-            <h4 className="font-display text-xl font-bold text-[var(--fg)] mb-1">
-              {cap.title}
-            </h4>
-            <p className="text-xs text-[var(--sanjeevani)] font-medium mb-3">
-              {cap.tagline}
-            </p>
-            <p className="text-xs text-[var(--fg-muted)] leading-relaxed">
-              {cap.details}
-            </p>
-          </div>
-
-          <div className="pt-6 mt-6 border-t border-[var(--border)] flex items-center justify-between text-[11px] font-mono text-[var(--fg)]">
-            <span className="font-bold">Embedded in Care Flow</span>
-            <span className="text-[var(--sanjeevani)] font-bold">Verified</span>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/* ── 07: Safety Infrastructure ── */
-function SafetyInfrastructure() {
-  const PILLARS = [
-    {
-      step: "01",
-      title: "IDENTITY",
-      desc: "ABDM Health ID (ABHA) and NMC medical council registration verification enforce zero-trust identity across patients, physicians, and pharmacists.",
-    },
-    {
-      step: "02",
-      title: "VALIDATION",
-      desc: "Real-time pharmacological cross-checks screen drug-drug interactions, maximum daily dosage limits, and patient allergy profiles.",
-    },
-    {
-      step: "03",
-      title: "CLINICAL SAFETY",
-      desc: "Safety-lock mechanisms block dispensary fulfillment until physician clinical override reasons are formally authorized and recorded.",
-    },
-    {
-      step: "04",
-      title: "AUDIT TRAIL",
-      desc: "Every prescription sign-off, lab result publish, and medication dispense generates an immutable SHA-256 hash in an append-only ledger.",
-    },
-    {
-      step: "05",
-      title: "DATA PRIVACY",
-      desc: "Compliant with DISHA, HIPAA, and Indian Digital Personal Data Protection standards. All patient data is encrypted in-flight and at-rest.",
-    },
-  ];
-
-  return (
-    <div className="w-full p-8 rounded-3xl border border-[var(--border)] bg-[var(--bg-elevated)] space-y-8 shadow-lg">
-      <div className="max-w-2xl">
-        <h3 className="font-display text-2xl sm:text-3xl font-black text-[var(--fg)]">
-          Clinical Safety &amp; Security Infrastructure
-        </h3>
-        <p className="text-xs text-[var(--fg-muted)] mt-1.5 leading-relaxed">
-          Not ornamental badges. Sanjeevani is built with hard architectural constraints to satisfy hospital enterprise compliance and patient safety.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {PILLARS.map((p) => (
-          <div key={p.step} className="p-5 rounded-2xl border border-[var(--border)] bg-[var(--bg)] flex flex-col justify-between">
-            <div>
-              <span className="font-mono text-xs font-bold text-[var(--sanjeevani)] block mb-2">{p.step}</span>
-              <h5 className="font-display font-bold text-sm text-[var(--fg)] mb-2">{p.title}</h5>
-              <p className="text-[11px] text-[var(--fg-muted)] leading-relaxed">{p.desc}</p>
-            </div>
-            <div className="mt-4 pt-3 border-t border-[var(--border)] text-[10px] font-mono text-[var(--safe)] font-bold flex items-center gap-1">
-              <Check className="w-3 h-3" /> Compliant
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* ── 08: Living Data Flows (Animated Simulation) ── */
-function LivingDataFlows() {
-  const [step, setStep] = useState(0);
-
-  const FLOW_STEPS = [
-    {
-      from: "Patient",
-      to: "Reception Counter",
-      packet: "Walk-In Token #14 • Chief Complaint: Acute Fever 102°F",
-      action: "Front desk logs intake; AI-4 assigns Severity Level 2 and queues patient.",
-    },
-    {
-      from: "Reception",
-      to: "Attending Physician",
-      packet: "Priority Queue Token #14 • Chart Sync #patient-sita",
-      action: "Doctor receives notification; 360° longitudinal history loads on physician workstation.",
-    },
-    {
-      from: "Doctor",
-      to: "Diagnostic Laboratory",
-      packet: "Lab Order #ORD-CBC-2026 • Requisition: CBC & Chest X-Ray",
-      action: "Doctor orders tests; specimen accessioning opens automatically at pathology workbench.",
-    },
-    {
-      from: "Laboratory",
-      to: "Sanjeevani Mesh",
-      packet: "Diagnostic Results Ready • AI-7 Plain Language Summary Drafted",
-      action: "Lab technician publishes verified counts; AI summarizes findings for patient review.",
-    },
-    {
-      from: "Doctor",
-      to: "Central Pharmacy",
-      packet: "Prescription Signed • SHA-256: e8b941f • Safety Lock: Clear",
-      action: "Doctor signs off medication plan; order drops into dispensary queue ready for fulfillment.",
-    },
-    {
-      from: "Pharmacy",
-      to: "Patient Smartphone",
-      packet: "Medication Dispensed • 30-Day Supply • WhatsApp Reminders Active",
-      action: "Dispenser confirms fulfillment; patient dashboard updates with daily dose checklist.",
-    },
-  ];
-
-  const cur = FLOW_STEPS[step];
-
-  return (
-    <div className="w-full p-8 rounded-3xl border border-[var(--border)] bg-[var(--bg-elevated)] space-y-6 shadow-lg">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--border)] pb-4">
-        <div>
-          <h3 className="font-display text-2xl font-bold">Living Data Flows Across The Mesh</h3>
-          <p className="text-xs text-[var(--fg-muted)] mt-0.5">
-            Trace how an actual clinical transaction propagates between stakeholders without manual handoffs.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setStep((prev) => (prev > 0 ? prev - 1 : FLOW_STEPS.length - 1))}
-            className="px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-xs font-mono font-bold hover:bg-[var(--bg-elevated)] transition-colors"
-          >
-            ← Previous
-          </button>
-          <button
-            onClick={() => setStep((prev) => (prev < FLOW_STEPS.length - 1 ? prev + 1 : 0))}
-            className="px-3.5 py-1.5 rounded-lg bg-[var(--sanjeevani)] text-[#0B1715] text-xs font-mono font-bold hover:opacity-90 transition-opacity"
-          >
-            Next Step →
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-        {/* Step Indicator Badges */}
-        <div className="md:col-span-4 space-y-2">
-          {FLOW_STEPS.map((s, idx) => (
-            <button
-              key={idx}
-              onClick={() => setStep(idx)}
-              className={`w-full p-2.5 rounded-xl border text-left text-xs font-mono transition-all flex items-center justify-between ${
-                step === idx
-                  ? "bg-[var(--sanjeevani)] text-[#0B1715] font-bold border-transparent"
-                  : "bg-[var(--bg)] border-[var(--border)] text-[var(--fg-muted)] hover:text-[var(--fg)]"
+              key={step.id}
+              onClick={() => setActiveStep(idx)}
+              className={`p-4 sm:p-6 text-left border-r last:border-r-0 border-[var(--border)] transition-all cursor-pointer rounded-none relative ${
+                isActive ? "bg-[var(--fg)] text-[var(--bg)]" : "bg-[var(--bg)] hover:bg-[var(--border)]/30"
               }`}
             >
-              <span>{s.from} → {s.to}</span>
-              <span>0{idx + 1}</span>
+              <div className="font-mono text-[10px] tracking-widest opacity-60 mb-2">
+                STAGE {step.num}
+              </div>
+              <div className="font-display text-sm sm:text-base font-bold uppercase tracking-tight">
+                {step.id}
+              </div>
+              <div className="font-mono text-[10px] mt-1 opacity-70">
+                {step.time}
+              </div>
+              {isActive && (
+                <div className="absolute top-0 left-0 right-0 h-1 bg-[var(--bg)]" />
+              )}
             </button>
-          ))}
+          );
+        })}
+      </div>
+
+      {/* Stage Detail Callout */}
+      <div className="border border-[var(--border)] p-8 sm:p-12 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-[var(--bg)]">
+        <div className="lg:col-span-8 space-y-4">
+          <div className="font-mono text-xs uppercase tracking-widest text-[var(--fg-muted)]">
+            STAGE 0{activeStep + 1} // {steps[activeStep].id}
+          </div>
+          <h3 className="font-display text-2xl sm:text-4xl font-black uppercase tracking-tight">
+            {steps[activeStep].label}
+          </h3>
+          <p className="font-sans text-sm sm:text-base text-[var(--fg-muted)] leading-relaxed max-w-2xl">
+            {steps[activeStep].description}
+          </p>
         </div>
 
-        {/* Current Packet Live Inspection Display */}
-        <div className="md:col-span-8 p-6 rounded-2xl bg-[var(--bg)] border border-[var(--border)] space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="font-mono text-xs font-bold text-[var(--sanjeevani)]">
-              TRANSACTION STEP 0{step + 1} OF 0{FLOW_STEPS.length}
-            </span>
-            <span className="text-[10px] font-mono text-[var(--safe)] font-bold flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--safe)] animate-ping" /> IN-TRANSIT
-            </span>
+        <div className="lg:col-span-4 border border-[var(--border)] p-6 bg-[var(--bg-elevated)] space-y-3 font-mono text-xs">
+          <div className="text-[10px] uppercase tracking-widest text-[var(--fg-muted)] border-b border-[var(--border)] pb-2 flex items-center justify-between">
+            <span>LIVE AUDIT TELEMETRY</span>
+            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-ping" />
           </div>
-
-          <div className="space-y-1">
-            <div className="text-[10px] font-mono uppercase tracking-wider text-[var(--fg-muted)] font-bold">
-              Packet Payload
-            </div>
-            <div className="font-display font-bold text-base text-[var(--fg)]">
-              {cur.packet}
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <div className="text-[10px] font-mono uppercase tracking-wider text-[var(--fg-muted)] font-bold">
-              Autonomous Mesh Action
-            </div>
-            <p className="text-xs text-[var(--fg-muted)] leading-relaxed">
-              {cur.action}
-            </p>
+          <p className="text-[11px] leading-relaxed break-all">
+            {steps[activeStep].telemetry}
+          </p>
+          <div className="pt-2 text-[10px] text-[var(--fg-muted)]">
+            SYSTEM STATUS: SYNCHRONIZED
           </div>
         </div>
       </div>
@@ -1317,211 +398,163 @@ function LivingDataFlows() {
   );
 }
 
-/* ── 09: Actual Software Platform Interfaces (Product Demo) ── */
-function PlatformSoftwareDemo() {
-  const [activeTab, setActiveTab] = useState<"patient" | "doctor" | "pharmacy" | "lab" | "reception">("doctor");
+/* ── COLLAPSIBLE PARTICIPANT ROWS (NO BOXES, BORDERS AS ARCHITECTURE) ── */
+function EcosystemParticipantRows() {
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(1); // Doctor expanded by default
+
+  const participants = [
+    {
+      num: "01",
+      role: "PATIENTS & CAREGIVERS",
+      thesis: "Healthcare begins with individual sovereignty and effortless adherence.",
+      details: [
+        "Single-tap access without app store friction via WhatsApp / SMS web link",
+        "Cryptographic 5-minute single-use QR Health Passport for emergency consults",
+        "Unified dosing schedule auto-merging prescriptions from multiple attending specialists",
+        "Offline-resilient dose logging with proactive caregiver escalation triggers",
+      ],
+      portalHref: "/dashboard",
+      portalLabel: "ENTER PATIENT CARE PORTAL",
+    },
+    {
+      num: "02",
+      role: "ATTENDING PHYSICIANS & SPECIALISTS",
+      thesis: "Care becomes actionable through longitudinal clarity and pharmacological guardrails.",
+      details: [
+        "Acuity-sorted triage queue prioritizing high-severity clinical presentations",
+        "Comprehensive 360-degree patient chart with 7-day adherence telemetry",
+        "Interactive prescription composer with live drug-drug and drug-allergy contraindication checks",
+        "Ambient voice SOAP dictation generating structured clinical documentation in seconds",
+      ],
+      portalHref: "/doctor",
+      portalLabel: "ACCESS PHYSICIAN COMMAND DESK",
+    },
+    {
+      num: "03",
+      role: "PATHOLOGY & DIAGNOSTIC LABORATORIES",
+      thesis: "Diagnostic information transforms into timely clinical evidence.",
+      details: [
+        "Doctor test orders arrive structured directly into the laboratory queue",
+        "Automated out-of-range critical value flagging with plain-language summary drafting",
+        "Instant one-click publish directly into the patient's verified health vault",
+        "Elimination of lost paper slips, manual transcription errors, and review delays",
+      ],
+      portalHref: "/lab",
+      portalLabel: "OPEN LABORATORY WORKBENCH",
+    },
+    {
+      num: "04",
+      role: "DISPENSARY PHARMACISTS",
+      thesis: "Dispense with absolute safety locks and automated cross-interaction catches.",
+      details: [
+        "Doctor-signed verified orders arrive instantly ready for preparation",
+        "Safety-lock enforcement prevents dispensing unauthorized or unverified regimens",
+        "Real-time pharmacy stock decrementing and dispense velocity audit trails",
+        "Refill intelligence identifying panel patients nearing the end of essential therapy",
+      ],
+      portalHref: "/pharmacy",
+      portalLabel: "ENTER DISPENSARY CONSOLE",
+    },
+    {
+      num: "05",
+      role: "FRONT DESK RECEPTIONISTS",
+      thesis: "A calmer, faster intake desk handling triage registration in under 60 seconds.",
+      details: [
+        "Rapid patient intake with AI keyword and clinical acuity suggestion",
+        "Scan-and-go paper prescription digitization directly to digital vault records",
+        "Smart department routing allocating incoming walk-ins to the right specialist",
+        "Instant printed queue token generation with estimated wait time telemetry",
+      ],
+      portalHref: "/reception",
+      portalLabel: "ACCESS FRONT DESK RECEPTION",
+    },
+    {
+      num: "06",
+      role: "HOSPITALS & CLINIC NETWORKS",
+      thesis: "Multi-facility governance, immutable protocol logs, and institutional security.",
+      details: [
+        "SHA-256 cryptographic sign-offs ensuring indisputable medico-legal auditability",
+        "Zero-trust role-based access control compartmentalizing patient and clinical boundaries",
+        "DISHA and ABDM standard compliance with encrypted session management",
+        "Cross-department synchronization eradicating fragmented paper folders",
+      ],
+      portalHref: "/login",
+      portalLabel: "PORTAL ACCESS LOGIN",
+    },
+  ];
 
   return (
-    <div className="w-full space-y-6">
-      {/* Tab Switcher */}
-      <div className="flex flex-wrap items-center justify-center gap-2">
-        {[
-          { id: "doctor", label: "Physician Command Center", href: "/doctor", icon: Stethoscope },
-          { id: "patient", label: "Patient Care Portal", href: "/dashboard", icon: User },
-          { id: "pharmacy", label: "Dispensary Pharmacy", href: "/pharmacy", icon: Pill },
-          { id: "lab", label: "Diagnostics Workbench", href: "/lab", icon: FlaskConical },
-          { id: "reception", label: "Hospital Front Desk", href: "/reception", icon: Building2 },
-        ].map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setActiveTab(t.id as any)}
-            className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-              activeTab === t.id
-                ? "bg-[var(--fg)] text-[var(--bg)] shadow-md"
-                : "border border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--fg-muted)] hover:text-[var(--fg)]"
-            }`}
-          >
-            <t.icon className="w-3.5 h-3.5" />
-            <span>{t.label}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Screen Mockup Container */}
-      <div className="rounded-3xl border border-[var(--border)] bg-[var(--bg-elevated)] overflow-hidden shadow-2xl">
-        {/* Browser Chrome Header */}
-        <div className="px-6 py-3 border-b border-[var(--border)] bg-[var(--bg)] flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-rose-400 inline-block" />
-            <span className="w-3 h-3 rounded-full bg-amber-400 inline-block" />
-            <span className="w-3 h-3 rounded-full bg-emerald-400 inline-block" />
-          </div>
-          <div className="font-mono text-[11px] text-[var(--fg-muted)] bg-[var(--bg-elevated)] px-4 py-1 rounded-full border border-[var(--border)]">
-            https://app.sanjeevani.health/{activeTab}
-          </div>
-          <Link
-            href={
-              activeTab === "doctor" ? "/doctor" :
-              activeTab === "patient" ? "/dashboard" :
-              activeTab === "pharmacy" ? "/pharmacy" :
-              activeTab === "lab" ? "/lab" : "/reception"
-            }
-            className="text-xs font-mono font-bold text-[var(--sanjeevani)] hover:underline flex items-center gap-1"
-          >
-            Live App <ArrowRight className="w-3 h-3" />
-          </Link>
-        </div>
-
-        {/* Viewport Content */}
-        <div className="p-6 md:p-8 bg-[var(--bg)] min-h-[380px] flex flex-col justify-center">
-          {activeTab === "doctor" && (
-            <div className="space-y-4 animate-in fade-in">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-display text-xl font-bold">Physician Triage Queue // Room 402</h4>
-                  <p className="text-xs text-[var(--fg-muted)]">Dr. Nitin Sharma • Internal Medicine &amp; Endocrinology</p>
-                </div>
-                <span className="text-xs font-mono bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 px-3 py-1 rounded-full font-bold">
-                  3 Patients Waiting
+    <div className="border-t border-[var(--border)]">
+      {participants.map((item, idx) => {
+        const isExpanded = expandedIndex === idx;
+        return (
+          <div key={item.num} className="border-b border-[var(--border)]">
+            <button
+              onClick={() => setExpandedIndex(isExpanded ? null : idx)}
+              className="w-full py-6 sm:py-8 flex items-center justify-between text-left group hover:opacity-70 transition-opacity cursor-pointer"
+            >
+              <div className="flex items-center gap-6 sm:gap-12">
+                <span className="font-mono text-sm sm:text-base font-bold text-[var(--fg-muted)]">
+                  {item.num}
+                </span>
+                <span className="font-display text-xl sm:text-3xl font-black uppercase tracking-tight">
+                  {item.role}
                 </span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)]">
-                  <div className="text-[10px] font-mono text-[var(--warn)] font-bold">TOKEN #14 • SEVERITY 3</div>
-                  <div className="font-bold text-sm text-[var(--fg)] mt-1">Vikram Singh (45M)</div>
-                  <div className="text-xs text-[var(--fg-muted)] mt-0.5">Severe chest pain, left arm radiation</div>
-                </div>
-                <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)]">
-                  <div className="text-[10px] font-mono text-[var(--signal)] font-bold">TOKEN #12 • SEVERITY 2</div>
-                  <div className="font-bold text-sm text-[var(--fg)] mt-1">Sita Devi (62F)</div>
-                  <div className="text-xs text-[var(--fg-muted)] mt-0.5">High fever (102°F) for 3 days, cough</div>
-                </div>
-                <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)]">
-                  <div className="text-[10px] font-mono text-[var(--safe)] font-bold">TOKEN #09 • SEVERITY 2</div>
-                  <div className="font-bold text-sm text-[var(--fg)] mt-1">Ramesh Kumar (58M)</div>
-                  <div className="text-xs text-[var(--fg-muted)] mt-0.5">Diabetes follow-up, reports dizziness</div>
-                </div>
+              <div className="font-mono text-lg sm:text-xl font-bold">
+                {isExpanded ? <Minus className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
               </div>
-            </div>
-          )}
+            </button>
 
-          {activeTab === "patient" && (
-            <div className="space-y-4 animate-in fade-in">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-display text-xl font-bold">Daily Dosing &amp; Safety Schedule</h4>
-                  <p className="text-xs text-[var(--fg-muted)]">Ramesh Kumar • 100% Adherence Compliance</p>
-                </div>
-                <span className="text-xs font-mono bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 px-3 py-1 rounded-full font-bold">
-                  Active Guard
-                </span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] flex items-center justify-between">
-                  <div>
-                    <div className="text-[10px] font-mono text-emerald-600 font-bold">08:00 AM • MORNING</div>
-                    <div className="font-bold text-sm text-[var(--fg)] mt-0.5">Metformin 500mg</div>
-                    <div className="text-xs text-[var(--fg-muted)]">Prescribed by Dr. Nitin Sharma</div>
-                  </div>
-                  <span className="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1 rounded-full border border-emerald-300">
-                    Taken ✓
+            {isExpanded && (
+              <div className="pb-8 sm:pb-12 pt-2 grid grid-cols-1 lg:grid-cols-12 gap-8 border-t border-[var(--border)]/50">
+                <div className="lg:col-span-5 space-y-4">
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-[var(--fg-muted)]">
+                    OPERATIONAL THESIS
                   </span>
-                </div>
-                <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] flex items-center justify-between">
+                  <p className="font-display text-lg sm:text-xl font-bold leading-snug">
+                    {item.thesis}
+                  </p>
                   <div>
-                    <div className="text-[10px] font-mono text-amber-600 font-bold">08:00 PM • BEDTIME</div>
-                    <div className="font-bold text-sm text-[var(--fg)] mt-0.5">Noveron 500mg</div>
-                    <div className="text-xs text-[var(--fg-muted)]">Take after evening meal</div>
+                    <Link
+                      href={item.portalHref}
+                      className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest font-bold bg-[var(--fg)] text-[var(--bg)] px-5 py-3 hover:opacity-90 transition-opacity rounded-none"
+                    >
+                      <span>{item.portalLabel}</span>
+                      <ArrowUpRight className="w-4 h-4" />
+                    </Link>
                   </div>
-                  <span className="text-xs font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/40 px-3 py-1 rounded-full border border-amber-300">
-                    Pending
+                </div>
+
+                <div className="lg:col-span-7 space-y-3">
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-[var(--fg-muted)] block mb-1">
+                    SYSTEM CAPABILITIES &amp; PROTOCOL
                   </span>
+                  <ul className="space-y-3 font-sans text-sm text-[var(--fg-muted)]">
+                    {item.details.map((detail, dIdx) => (
+                      <li key={dIdx} className="flex items-start gap-3">
+                        <span className="font-mono text-xs text-[var(--fg)] mt-0.5">--</span>
+                        <span className="leading-relaxed">{detail}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
-            </div>
-          )}
-
-          {activeTab === "pharmacy" && (
-            <div className="space-y-4 animate-in fade-in">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-display text-xl font-bold">Central Pharmacy Dispense Stream</h4>
-                  <p className="text-xs text-[var(--fg-muted)]">Pharmacist Anil Kumar • Counter 2</p>
-                </div>
-                <span className="text-xs font-mono bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-800 px-3 py-1 rounded-full font-bold">
-                  Safety Lock Enforced
-                </span>
-              </div>
-              <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] flex items-center justify-between">
-                <div>
-                  <div className="text-[10px] font-mono text-[var(--sanjeevani)] font-bold">ORDER #RX-RAMESH-2026</div>
-                  <div className="font-bold text-sm text-[var(--fg)] mt-0.5">Ramesh Kumar (58M) • Metformin 500mg (30 days)</div>
-                  <div className="text-xs text-[var(--fg-muted)]">Verified doctor digital signature SHA-256: 7d4a92c</div>
-                </div>
-                <span className="text-xs font-bold text-[#0B1715] bg-[var(--sanjeevani)] px-4 py-2 rounded-full shadow-xs">
-                  Confirm &amp; Dispense
-                </span>
-              </div>
-            </div>
-          )}
-
-          {activeTab === "lab" && (
-            <div className="space-y-4 animate-in fade-in">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-display text-xl font-bold">Diagnostic Pathology Workbench</h4>
-                  <p className="text-xs text-[var(--fg-muted)]">Order #ORD-RAMESH-L1 • Fasting Lipid &amp; HbA1c</p>
-                </div>
-                <span className="text-xs font-mono bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-800 px-3 py-1 rounded-full font-bold">
-                  Results Ready
-                </span>
-              </div>
-              <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold">HbA1c Glycated Hemoglobin: 6.9%</span>
-                  <span className="text-emerald-600 font-bold">Improved vs last visit (7.2%)</span>
-                </div>
-                <p className="text-xs text-[var(--fg-muted)] leading-relaxed">
-                  AI-7 Plain-Language Draft: Blood sugar trajectory is downward and responding favorably to Metformin dosage titration.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {activeTab === "reception" && (
-            <div className="space-y-4 animate-in fade-in">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-display text-xl font-bold">Front-Desk Triage &amp; Intake</h4>
-                  <p className="text-xs text-[var(--fg-muted)]">AI-4 Clinical Severity Classification</p>
-                </div>
-                <span className="text-xs font-mono bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800 px-3 py-1 rounded-full font-bold">
-                  Intake SLA: 48s
-                </span>
-              </div>
-              <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] flex items-center justify-between">
-                <div>
-                  <div className="text-[10px] font-mono text-[var(--fg-muted)] font-bold">WALK-IN REGISTRATION</div>
-                  <div className="font-bold text-sm text-[var(--fg)] mt-0.5">Sita Devi (62F) • Assigned to Dr. Nitin Sharma</div>
-                  <div className="text-xs text-[var(--fg-muted)]">Priority Level 2 • Estimated wait time: 8 minutes</div>
-                </div>
-                <span className="text-xs font-bold text-[var(--fg)] bg-[var(--bg)] px-3 py-1.5 rounded-full border border-[var(--border)]">
-                  Token #12 Issued
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-/* ── Main Landing Page ── */
+/* ── MASTER UNIVERSAL LANDING PAGE ── */
 export default function LandingPage() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [problemConnected, setProblemConnected] = useState(false);
 
+  // Sync theme state with actual DOM attribute on mount
   useEffect(() => {
     const current = (document.documentElement.getAttribute("data-theme") as "light" | "dark") || "light";
     setTheme(current);
@@ -1531,75 +564,57 @@ export default function LandingPage() {
     const nextTheme = theme === "light" ? "dark" : "light";
     setTheme(nextTheme);
     document.documentElement.setAttribute("data-theme", nextTheme);
-    if (nextTheme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
+    if (nextTheme === "dark") document.documentElement.classList.add("dark");
+    else document.documentElement.classList.remove("dark");
     try { localStorage.setItem("sanjeevani_theme", nextTheme); } catch {}
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] transition-colors duration-300 selection:bg-[var(--sanjeevani)] selection:text-[#0B1715]">
-      {/* ── STICKY EDITORIAL TOP NAVIGATION BAR ── */}
-      <header className="sticky top-0 z-50 bg-[var(--bg)]/90 backdrop-blur-md border-b border-[var(--border)]">
-        <div className="max-w-7xl mx-auto px-6 h-18 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3 font-display text-xl font-black tracking-tight">
-            <div className="w-8 h-8 rounded-lg bg-[var(--sanjeevani)] text-[#0B1715] flex items-center justify-center font-bold text-sm shadow-xs">
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] selection:bg-[var(--fg)] selection:text-[var(--bg)] font-sans">
+      {/* ── TOP NAV BAR (SWISS BRUTALIST ARCHITECTURE) ── */}
+      <header className="sticky top-0 z-50 bg-[var(--bg)]/95 backdrop-blur-md border-b border-[var(--border)]">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3 font-display font-black text-lg tracking-tight">
+            <span className="w-5 h-5 bg-[var(--fg)] text-[var(--bg)] flex items-center justify-center font-mono text-xs font-bold">
               S
-            </div>
-            <div className="flex flex-col">
-              <span className="leading-none text-base font-extrabold tracking-tight">SANJEEVANI</span>
-              <span className="font-mono text-[9px] uppercase tracking-widest text-[var(--sanjeevani)] font-bold">CARE MESH</span>
-            </div>
+            </span>
+            <span className="tracking-widest">SANJEEVANI</span>
           </Link>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-8 text-xs uppercase tracking-widest font-semibold text-[var(--fg-muted)]">
-            <a href="#ecosystem" className="hover:text-[var(--fg)] transition-colors">Ecosystem</a>
-            <a href="#the-problem" className="hover:text-[var(--fg)] transition-colors">The Problem</a>
-            <a href="#care-journey" className="hover:text-[var(--fg)] transition-colors">Care Journey</a>
-            <a href="#stakeholders" className="hover:text-[var(--fg)] transition-colors">Stakeholders</a>
-            <a href="#intelligence" className="hover:text-[var(--fg)] transition-colors">Intelligence</a>
-            <a href="#safety" className="hover:text-[var(--fg)] transition-colors">Safety</a>
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center gap-8 font-mono text-[11px] font-bold uppercase tracking-widest text-[var(--fg-muted)]">
+            <a href="#problem" className="hover:text-[var(--fg)] transition-colors">01 // Problem</a>
+            <a href="#ecosystem" className="hover:text-[var(--fg)] transition-colors">02 // Ecosystem</a>
+            <a href="#journey" className="hover:text-[var(--fg)] transition-colors">03 // Journey</a>
+            <a href="#intelligence" className="hover:text-[var(--fg)] transition-colors">04 // Intelligence</a>
+            <a href="#protocol" className="hover:text-[var(--fg)] transition-colors">05 // Protocol</a>
           </nav>
 
-          {/* Controls: Theme Toggle + Sign In */}
-          <div className="flex items-center gap-3">
-            {/* Pill Theme Switch */}
+          {/* Header Controls */}
+          <div className="flex items-center gap-4">
+            {/* Minimalist B&W Theme Switch */}
             <button
               onClick={toggleTheme}
-              className="w-[52px] h-7 rounded-full bg-[var(--bg-muted)] border border-[var(--border)] p-0.5 flex items-center transition-colors relative cursor-pointer"
-              aria-label="Toggle theme"
+              className="p-2 border border-[var(--border)] hover:border-[var(--fg)] transition-colors cursor-pointer text-xs font-mono rounded-none"
+              aria-label="Toggle theme mode"
+              title="Toggle light / dark contrast"
             >
-              <div
-                className={`w-5 h-5 rounded-full bg-[var(--bg-elevated)] shadow-sm flex items-center justify-center text-[10px] transition-transform duration-300 ${
-                  theme === "dark" ? "translate-x-6" : "translate-x-0"
-                }`}
-              >
-                {theme === "dark" ? <Moon className="w-3 h-3 text-[var(--signal)]" /> : <Sun className="w-3 h-3 text-[var(--signal)]" />}
-              </div>
+              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
 
             {/* Portal Direct Access */}
             <Link
               href="/login"
-              className="hidden sm:inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--fg)] px-4 py-2 text-xs font-bold uppercase tracking-wider hover:bg-[var(--bg-muted)] transition-colors"
+              className="hidden sm:inline-flex items-center gap-2 border border-[var(--fg)] bg-[var(--fg)] text-[var(--bg)] px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider hover:opacity-80 transition-opacity rounded-none"
             >
-              Sign In
+              <span>ACCESS PORTAL</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
 
-            <Link
-              href="#connect-facility"
-              className="hidden sm:inline-flex items-center gap-2 rounded-full bg-[var(--sanjeevani)] text-[#0B1715] px-4 py-2 text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-opacity font-display"
-            >
-              Connect Facility →
-            </Link>
-
-            {/* Mobile Menu Button */}
+            {/* Mobile Hamburger */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-xl border border-[var(--border)] text-[var(--fg-muted)]"
+              className="md:hidden p-2 border border-[var(--border)] rounded-none"
               aria-label="Toggle navigation menu"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -1607,286 +622,561 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Mobile Navigation Drawer */}
+        {/* Mobile Slide Drawer */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-[var(--border)] bg-[var(--bg-elevated)] px-6 py-4 space-y-3 animate-in slide-in-from-top-2">
-            <a href="#ecosystem" onClick={() => setMobileMenuOpen(false)} className="block text-xs uppercase font-mono py-1">Ecosystem</a>
-            <a href="#the-problem" onClick={() => setMobileMenuOpen(false)} className="block text-xs uppercase font-mono py-1">The Problem</a>
-            <a href="#care-journey" onClick={() => setMobileMenuOpen(false)} className="block text-xs uppercase font-mono py-1">Care Journey</a>
-            <a href="#stakeholders" onClick={() => setMobileMenuOpen(false)} className="block text-xs uppercase font-mono py-1">Stakeholders</a>
-            <a href="#intelligence" onClick={() => setMobileMenuOpen(false)} className="block text-xs uppercase font-mono py-1">Intelligence</a>
-            <a href="#safety" onClick={() => setMobileMenuOpen(false)} className="block text-xs uppercase font-mono py-1">Safety</a>
-            <div className="pt-2 border-t border-[var(--border)] flex gap-2">
-              <Link href="/login" className="flex-1 text-center py-2 text-xs font-bold uppercase border border-[var(--border)] rounded-lg">Sign In</Link>
-              <Link href="#connect-facility" className="flex-1 text-center py-2 text-xs font-bold uppercase bg-[var(--sanjeevani)] text-[#0B1715] rounded-lg">Connect</Link>
+          <div className="md:hidden border-b border-[var(--border)] bg-[var(--bg)] px-6 py-6 space-y-4 font-mono text-xs uppercase tracking-widest animate-in slide-in-from-top-2">
+            <a href="#problem" onClick={() => setMobileMenuOpen(false)} className="block py-2 border-b border-[var(--border)]">
+              01 // Problem &amp; Fragmentation
+            </a>
+            <a href="#ecosystem" onClick={() => setMobileMenuOpen(false)} className="block py-2 border-b border-[var(--border)]">
+              02 // Ecosystem Participants
+            </a>
+            <a href="#journey" onClick={() => setMobileMenuOpen(false)} className="block py-2 border-b border-[var(--border)]">
+              03 // Patient Journey
+            </a>
+            <a href="#intelligence" onClick={() => setMobileMenuOpen(false)} className="block py-2 border-b border-[var(--border)]">
+              04 // Clinical Intelligence
+            </a>
+            <a href="#protocol" onClick={() => setMobileMenuOpen(false)} className="block py-2 border-b border-[var(--border)]">
+              05 // Trust &amp; Governance
+            </a>
+            <div className="pt-2 flex flex-col gap-2">
+              <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="py-3 text-center bg-[var(--fg)] text-[var(--bg)] font-bold">
+                ENTER HEALTHCARE PORTAL →
+              </Link>
             </div>
           </div>
         )}
       </header>
 
-      {/* ── 01 // HERO: "HEALTHCARE, CONNECTED." ── */}
-      <section className="px-6 md:px-12 pt-16 pb-20 border-b border-[var(--border)] max-w-7xl mx-auto">
-        <div className="max-w-4xl space-y-6 mb-12">
-          <Eyebrow index="01" label="THE UNIFIED HEALTHCARE ECOSYSTEM" />
+      {/* ── 01 // MONUMENTAL HERO SECTION ── */}
+      <section className="px-6 md:px-12 pt-16 sm:pt-24 pb-20 max-w-7xl mx-auto border-b border-[var(--border)]">
+        <div className="space-y-6">
+          <div className="font-mono text-xs sm:text-sm font-bold tracking-[0.3em] uppercase text-[var(--fg-muted)]">
+            01 // SANJEEVANI ARCHITECTURE
+          </div>
 
-          <h1 className="font-display text-5xl sm:text-7xl lg:text-8xl font-black tracking-tight uppercase leading-[0.95] text-[var(--fg)]">
-            HEALTHCARE,<br />
-            <span className="text-[var(--sanjeevani)]">CONNECTED.</span>
+          <h1 className="font-display font-black text-5xl sm:text-7xl lg:text-9xl uppercase tracking-tighter leading-[0.88] select-none">
+            HEALTHCARE,
+            <span className="block mt-2 sm:mt-4 text-[var(--bg)] bg-[var(--fg)] px-3 sm:px-6 py-1 sm:py-2 inline-block">
+              CONNECTED.
+            </span>
           </h1>
 
-          <p className="text-base sm:text-xl text-[var(--fg-muted)] max-w-2xl font-medium leading-relaxed">
-            One intelligent ecosystem connecting patients, doctors, clinics, labs, pharmacies and every step in between.
-          </p>
-
-          <div className="flex flex-wrap items-center gap-4 pt-2">
-            <a
-              href="#ecosystem"
-              className="rounded-full bg-[var(--fg)] text-[var(--bg)] px-6 py-3.5 text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-opacity flex items-center gap-2 font-display"
-            >
-              <span>Explore The Network</span>
-              <ArrowRight className="w-4 h-4" />
-            </a>
-
-            <Link
-              href="/login"
-              className="rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] px-6 py-3.5 text-xs font-bold uppercase tracking-wider hover:bg-[var(--bg-muted)] transition-colors text-[var(--fg)] font-display"
-            >
-              Access Role Portals
-            </Link>
-          </div>
-        </div>
-
-        {/* Hero Interactive Living Network Visual */}
-        <HeroLivingNetwork />
-      </section>
-
-      {/* ── 02 // THE PROBLEM: HEALTHCARE IS CONNECTED IN THEORY ── */}
-      <section id="the-problem" className="px-6 md:px-12 py-24 border-b border-[var(--border)] max-w-7xl mx-auto">
-        <Eyebrow index="02" label="THE FRAGMENTATION PROBLEM" />
-        <FragmentationComparison />
-      </section>
-
-      {/* ── 03 // THE ECOSYSTEM: THE CONNECTIVE TISSUE ── */}
-      <section id="ecosystem" className="px-6 md:px-12 py-24 border-b border-[var(--border)] max-w-7xl mx-auto space-y-12">
-        <div className="max-w-3xl space-y-3">
-          <Eyebrow index="03" label="ARCHITECTURAL FOUNDATION" />
-          <h2 className="font-display text-3xl sm:text-5xl font-black tracking-tight text-[var(--fg)]">
-            Sanjeevani is the Connective Tissue of Modern Care.
-          </h2>
-          <p className="text-sm text-[var(--fg-muted)] leading-relaxed">
-            We do not simply build point tools. Sanjeevani orchestrates the three fundamental layers of healthcare infrastructure into one convergent system.
-          </p>
-        </div>
-
-        {/* 3-Tier Layer Diagram */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Layer 1 */}
-          <div className="p-8 rounded-3xl border border-[var(--border)] bg-[var(--bg-elevated)] space-y-4">
-            <span className="font-mono text-xs font-bold text-[var(--sanjeevani)]">LAYER 01</span>
-            <h3 className="font-display text-xl font-bold">THE PARTICIPANTS</h3>
-            <p className="text-xs text-[var(--fg-muted)] leading-relaxed">
-              Every medical actor operates with their own dedicated, role-compartmentalized workspace.
-            </p>
-            <div className="flex flex-wrap gap-1.5 pt-2">
-              {["Patients", "Physicians", "Laboratories", "Pharmacies", "Care Teams", "Hospitals"].map((p) => (
-                <span key={p} className="text-[10px] font-mono px-2.5 py-1 rounded-full border border-[var(--border)] bg-[var(--bg)] font-bold">
-                  {p}
-                </span>
-              ))}
+          <div className="pt-6 sm:pt-10 grid grid-cols-1 md:grid-cols-12 gap-8 items-end">
+            <div className="md:col-span-8">
+              <p className="font-sans text-lg sm:text-2xl text-[var(--fg-muted)] font-normal leading-relaxed max-w-3xl">
+                One unified healthcare ecosystem connecting patients, doctors, laboratories, pharmacies, clinics, and hospitals.
+                Eliminating medical fragmentation through cryptographic records, pharmacological safety nets, and real-time clinical synchronization.
+              </p>
             </div>
-          </div>
 
-          {/* Layer 2 */}
-          <div className="p-8 rounded-3xl border border-[var(--border)] bg-[var(--bg-elevated)] space-y-4">
-            <span className="font-mono text-xs font-bold text-[var(--signal)]">LAYER 02</span>
-            <h3 className="font-display text-xl font-bold">THE WORKFLOWS</h3>
-            <p className="text-xs text-[var(--fg-muted)] leading-relaxed">
-              Continuous handoffs from reception triage to consultation, lab diagnostics, dispensing, and adherence.
-            </p>
-            <div className="flex flex-wrap gap-1.5 pt-2">
-              {["Intake", "Consultation", "Diagnostics", "Prescriptions", "Fulfillment", "Follow-up"].map((w) => (
-                <span key={w} className="text-[10px] font-mono px-2.5 py-1 rounded-full border border-[var(--border)] bg-[var(--bg)] font-bold">
-                  {w}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Layer 3 */}
-          <div className="p-8 rounded-3xl border border-[var(--border)] bg-[var(--bg-elevated)] space-y-4">
-            <span className="font-mono text-xs font-bold text-[var(--sanjeevani)]">LAYER 03</span>
-            <h3 className="font-display text-xl font-bold">THE INTELLIGENCE MESH</h3>
-            <p className="text-xs text-[var(--fg-muted)] leading-relaxed">
-              Autonomous clinical intelligence embedded directly into the transaction path to enforce safety and prevent errors.
-            </p>
-            <div className="flex flex-wrap gap-1.5 pt-2">
-              {["Guardrails", "YOLOv7 AI", "Ambient SOAP", "Refill Velocity", "SHA-256 Ledger"].map((i) => (
-                <span key={i} className="text-[10px] font-mono px-2.5 py-1 rounded-full border border-[var(--border)] bg-[var(--bg)] font-bold text-[var(--sanjeevani)]">
-                  {i}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 04 // THE CARE JOURNEY: 6-STAGE STORYTELLING ── */}
-      <section id="care-journey" className="px-6 md:px-12 py-24 border-b border-[var(--border)] max-w-7xl mx-auto space-y-12">
-        <div className="max-w-3xl space-y-3">
-          <Eyebrow index="04" label="END-TO-END CLINICAL JOURNEY" />
-          <h2 className="font-display text-3xl sm:text-5xl font-black tracking-tight text-[var(--fg)]">
-            One Patient. One Connected Care Journey.
-          </h2>
-          <p className="text-sm text-[var(--fg-muted)] leading-relaxed">
-            Instead of fragmented apps, explore how a patient&apos;s healthcare unfolds across 6 integrated lifecycle stages.
-          </p>
-        </div>
-
-        <CareJourneyStory />
-      </section>
-
-      {/* ── 05 // ONE PLATFORM. MANY ROLES. ── */}
-      <section id="stakeholders" className="px-6 md:px-12 py-24 border-b border-[var(--border)] max-w-7xl mx-auto space-y-12">
-        <div className="max-w-3xl space-y-3">
-          <Eyebrow index="05" label="MULTIDISCIPLINARY WORKSPACES" />
-          <h2 className="font-display text-3xl sm:text-5xl font-black tracking-tight text-[var(--fg)]">
-            One Platform. Dedicated Tools for Every Role.
-          </h2>
-          <p className="text-sm text-[var(--fg-muted)] leading-relaxed">
-            Healthcare requires role-based compartmentalization. Sanjeevani provides bespoke, high-velocity workspaces tailored for each clinical discipline.
-          </p>
-        </div>
-
-        <EcosystemStakeholders />
-      </section>
-
-      {/* ── 06 // THE INTELLIGENCE LAYER ── */}
-      <section id="intelligence" className="px-6 md:px-12 py-24 border-b border-[var(--border)] max-w-7xl mx-auto space-y-12">
-        <div className="max-w-3xl space-y-3">
-          <Eyebrow index="06" label="CLINICAL INTELLIGENCE CAPABILITIES" />
-          <h2 className="font-display text-3xl sm:text-5xl font-black tracking-tight text-[var(--fg)]">
-            Intelligence Embedded Across the Entire Care Lifecycle.
-          </h2>
-          <p className="text-sm text-[var(--fg-muted)] leading-relaxed">
-            Advanced vision, language models, and deterministic pharmacological rules run invisibly within the clinical workflow.
-          </p>
-        </div>
-
-        <IntelligenceLayer />
-      </section>
-
-      {/* ── 07 // SAFETY INFRASTRUCTURE ── */}
-      <section id="safety" className="px-6 md:px-12 py-24 border-b border-[var(--border)] max-w-7xl mx-auto space-y-12">
-        <Eyebrow index="07" label="SAFETY ARCHITECTURE &amp; COMPLIANCE" />
-        <SafetyInfrastructure />
-      </section>
-
-      {/* ── 08 // LIVING DATA FLOWS ── */}
-      <section className="px-6 md:px-12 py-24 border-b border-[var(--border)] max-w-7xl mx-auto space-y-12">
-        <Eyebrow index="08" label="DATA PROPAGATION TELEMETRY" />
-        <LivingDataFlows />
-      </section>
-
-      {/* ── 09 // ACTUAL SOFTWARE PLATFORM DEMO ── */}
-      <section className="px-6 md:px-12 py-24 border-b border-[var(--border)] max-w-7xl mx-auto space-y-12">
-        <div className="max-w-3xl space-y-3 text-center mx-auto">
-          <Eyebrow index="09" label="PRODUCTION SOFTWARE INTERFACES" />
-          <h2 className="font-display text-3xl sm:text-5xl font-black tracking-tight text-[var(--fg)]">
-            Engineered for Real Hospital Desks.
-          </h2>
-          <p className="text-sm text-[var(--fg-muted)] leading-relaxed">
-            Experience the actual web interfaces used by doctors, pharmacists, pathologists, and patients.
-          </p>
-        </div>
-
-        <PlatformSoftwareDemo />
-      </section>
-
-      {/* ── 10 // FINAL STATEMENT & FACILITY LEAD FORM ── */}
-      <section id="connect-facility" className="px-6 md:px-12 py-28 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          <div className="lg:col-span-7 space-y-6">
-            <Eyebrow index="10" label="ENTER THE HEALTHCARE MESH" />
-            <h2 className="font-display text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight uppercase leading-[0.95] text-[var(--fg)]">
-              HEALTHCARE<br />
-              SHOULD FEEL<br />
-              <span className="text-[var(--sanjeevani)]">LIKE ONE SYSTEM.</span>
-            </h2>
-            <p className="text-base sm:text-lg text-[var(--fg-muted)] max-w-lg leading-relaxed">
-              Stop fighting siloed software and broken handoffs. Join modern clinics, specialty hospitals, and diagnostic networks built on the Sanjeevani Care Mesh.
-            </p>
-            <div className="flex flex-wrap items-center gap-4 pt-2">
+            <div className="md:col-span-4 flex flex-col sm:flex-row md:flex-col gap-4">
               <Link
                 href="/login"
-                className="rounded-full bg-[var(--fg)] text-[var(--bg)] px-8 py-4 font-display text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-opacity flex items-center gap-2"
+                className="w-full py-5 px-8 bg-[var(--fg)] text-[var(--bg)] font-mono text-xs font-bold uppercase tracking-widest hover:opacity-85 transition-opacity text-center flex items-center justify-center gap-3 rounded-none cursor-pointer"
               >
                 <span>ENTER SANJEEVANI</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
+
+              <a
+                href="#ecosystem"
+                className="w-full py-4 px-8 border border-[var(--border)] hover:border-[var(--fg)] font-mono text-xs uppercase tracking-widest text-center transition-colors rounded-none"
+              >
+                [ EXPLORE PARTICIPANTS ]
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* Abstract Convergence Architecture (No fake cards, pure typographic choreo) */}
+        <div className="mt-16 sm:mt-24">
+          <EcosystemConvergence />
+        </div>
+      </section>
+
+      {/* ── 02 // MONUMENTAL EDITORIAL MARQUEE TICKER ── */}
+      <section className="bg-[var(--fg)] text-[var(--bg)] overflow-hidden py-5 select-none border-b border-[var(--border)]">
+        <div className="animate-marquee whitespace-nowrap font-display text-sm sm:text-base font-black uppercase tracking-[0.25em] flex items-center gap-8">
+          <span>PATIENTS</span>
+          <span>•</span>
+          <span>DOCTORS</span>
+          <span>•</span>
+          <span>LABORATORIES</span>
+          <span>•</span>
+          <span>PHARMACIES</span>
+          <span>•</span>
+          <span>CLINICS</span>
+          <span>•</span>
+          <span>HOSPITALS</span>
+          <span>•</span>
+          <span>CARE TEAMS</span>
+          <span>•</span>
+          <span>ZERO GUESSWORK</span>
+          <span>•</span>
+          <span>FEWER MISTAKES</span>
+          <span>•</span>
+          <span>CLEAR PRESCRIPTIONS</span>
+          <span>•</span>
+          <span>PATIENTS</span>
+          <span>•</span>
+          <span>DOCTORS</span>
+          <span>•</span>
+          <span>LABORATORIES</span>
+          <span>•</span>
+          <span>PHARMACIES</span>
+          <span>•</span>
+          <span>CLINICS</span>
+          <span>•</span>
+          <span>HOSPITALS</span>
+        </div>
+      </section>
+
+      {/* ── 03 // THE PROBLEM: FRAGMENTATION VS CONNECTION ── */}
+      <section id="problem" className="px-6 md:px-12 py-20 sm:py-32 max-w-7xl mx-auto border-b border-[var(--border)]">
+        <SectionEyebrow index="02" label="THE STRUCTURAL CRISIS" />
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start mb-16">
+          <div className="lg:col-span-7 space-y-4">
+            <h2 className="font-display text-4xl sm:text-6xl font-black uppercase tracking-tight leading-[0.95]">
+              HEALTHCARE IS FRAGMENTED.
+            </h2>
+            <p className="font-sans text-base sm:text-lg text-[var(--fg-muted)] leading-relaxed max-w-xl">
+              Prescriptions live on paper slips. Lab reports are scattered across PDF portals. Pharmacies dispense without cross-doctor interaction checks.
+              Patients bear the cognitive burden of remembering their own contradictory regimens.
+            </p>
+          </div>
+
+          <div className="lg:col-span-5 flex flex-col gap-3 font-mono text-xs">
+            <div className="border border-[var(--border)] p-4 flex items-center justify-between">
+              <span className="text-[var(--fg-muted)]">CROSS-SPECIALTY ERRORS</span>
+              <strong className="text-base font-bold">42% OF ADVERSE EVENTS</strong>
+            </div>
+            <div className="border border-[var(--border)] p-4 flex items-center justify-between">
+              <span className="text-[var(--fg-muted)]">LOST DIAGNOSTIC DUPLICATION</span>
+              <strong className="text-base font-bold">1 IN 5 REPEAT TESTS</strong>
+            </div>
+            <div className="border border-[var(--border)] p-4 flex items-center justify-between">
+              <span className="text-[var(--fg-muted)]">PAPER RECORD ATTRITION</span>
+              <strong className="text-base font-bold">&gt;68% UNRECORDED RX</strong>
+            </div>
+          </div>
+        </div>
+
+        {/* Interactive Fragmentation vs Synchronization Demo */}
+        <div className="border border-[var(--border)] p-8 sm:p-12 space-y-8 bg-[var(--bg)]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--border)] pb-4 gap-4">
+            <span className="font-mono text-xs uppercase tracking-widest text-[var(--fg-muted)]">
+              STRUCTURAL COMPARISON
+            </span>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setProblemConnected(false)}
+                className={`px-4 py-2 font-mono text-xs uppercase tracking-widest border transition-colors cursor-pointer rounded-none ${
+                  !problemConnected
+                    ? "bg-[var(--fg)] text-[var(--bg)] border-[var(--fg)]"
+                    : "border-[var(--border)] text-[var(--fg-muted)] hover:text-[var(--fg)]"
+                }`}
+              >
+                [ FRAGMENTED SILOS ]
+              </button>
+              <button
+                onClick={() => setProblemConnected(true)}
+                className={`px-4 py-2 font-mono text-xs uppercase tracking-widest border transition-colors cursor-pointer rounded-none ${
+                  problemConnected
+                    ? "bg-[var(--fg)] text-[var(--bg)] border-[var(--fg)]"
+                    : "border-[var(--border)] text-[var(--fg-muted)] hover:text-[var(--fg)]"
+                }`}
+              >
+                [ SANJEEVANI CONNECTED ]
+              </button>
             </div>
           </div>
 
-          <div className="lg:col-span-5">
+          {!problemConnected ? (
+            /* Fragmented State */
+            <div className="py-12 grid grid-cols-1 sm:grid-cols-5 gap-6 text-center">
+              <div className="border border-dashed border-[var(--border)] p-6 space-y-2">
+                <div className="font-mono text-xs text-[var(--fg-muted)]">ISOLATION 01</div>
+                <div className="font-display text-lg font-bold">PATIENT</div>
+                <p className="font-mono text-[10px] text-[var(--fg-muted)]">Lost physical paper prescriptions. Unchecked OTC supplements.</p>
+              </div>
+              <div className="border border-dashed border-[var(--border)] p-6 space-y-2">
+                <div className="font-mono text-xs text-[var(--fg-muted)]">ISOLATION 02</div>
+                <div className="font-display text-lg font-bold">DOCTOR</div>
+                <p className="font-mono text-[10px] text-[var(--fg-muted)]">Zero visibility into concurrent specialists&apos; active treatments.</p>
+              </div>
+              <div className="border border-dashed border-[var(--border)] p-6 space-y-2">
+                <div className="font-mono text-xs text-[var(--fg-muted)]">ISOLATION 03</div>
+                <div className="font-display text-lg font-bold">LABORATORY</div>
+                <p className="font-mono text-[10px] text-[var(--fg-muted)]">Reports sit unreviewed in patient email inboxes for weeks.</p>
+              </div>
+              <div className="border border-dashed border-[var(--border)] p-6 space-y-2">
+                <div className="font-mono text-xs text-[var(--fg-muted)]">ISOLATION 04</div>
+                <div className="font-display text-lg font-bold">PHARMACY</div>
+                <p className="font-mono text-[10px] text-[var(--fg-muted)]">Dispenses without knowledge of renal function or acute allergies.</p>
+              </div>
+              <div className="border border-dashed border-[var(--border)] p-6 space-y-2">
+                <div className="font-mono text-xs text-[var(--fg-muted)]">ISOLATION 05</div>
+                <div className="font-display text-lg font-bold">HOSPITAL</div>
+                <p className="font-mono text-[10px] text-[var(--fg-muted)]">Discharge summaries filed in paper archives without follow-up.</p>
+              </div>
+            </div>
+          ) : (
+            /* Connected State */
+            <div className="py-12 border border-[var(--fg)] bg-[var(--fg)] text-[var(--bg)] p-8 sm:p-12 space-y-8 animate-in fade-in duration-300">
+              <div className="flex items-center justify-between border-b border-[var(--bg)]/30 pb-4">
+                <span className="font-mono text-xs tracking-widest uppercase">
+                  UNIFIED CLINICAL BACKBONE ACTIVE
+                </span>
+                <span className="font-mono text-xs">LATENCY: &lt;15MS // 100% AUDITABLE</span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 text-center font-display font-black text-base sm:text-xl tracking-tight">
+                <div className="p-3 border border-[var(--bg)]/40">PATIENT</div>
+                <div className="p-3 border border-[var(--bg)]/40">DOCTOR</div>
+                <div className="p-3 border border-[var(--bg)]/40">LABORATORY</div>
+                <div className="p-3 border border-[var(--bg)]/40">PHARMACY</div>
+                <div className="p-3 border border-[var(--bg)]/40">HOSPITAL</div>
+              </div>
+
+              <div className="font-mono text-xs text-center max-w-xl mx-auto opacity-80 leading-relaxed">
+                When a doctor signs off in Room 402, the prescription arrives in the Dispensary queue, updates the patient&apos;s daily dosing calendar, and alerts the caregiver if a dose is delayed.
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ── 04 // THE ECOSYSTEM: EVERYONE IN CARE (HUGE LIST ROWS) ── */}
+      <section id="ecosystem" className="px-6 md:px-12 py-20 sm:py-32 max-w-7xl mx-auto border-b border-[var(--border)]">
+        <SectionEyebrow index="03" label="ECOSYSTEM ARCHITECTURE" />
+
+        <div className="max-w-3xl mb-16">
+          <h2 className="font-display text-4xl sm:text-6xl font-black uppercase tracking-tight leading-[0.95]">
+            EVERYONE INVOLVED IN CARE.
+          </h2>
+          <p className="font-sans text-base sm:text-lg text-[var(--fg-muted)] mt-4 leading-relaxed">
+            Sanjeevani does not replace clinicians or force patients into confusing portals.
+            It provides each stakeholder a purpose-built, high-velocity workstation bound by strict zero-trust role boundaries.
+          </p>
+        </div>
+
+        <EcosystemParticipantRows />
+      </section>
+
+      {/* ── 05 // THE PATIENT JOURNEY: ONE PATIENT. ONE JOURNEY. ── */}
+      <section id="journey" className="px-6 md:px-12 py-20 sm:py-32 max-w-7xl mx-auto border-b border-[var(--border)]">
+        <SectionEyebrow index="04" label="LONGITUDINAL TRAJECTORY" />
+
+        <div className="max-w-3xl mb-16">
+          <h2 className="font-display text-4xl sm:text-6xl font-black uppercase tracking-tight leading-[0.95]">
+            ONE PATIENT. ONE JOURNEY.
+          </h2>
+          <p className="font-sans text-base sm:text-lg text-[var(--fg-muted)] mt-4 leading-relaxed">
+            From initial walk-in registration to multi-specialist diagnosis, dispensary dispensing, and 30-day home adherence monitoring.
+            Every clinical event is synchronized across one immutable timeline.
+          </p>
+        </div>
+
+        <PatientJourneySequencer />
+      </section>
+
+      {/* ── 06 // INTELLIGENCE WHERE IT MATTERS ── */}
+      <section id="intelligence" className="px-6 md:px-12 py-20 sm:py-32 max-w-7xl mx-auto border-b border-[var(--border)]">
+        <SectionEyebrow index="05" label="CLINICAL INTELLIGENCE NET" />
+
+        <div className="max-w-3xl mb-16">
+          <h2 className="font-display text-4xl sm:text-6xl font-black uppercase tracking-tight leading-[0.95]">
+            INTELLIGENCE WHERE IT MATTERS.
+          </h2>
+          <p className="font-sans text-base sm:text-lg text-[var(--fg-muted)] mt-4 leading-relaxed">
+            Not gimmicky conversational chatbots. Deterministic pharmacological guardrails, BioMistral clinical extraction, and YOLOv7 diagnostic canvases that assist medical judgment without replacing human accountability.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 border-t border-l border-[var(--border)]">
+          {[
+            {
+              num: "01",
+              title: "PRESCRIPTION",
+              tagline: "Digitize clinical instructions.",
+              desc: "Transforms handwritten prescriptions and unverified paper scans into structured, machine-executable medication schedules within seconds.",
+            },
+            {
+              num: "02",
+              title: "DIAGNOSTICS",
+              tagline: "Surface relevant findings.",
+              desc: "Highlights abnormal biomarker trends (HbA1c, serum creatinine) and flags radiological opacity on X-ray review canvases.",
+            },
+            {
+              num: "03",
+              title: "MEDICATION",
+              tagline: "Support safer treatment journeys.",
+              desc: "Evaluates cross-specialist drug-drug conflicts, food-drug contraindications, and organ clearance warnings prior to sign-off.",
+            },
+            {
+              num: "04",
+              title: "RECORDS",
+              tagline: "Longitudinal clinical history.",
+              desc: "Aggregates past discharge notes, vaccination cards, and lab panels into a unified queryable self-sovereign health vault.",
+            },
+          ].map((item) => (
+            <div
+              key={item.num}
+              className="p-8 border-b border-r border-[var(--border)] space-y-4 flex flex-col justify-between hover:bg-[var(--border)]/15 transition-colors"
+            >
+              <div className="space-y-3">
+                <span className="font-mono text-xs font-bold text-[var(--fg-muted)]">
+                  {item.num} //
+                </span>
+                <h3 className="font-display text-2xl font-black uppercase tracking-tight">
+                  {item.title}
+                </h3>
+                <p className="font-display text-sm font-bold text-[var(--fg)]">
+                  {item.tagline}
+                </p>
+                <p className="font-sans text-xs text-[var(--fg-muted)] leading-relaxed">
+                  {item.desc}
+                </p>
+              </div>
+
+              <div className="font-mono text-[10px] uppercase tracking-widest text-[var(--fg-muted)] pt-4 border-t border-[var(--border)]">
+                SPECIFICATION // AI-VERIFIED
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── 07 // THE PLATFORM: REAL INTERFACE TELEMETRY ── */}
+      <section className="px-6 md:px-12 py-20 sm:py-32 max-w-7xl mx-auto border-b border-[var(--border)]">
+        <SectionEyebrow index="06" label="SYSTEM ARCHITECTURE" />
+
+        <div className="max-w-3xl mb-12">
+          <h2 className="font-display text-4xl sm:text-6xl font-black uppercase tracking-tight leading-[0.95]">
+            THE PLATFORM.
+          </h2>
+          <p className="font-sans text-base sm:text-lg text-[var(--fg-muted)] mt-4 leading-relaxed">
+            One single cohesive clinical design system. Sharp typography, hairlines as architecture, and zero cognitive clutter.
+          </p>
+        </div>
+
+        {/* Real Platform Window Frame */}
+        <div className="border border-[var(--fg)] bg-[var(--bg-elevated)] shadow-2xl">
+          {/* Window Chrome Header */}
+          <div className="border-b border-[var(--border)] px-6 py-4 flex items-center justify-between bg-[var(--bg)] font-mono text-xs">
+            <div className="flex items-center gap-3">
+              <span className="w-2.5 h-2.5 bg-[var(--fg)] inline-block" />
+              <strong className="tracking-widest">SANJEEVANI // CLINICAL CONSOLE v2.0</strong>
+            </div>
+            <div className="hidden sm:flex items-center gap-6 text-[var(--fg-muted)]">
+              <span>PATIENT: RAMESH KUMAR</span>
+              <span>MRN: 94812</span>
+              <span className="text-[var(--fg)] font-bold">STATUS: ADHERENT</span>
+            </div>
+          </div>
+
+          {/* Window Body Grid */}
+          <div className="p-6 sm:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 font-mono text-xs">
+            <div className="lg:col-span-4 border border-[var(--border)] p-6 space-y-4 bg-[var(--bg)]">
+              <div className="border-b border-[var(--border)] pb-2 flex items-center justify-between text-[11px] text-[var(--fg-muted)]">
+                <span>01 // ACTIVE REGIMEN</span>
+                <span>2 MEDICATIONS</span>
+              </div>
+              <div className="space-y-3 font-sans">
+                <div className="border-b border-[var(--border)]/60 pb-2">
+                  <div className="font-bold text-sm">Metformin 500mg</div>
+                  <div className="font-mono text-[11px] text-[var(--fg-muted)]">1-0-1 (Post-Meal) · 30 Days · Rx #491</div>
+                </div>
+                <div className="border-b border-[var(--border)]/60 pb-2">
+                  <div className="font-bold text-sm">Atorvastatin 20mg</div>
+                  <div className="font-mono text-[11px] text-[var(--fg-muted)]">0-0-1 (Bedtime) · 30 Days · Rx #491</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="lg:col-span-4 border border-[var(--border)] p-6 space-y-4 bg-[var(--bg)]">
+              <div className="border-b border-[var(--border)] pb-2 flex items-center justify-between text-[11px] text-[var(--fg-muted)]">
+                <span>02 // PHARMACOLOGICAL GUARD</span>
+                <span className="text-emerald-600 font-bold">ZERO CONFLICT</span>
+              </div>
+              <div className="space-y-2 font-sans text-xs text-[var(--fg-muted)]">
+                <p>-- Cross-referenced against 14-day history.</p>
+                <p>-- eGFR: 78 mL/min (Cleared for Metformin titration).</p>
+                <p>-- Known Allergy: Penicillin (Flagged on Beta-Lactam class).</p>
+              </div>
+            </div>
+
+            <div className="lg:col-span-4 border border-[var(--border)] p-6 space-y-4 bg-[var(--bg)]">
+              <div className="border-b border-[var(--border)] pb-2 flex items-center justify-between text-[11px] text-[var(--fg-muted)]">
+                <span>03 // DISPENSARY SYNC</span>
+                <span>CENTRAL QUEUE</span>
+              </div>
+              <div className="space-y-2 font-mono text-[11px]">
+                <div className="flex justify-between">
+                  <span>DISPENSE STATUS:</span>
+                  <span className="font-bold text-[var(--fg)]">READY</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>SAFETY LOCK:</span>
+                  <span className="font-bold text-[var(--fg)]">AUTHORIZED</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>SHA-256 HASH:</span>
+                  <span className="text-[var(--fg-muted)]">8f2a...c014</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Window Footer */}
+          <div className="border-t border-[var(--border)] px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[var(--bg)] font-mono text-xs">
+            <span className="text-[var(--fg-muted)]">
+              CONNECTED WORKSTATIONS: RECEPTION · DOCTOR · PHARMACY · LAB · PATIENT
+            </span>
+            <Link
+              href="/login"
+              className="font-bold underline underline-offset-4 hover:opacity-70 transition-opacity"
+            >
+              [ LAUNCH FULL CLINICAL PROTOCOL → ]
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 08 // INSTITUTIONAL TRUST & SOVEREIGN PROTOCOL ── */}
+      <section id="protocol" className="px-6 md:px-12 py-20 sm:py-32 max-w-7xl mx-auto border-b border-[var(--border)]">
+        <SectionEyebrow index="07" label="SECURITY &amp; COMPLIANCE" />
+
+        <div className="max-w-3xl mb-16">
+          <h2 className="font-display text-4xl sm:text-6xl font-black uppercase tracking-tight leading-[0.95]">
+            SOVEREIGN TECHNICAL ARCHITECTURE.
+          </h2>
+          <p className="font-sans text-base sm:text-lg text-[var(--fg-muted)] mt-4 leading-relaxed">
+            Healthcare systems demand indisputable legal auditability and strict data boundaries.
+            Sanjeevani is engineered from the ground up to prevent unauthorized role elevation, data leakage, and unverified dispensing.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 border-t border-l border-[var(--border)]">
+          {[
+            {
+              title: "IMMUTABLE AUDIT LOGS",
+              desc: "Every prescription sign-off, dispense authorization, and dose mark is hashed with SHA-256 and written to append-only database logs.",
+            },
+            {
+              title: "STRICT ZERO-TRUST RBAC",
+              desc: "Patients cannot access physician queues. Doctors cannot dispense without pharmacy credentialing. Role boundaries enforced by session tokens.",
+            },
+            {
+              title: "5-MINUTE QR ACCESS TOKENS",
+              desc: "Patients generate short-lived, single-use QR tokens that grant visiting emergency physicians read-only access that expires automatically.",
+            },
+            {
+              title: "LOCAL INFERENCE PRIVACY",
+              desc: "Sensitive OCR and clinical extraction tasks run on private instances without exposing Protected Health Information (PHI) to public APIs.",
+            },
+            {
+              title: "DISHA & ABDM COMPLIANT",
+              desc: "Full compatibility with Indian digital health data privacy standards (DISHA) and Ayushman Bharat Digital Mission protocol architectures.",
+            },
+            {
+              title: "OFFLINE PWA RESILIENCE",
+              desc: "Core dose schedules and medication reminder alarms continue to function seamlessly even in remote clinic areas without internet connectivity.",
+            },
+          ].map((item, idx) => (
+            <div key={idx} className="p-8 border-b border-r border-[var(--border)] space-y-3">
+              <span className="font-mono text-xs font-bold text-[var(--fg-muted)]">
+                0{idx + 1} //
+              </span>
+              <h3 className="font-display text-lg font-bold uppercase tracking-tight">
+                {item.title}
+              </h3>
+              <p className="font-sans text-xs text-[var(--fg-muted)] leading-relaxed">
+                {item.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── 09 // CLINIC ONBOARDING INTAKE SECTION ── */}
+      <section className="px-6 md:px-12 py-20 sm:py-32 max-w-7xl mx-auto border-b border-[var(--border)]">
+        <SectionEyebrow index="08" label="CLINICAL DEPLOYMENT" />
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+          <div className="lg:col-span-5 space-y-6">
+            <h2 className="font-display text-4xl sm:text-6xl font-black uppercase tracking-tight leading-[0.95]">
+              DEPLOY SANJEEVANI IN YOUR CLINIC.
+            </h2>
+            <p className="font-sans text-base sm:text-lg text-[var(--fg-muted)] leading-relaxed">
+              Connect your front desk, consultation rooms, dispensary, and pathology laboratory into one cohesive clinical backbone.
+              Setup takes less than 24 hours with zero hardware replacement.
+            </p>
+            <div className="border border-[var(--border)] p-6 space-y-2 font-mono text-xs text-[var(--fg-muted)]">
+              <div>-- ZERO PER-SEAT SOFTWARE TAX</div>
+              <div>-- INSTANT WEB PWA ACCESS (ZERO APP STORE INSTALL)</div>
+              <div>-- INTEGRATED WHATSAPP REMINDER DISPATCH</div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-7">
             <ClinicAccessForm />
           </div>
         </div>
       </section>
 
-      {/* ── FOOTER ── */}
-      <footer className="border-t border-[var(--border)] bg-[var(--bg-elevated)] px-6 md:px-12 py-16 text-xs text-[var(--fg-muted)]">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
-          <div className="lg:col-span-2 space-y-3">
-            <div className="flex items-center gap-2.5 font-display text-lg font-black text-[var(--fg)]">
-              <div className="w-7 h-7 rounded-lg bg-[var(--sanjeevani)] text-[#0B1715] flex items-center justify-center font-bold text-xs">
-                S
-              </div>
-              <span>SANJEEVANI HEALTHCARE NETWORK</span>
-            </div>
-            <p className="text-xs leading-relaxed max-w-sm">
-              The unified clinical operating system connecting patients, doctors, labs, pharmacies, and hospitals on an immutable care mesh.
-            </p>
-            <p className="font-mono text-[10px] text-[var(--fg-muted)]">
-              ABDM Certified • DISHA &amp; HIPAA Compliant • ISO 27001 Data Architecture
-            </p>
-          </div>
-
-          <div>
-            <p className="font-mono text-[11px] uppercase font-bold text-[var(--fg)] mb-3">Portals</p>
-            <ul className="space-y-2 font-mono text-[11px]">
-              <li><Link href="/dashboard" className="hover:text-[var(--fg)]">Patient Care Portal</Link></li>
-              <li><Link href="/doctor" className="hover:text-[var(--fg)]">Doctor Command Center</Link></li>
-              <li><Link href="/pharmacy" className="hover:text-[var(--fg)]">Dispensary Pharmacy</Link></li>
-              <li><Link href="/lab" className="hover:text-[var(--fg)]">Pathology Laboratory</Link></li>
-              <li><Link href="/reception" className="hover:text-[var(--fg)]">Hospital Front Desk</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <p className="font-mono text-[11px] uppercase font-bold text-[var(--fg)] mb-3">Ecosystem</p>
-            <ul className="space-y-2 font-mono text-[11px]">
-              <li><a href="#ecosystem" className="hover:text-[var(--fg)]">The Connective Tissue</a></li>
-              <li><a href="#care-journey" className="hover:text-[var(--fg)]">6-Stage Care Journey</a></li>
-              <li><a href="#intelligence" className="hover:text-[var(--fg)]">Intelligence Layer</a></li>
-              <li><a href="#safety" className="hover:text-[var(--fg)]">Safety Infrastructure</a></li>
-              <li><a href="#connect-facility" className="hover:text-[var(--fg)]">Connect Facility</a></li>
-            </ul>
-          </div>
-
-          <div>
-            <p className="font-mono text-[11px] uppercase font-bold text-[var(--fg)] mb-3">Authentication</p>
-            <ul className="space-y-2 font-mono text-[11px]">
-              <li><Link href="/login" className="hover:text-[var(--fg)]">Unified Staff Sign In</Link></li>
-              <li><Link href="/settings" className="hover:text-[var(--fg)]">Preferences &amp; Council Registration</Link></li>
-              <li><Link href="/passport" className="hover:text-[var(--fg)]">Universal Health Passport</Link></li>
-            </ul>
-          </div>
+      {/* ── 10 // FINAL MONUMENTAL STATEMENT & CALL TO ACTION ── */}
+      <section className="px-6 md:px-12 py-24 sm:py-40 max-w-7xl mx-auto text-center space-y-12">
+        <div className="font-mono text-xs font-bold tracking-[0.3em] uppercase text-[var(--fg-muted)]">
+          09 // THE CODA
         </div>
 
-        <div className="max-w-7xl mx-auto pt-8 border-t border-[var(--border)] flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-[10px]">
-          <div>© {new Date().getFullYear()} SANJEEVANI HEALTH MESH. ALL RIGHTS RESERVED.</div>
-          <div className="flex items-center gap-6">
-            <span>DISHA / HIPAA / ABDM READY</span>
-            <span>SHA-256 CLINICAL LEDGER</span>
+        <h2 className="font-display font-black text-4xl sm:text-7xl lg:text-9xl uppercase tracking-tighter leading-[0.9]">
+          HEALTHCARE
+          <span className="block">SHOULD FEEL</span>
+          <span className="block text-[var(--bg)] bg-[var(--fg)] px-4 py-1 inline-block mt-2">
+            LIKE ONE SYSTEM.
+          </span>
+        </h2>
+
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto">
+          <Link
+            href="/login"
+            className="w-full sm:w-auto px-10 py-5 bg-[var(--fg)] text-[var(--bg)] font-mono text-xs font-bold uppercase tracking-widest hover:opacity-85 transition-opacity flex items-center justify-center gap-3 rounded-none cursor-pointer"
+          >
+            <span>ENTER SANJEEVANI →</span>
+          </Link>
+          <Link
+            href="/dashboard"
+            className="w-full sm:w-auto px-10 py-5 border border-[var(--border)] hover:border-[var(--fg)] font-mono text-xs font-bold uppercase tracking-widest transition-colors rounded-none"
+          >
+            [ PATIENT PREVIEW ]
+          </Link>
+        </div>
+      </section>
+
+      {/* ── FOOTER (SWISS BRUTALIST 1PX RULES) ── */}
+      <footer className="border-t border-[var(--border)] py-12 px-6 md:px-12 font-mono text-xs text-[var(--fg-muted)]">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="flex items-center gap-3 font-display font-bold text-sm text-[var(--fg)]">
+            <span className="w-4 h-4 bg-[var(--fg)] text-[var(--bg)] flex items-center justify-center text-[10px]">
+              S
+            </span>
+            <span>SANJEEVANI HEALTHCARE INFRASTRUCTURE</span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-6 text-[11px]">
+            <span>SHA-256 PROTOCOL LOGS</span>
+            <span>•</span>
+            <span>DISHA / ABDM COMPLIANT</span>
+            <span>•</span>
+            <span>ZERO-KNOWLEDGE PASSPORT</span>
+            <span>•</span>
+            <span>© 2026 SANJEEVANI MESH</span>
           </div>
         </div>
       </footer>

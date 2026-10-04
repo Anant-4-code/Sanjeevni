@@ -5,51 +5,41 @@
 @tailwind utilities;
 
 :root {
-  --bg: #F4F5F0;
+  --bg: #F8F7F4;
   --bg-elevated: #FFFFFF;
-  --bg-muted: #E8EAE3;
-  --fg: #0B1715;
-  --fg-muted: #53625E;
-  --border: #D8DCD5;
-  --accent: #0B1715;
+  --bg-muted: #EFECE6;
+  --fg: #0F172A;
+  --fg-muted: #64748B;
+  --border: #E2E8F0;
+  --accent: #0F172A;
   --accent-foreground: #FFFFFF;
-  --sanjeevani: #4FAF91;
-  --sanjeevani-glow: rgba(79, 175, 145, 0.25);
-  --signal: #D7A84A;
-  --signal-glow: rgba(215, 168, 74, 0.25);
-  --surface: #FFFFFF;
   --warn: #DC2626;
   --warn-bg: #FEF2F2;
   --warn-border: #FCA5A5;
-  --safe: #4FAF91;
-  --safe-bg: #EAF7F3;
-  --safe-border: #A3DFC9;
-  --unverified: #D7A84A;
-  --unverified-bg: #FDF8ED;
-  --unverified-border: #F2D59A;
+  --safe: #059669;
+  --safe-bg: #ECFDF5;
+  --safe-border: #6EE7B7;
+  --unverified: #D97706;
+  --unverified-bg: #FFFBEB;
+  --unverified-border: #FCD34D;
 }
 
 [data-theme="dark"], .dark {
-  --bg: #07110F;
-  --bg-elevated: #0E1A17;
-  --bg-muted: #152622;
-  --fg: #F1F4EF;
-  --fg-muted: #9BA9A4;
-  --border: #1D332D;
-  --accent: #F1F4EF;
-  --accent-foreground: #07110F;
-  --sanjeevani: #62C7A4;
-  --sanjeevani-glow: rgba(98, 199, 164, 0.3);
-  --signal: #D8B65C;
-  --signal-glow: rgba(216, 182, 92, 0.3);
-  --surface: #0E1A17;
+  --bg: #090D16;
+  --bg-elevated: #111827;
+  --bg-muted: #1F2937;
+  --fg: #F9FAFB;
+  --fg-muted: #9CA3AF;
+  --border: #1F2937;
+  --accent: #F9FAFB;
+  --accent-foreground: #090D16;
   --warn: #EF4444;
   --warn-bg: #450A0A;
   --warn-border: #991B1B;
-  --safe: #62C7A4;
+  --safe: #10B981;
   --safe-bg: #064E3B;
   --safe-border: #047857;
-  --unverified: #D8B65C;
+  --unverified: #F59E0B;
   --unverified-bg: #451A03;
   --unverified-border: #B45309;
 }
@@ -119,47 +109,3 @@ body {
 /* Utility for hiding scrollbar */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-/* Living Healthcare Ecosystem Keyframes */
-@keyframes network-pulse {
-  0%, 100% { transform: scale(1); opacity: 0.9; }
-  50% { transform: scale(1.05); opacity: 1; }
-}
-
-@keyframes signal-glow {
-  0%, 100% { filter: drop-shadow(0 0 6px rgba(79, 175, 145, 0.35)); }
-  50% { filter: drop-shadow(0 0 18px rgba(79, 175, 145, 0.75)); }
-}
-
-@keyframes gold-signal-glow {
-  0%, 100% { filter: drop-shadow(0 0 6px rgba(215, 168, 74, 0.35)); }
-  50% { filter: drop-shadow(0 0 18px rgba(215, 168, 74, 0.75)); }
-}
-
-@keyframes float-subtle {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-5px); }
-}
-
-@keyframes dash-flow {
-  to {
-    stroke-dashoffset: -40;
-  }
-}
-
-.animate-float {
-  animation: float-subtle 4s ease-in-out infinite;
-}
-
-.animate-dash-flow {
-  stroke-dasharray: 6 6;
-  animation: dash-flow 1.5s linear infinite;
-}
-
-.animate-signal-glow {
-  animation: signal-glow 3s ease-in-out infinite;
-}
-
-.animate-gold-glow {
-  animation: gold-signal-glow 3s ease-in-out infinite;
-}
