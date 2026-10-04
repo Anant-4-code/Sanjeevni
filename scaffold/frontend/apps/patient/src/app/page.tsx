@@ -25,7 +25,7 @@ function SectionEyebrow({ index, label }: { index: string; label: string }) {
   return (
     <div className="flex items-center gap-3 mb-6">
       <span className="font-mono text-[11px] font-bold tracking-[0.25em] text-[var(--fg-muted)]">
-        {index} //
+        {index} —
       </span>
       <span className="font-mono text-[11px] font-bold tracking-[0.2em] uppercase text-[var(--fg-muted)]">
         {label}
@@ -100,7 +100,7 @@ function ClinicAccessForm() {
           onClick={() => { setSubmitted(false); setName(""); setContact(""); setClinic(""); }}
           className="font-mono text-xs uppercase tracking-widest underline underline-offset-4 hover:opacity-70 transition-opacity"
         >
-          [ Submit Another Clinic Request ]
+          Submit Another Clinic Request →
         </button>
       </div>
     );
@@ -112,13 +112,13 @@ function ClinicAccessForm() {
         <span className="font-mono text-xs uppercase tracking-widest text-[var(--fg-muted)]">
           CLINICAL INTAKE DISPATCH
         </span>
-        <span className="font-mono text-xs text-[var(--fg-muted)]">SECURE // ENCRYPTED</span>
+        <span className="font-mono text-xs text-[var(--fg-muted)]">SECURE — ENCRYPTED</span>
       </div>
 
       <div className="space-y-6">
         <div className="space-y-2">
           <label className="block font-mono text-[11px] uppercase tracking-widest text-[var(--fg-muted)]">
-            01 // Full Name &amp; Title *
+            01. Full Name &amp; Title *
           </label>
           <input
             type="text"
@@ -132,7 +132,7 @@ function ClinicAccessForm() {
 
         <div className="space-y-2">
           <label className="block font-mono text-[11px] uppercase tracking-widest text-[var(--fg-muted)]">
-            02 // Institutional Email or Direct Phone *
+            02. Institutional Email or Direct Phone *
           </label>
           <input
             type="text"
@@ -146,7 +146,7 @@ function ClinicAccessForm() {
 
         <div className="space-y-2">
           <label className="block font-mono text-[11px] uppercase tracking-widest text-[var(--fg-muted)]">
-            03 // Hospital, Clinic, or Practice Name
+            03. Hospital, Clinic, or Practice Name
           </label>
           <input
             type="text"
@@ -160,7 +160,7 @@ function ClinicAccessForm() {
 
       {error && (
         <div className="border border-[var(--fg)] p-3 font-mono text-xs uppercase tracking-wider text-[var(--fg)]">
-          [!] Error: {error}
+          Attention: {error}
         </div>
       )}
 
@@ -200,7 +200,7 @@ function EcosystemConvergence() {
     <div className="border border-[var(--border)] p-6 sm:p-12 space-y-8 bg-[var(--bg)]">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--border)] pb-4 gap-2">
         <span className="font-mono text-xs uppercase tracking-widest text-[var(--fg-muted)]">
-          TELEMETRY // CONVERGENCE CHOREOGRAPHY
+          TELEMETRY — CONVERGENCE CHOREOGRAPHY
         </span>
         <span className="font-mono text-[11px] text-[var(--fg-muted)]">
           ACTIVE PARTICIPANT: <strong className="text-[var(--fg)]">{activeNode}</strong>
@@ -226,7 +226,7 @@ function EcosystemConvergence() {
             SANJEEVANI
           </div>
           <div className="font-mono text-[10px] tracking-widest mt-1 opacity-80">
-            SHA-256 MESH // ISO-27001
+            SHA-256 MESH • ISO-27001
           </div>
         </div>
 
@@ -246,7 +246,7 @@ function EcosystemConvergence() {
                 }`}
               >
                 <div className="font-mono text-[10px] uppercase tracking-widest opacity-60 mb-1">
-                  0{nodes.indexOf(node) + 1} //
+                  0{nodes.indexOf(node) + 1}
                 </div>
                 <div className="font-display text-sm sm:text-base font-bold tracking-tight">
                   {node.id}
@@ -274,7 +274,7 @@ function EcosystemConvergence() {
           href="/login"
           className="font-mono text-xs uppercase tracking-widest font-bold inline-flex items-center gap-2 hover:opacity-70 transition-opacity shrink-0"
         >
-          [ ACCESS {activeNode} CONSOLE → ]
+          ACCESS {activeNode} CONSOLE →
         </Link>
       </div>
     </div>
@@ -292,7 +292,7 @@ function PatientJourneySequencer() {
       label: "Zero-Install Patient Entry",
       time: "Minute 00",
       description: "Patient accesses their complete medical vault and care plan via SMS/WhatsApp PWA link without app store friction or account setup delay.",
-      telemetry: "ABDM ID: 91-8472-1082-99 // AUTH: ZERO-KNOWLEDGE PASSPORT",
+      telemetry: "ABDM ID: 91-8472-1082-99 • AUTH: ZERO-KNOWLEDGE PASSPORT",
     },
     {
       num: "02",
@@ -300,7 +300,7 @@ function PatientJourneySequencer() {
       label: "Clinical Triage & History",
       time: "Minute 04",
       description: "Front-desk intake dynamically streams patient vital telemetry and AI severity scoring directly to the attending physician's live triage queue.",
-      telemetry: "TRIAGE SEVERITY: LEVEL 2 // COMPLAINT: POSTPRANDIAL DIZZINESS",
+      telemetry: "TRIAGE SEVERITY: LEVEL 2 • COMPLAINT: POSTPRANDIAL DIZZINESS",
     },
     {
       num: "03",
@@ -308,7 +308,7 @@ function PatientJourneySequencer() {
       label: "Multimodal Lab & Imaging",
       time: "Minute 12",
       description: "Digital test orders route directly to the diagnostic workbench. Critical values (HbA1c, eGFR) auto-flag and append to the physician's review canvas.",
-      telemetry: "BIOMARKER: HBA1C 7.2% -> 6.9% // RADIOLOGY: X-RAY CLEAR",
+      telemetry: "BIOMARKER: HBA1C 7.2% TO 6.9% • RADIOLOGY: X-RAY CLEAR",
     },
     {
       num: "04",
@@ -316,7 +316,7 @@ function PatientJourneySequencer() {
       label: "Guardrail Verification",
       time: "Minute 18",
       description: "Doctor drafts structured medication regimen. Real-time inference checks cross-specialist contraindications and cryptographically signs with SHA-256.",
-      telemetry: "REGIMEN: METFORMIN 500MG (1-0-1) // INTERACTION: ZERO CONFLICT",
+      telemetry: "REGIMEN: METFORMIN 500MG (1-0-1) • INTERACTION: ZERO CONFLICT",
     },
     {
       num: "05",
@@ -324,7 +324,7 @@ function PatientJourneySequencer() {
       label: "Dispensary Safety Lock",
       time: "Minute 25",
       description: "Verified prescription arrives in the Central Pharmacy queue. Pharmacist validates safety lock, dispenses physical medication, and syncs inventory.",
-      telemetry: "PHARMACY DISPENSE LOG: DISP-2026-88 // INVENTORY: -30 UNITS",
+      telemetry: "PHARMACY DISPENSE LOG: DISP-2026-88 • INVENTORY: -30 UNITS",
     },
     {
       num: "06",
@@ -332,7 +332,7 @@ function PatientJourneySequencer() {
       label: "Autonomous Adherence Loop",
       time: "Day 01 - 30",
       description: "Patient daily schedule updates immediately. Missed dose escalation triggers smart caregiver nudges, symptom tracking, and proactive 14-day refill alerts.",
-      telemetry: "COMPLIANCE: 100% // NEXT APPOINTMENT: +14 DAYS AUTOMATED",
+      telemetry: "COMPLIANCE: 100% • NEXT APPOINTMENT: +14 DAYS AUTOMATED",
     },
   ];
 
@@ -371,7 +371,7 @@ function PatientJourneySequencer() {
       <div className="border border-[var(--border)] p-8 sm:p-12 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-[var(--bg)]">
         <div className="lg:col-span-8 space-y-4">
           <div className="font-mono text-xs uppercase tracking-widest text-[var(--fg-muted)]">
-            STAGE 0{activeStep + 1} // {steps[activeStep].id}
+            STAGE 0{activeStep + 1} — {steps[activeStep].id}
           </div>
           <h3 className="font-display text-2xl sm:text-4xl font-black uppercase tracking-tight">
             {steps[activeStep].label}
@@ -583,11 +583,11 @@ export default function LandingPage() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8 font-mono text-[11px] font-bold uppercase tracking-widest text-[var(--fg-muted)]">
-            <a href="#problem" className="hover:text-[var(--fg)] transition-colors">01 // Problem</a>
-            <a href="#ecosystem" className="hover:text-[var(--fg)] transition-colors">02 // Ecosystem</a>
-            <a href="#journey" className="hover:text-[var(--fg)] transition-colors">03 // Journey</a>
-            <a href="#intelligence" className="hover:text-[var(--fg)] transition-colors">04 // Intelligence</a>
-            <a href="#protocol" className="hover:text-[var(--fg)] transition-colors">05 // Protocol</a>
+            <a href="#problem" className="hover:text-[var(--fg)] transition-colors">01 Problem</a>
+            <a href="#ecosystem" className="hover:text-[var(--fg)] transition-colors">02 Ecosystem</a>
+            <a href="#journey" className="hover:text-[var(--fg)] transition-colors">03 Journey</a>
+            <a href="#intelligence" className="hover:text-[var(--fg)] transition-colors">04 Intelligence</a>
+            <a href="#protocol" className="hover:text-[var(--fg)] transition-colors">05 Protocol</a>
           </nav>
 
           {/* Header Controls */}
@@ -626,19 +626,19 @@ export default function LandingPage() {
         {mobileMenuOpen && (
           <div className="md:hidden border-b border-[var(--border)] bg-[var(--bg)] px-6 py-6 space-y-4 font-mono text-xs uppercase tracking-widest animate-in slide-in-from-top-2">
             <a href="#problem" onClick={() => setMobileMenuOpen(false)} className="block py-2 border-b border-[var(--border)]">
-              01 // Problem &amp; Fragmentation
+              01 — Problem &amp; Fragmentation
             </a>
             <a href="#ecosystem" onClick={() => setMobileMenuOpen(false)} className="block py-2 border-b border-[var(--border)]">
-              02 // Ecosystem Participants
+              02 — Ecosystem Participants
             </a>
             <a href="#journey" onClick={() => setMobileMenuOpen(false)} className="block py-2 border-b border-[var(--border)]">
-              03 // Patient Journey
+              03 — Patient Journey
             </a>
             <a href="#intelligence" onClick={() => setMobileMenuOpen(false)} className="block py-2 border-b border-[var(--border)]">
-              04 // Clinical Intelligence
+              04 — Clinical Intelligence
             </a>
             <a href="#protocol" onClick={() => setMobileMenuOpen(false)} className="block py-2 border-b border-[var(--border)]">
-              05 // Trust &amp; Governance
+              05 — Trust &amp; Governance
             </a>
             <div className="pt-2 flex flex-col gap-2">
               <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="py-3 text-center bg-[var(--fg)] text-[var(--bg)] font-bold">
@@ -649,11 +649,11 @@ export default function LandingPage() {
         )}
       </header>
 
-      {/* ── 01 // MONUMENTAL HERO SECTION ── */}
+      {/* ── 01 HERO SECTION ── */}
       <section className="px-6 md:px-12 pt-16 sm:pt-24 pb-20 max-w-7xl mx-auto border-b border-[var(--border)]">
         <div className="space-y-6">
           <div className="font-mono text-xs sm:text-sm font-bold tracking-[0.3em] uppercase text-[var(--fg-muted)]">
-            01 // SANJEEVANI ARCHITECTURE
+            01 — SANJEEVANI ARCHITECTURE
           </div>
 
           <h1 className="font-display font-black text-5xl sm:text-7xl lg:text-9xl uppercase tracking-tighter leading-[0.88] select-none">
@@ -684,7 +684,7 @@ export default function LandingPage() {
                 href="#ecosystem"
                 className="w-full py-4 px-8 border border-[var(--border)] hover:border-[var(--fg)] font-mono text-xs uppercase tracking-widest text-center transition-colors rounded-none"
               >
-                [ EXPLORE PARTICIPANTS ]
+                EXPLORE PARTICIPANTS
               </a>
             </div>
           </div>
@@ -780,7 +780,7 @@ export default function LandingPage() {
                     : "border-[var(--border)] text-[var(--fg-muted)] hover:text-[var(--fg)]"
                 }`}
               >
-                [ FRAGMENTED SILOS ]
+                FRAGMENTED SILOS
               </button>
               <button
                 onClick={() => setProblemConnected(true)}
@@ -790,7 +790,7 @@ export default function LandingPage() {
                     : "border-[var(--border)] text-[var(--fg-muted)] hover:text-[var(--fg)]"
                 }`}
               >
-                [ SANJEEVANI CONNECTED ]
+                SANJEEVANI CONNECTED
               </button>
             </div>
           </div>
@@ -831,7 +831,7 @@ export default function LandingPage() {
                 <span className="font-mono text-xs tracking-widest uppercase">
                   UNIFIED CLINICAL BACKBONE ACTIVE
                 </span>
-                <span className="font-mono text-xs">LATENCY: &lt;15MS // 100% AUDITABLE</span>
+                <span className="font-mono text-xs">LATENCY: &lt;15MS • 100% AUDITABLE</span>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 text-center font-display font-black text-base sm:text-xl tracking-tight">
@@ -930,7 +930,7 @@ export default function LandingPage() {
             >
               <div className="space-y-3">
                 <span className="font-mono text-xs font-bold text-[var(--fg-muted)]">
-                  {item.num} //
+                  {item.num}
                 </span>
                 <h3 className="font-display text-2xl font-black uppercase tracking-tight">
                   {item.title}
@@ -944,7 +944,7 @@ export default function LandingPage() {
               </div>
 
               <div className="font-mono text-[10px] uppercase tracking-widest text-[var(--fg-muted)] pt-4 border-t border-[var(--border)]">
-                SPECIFICATION // AI-VERIFIED
+                SPECIFICATION — AI-VERIFIED
               </div>
             </div>
           ))}
@@ -970,7 +970,7 @@ export default function LandingPage() {
           <div className="border-b border-[var(--border)] px-6 py-4 flex items-center justify-between bg-[var(--bg)] font-mono text-xs">
             <div className="flex items-center gap-3">
               <span className="w-2.5 h-2.5 bg-[var(--fg)] inline-block" />
-              <strong className="tracking-widest">SANJEEVANI // CLINICAL CONSOLE v2.0</strong>
+              <strong className="tracking-widest">SANJEEVANI — CLINICAL CONSOLE v2.0</strong>
             </div>
             <div className="hidden sm:flex items-center gap-6 text-[var(--fg-muted)]">
               <span>PATIENT: RAMESH KUMAR</span>
@@ -983,7 +983,7 @@ export default function LandingPage() {
           <div className="p-6 sm:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 font-mono text-xs">
             <div className="lg:col-span-4 border border-[var(--border)] p-6 space-y-4 bg-[var(--bg)]">
               <div className="border-b border-[var(--border)] pb-2 flex items-center justify-between text-[11px] text-[var(--fg-muted)]">
-                <span>01 // ACTIVE REGIMEN</span>
+                <span>01 — ACTIVE REGIMEN</span>
                 <span>2 MEDICATIONS</span>
               </div>
               <div className="space-y-3 font-sans">
@@ -1000,7 +1000,7 @@ export default function LandingPage() {
 
             <div className="lg:col-span-4 border border-[var(--border)] p-6 space-y-4 bg-[var(--bg)]">
               <div className="border-b border-[var(--border)] pb-2 flex items-center justify-between text-[11px] text-[var(--fg-muted)]">
-                <span>02 // PHARMACOLOGICAL GUARD</span>
+                <span>02 — PHARMACOLOGICAL GUARD</span>
                 <span className="text-emerald-600 font-bold">ZERO CONFLICT</span>
               </div>
               <div className="space-y-2 font-sans text-xs text-[var(--fg-muted)]">
@@ -1012,7 +1012,7 @@ export default function LandingPage() {
 
             <div className="lg:col-span-4 border border-[var(--border)] p-6 space-y-4 bg-[var(--bg)]">
               <div className="border-b border-[var(--border)] pb-2 flex items-center justify-between text-[11px] text-[var(--fg-muted)]">
-                <span>03 // DISPENSARY SYNC</span>
+                <span>03 — DISPENSARY SYNC</span>
                 <span>CENTRAL QUEUE</span>
               </div>
               <div className="space-y-2 font-mono text-[11px]">
@@ -1041,7 +1041,7 @@ export default function LandingPage() {
               href="/login"
               className="font-bold underline underline-offset-4 hover:opacity-70 transition-opacity"
             >
-              [ LAUNCH FULL CLINICAL PROTOCOL → ]
+              LAUNCH FULL CLINICAL PROTOCOL →
             </Link>
           </div>
         </div>
@@ -1090,7 +1090,7 @@ export default function LandingPage() {
           ].map((item, idx) => (
             <div key={idx} className="p-8 border-b border-r border-[var(--border)] space-y-3">
               <span className="font-mono text-xs font-bold text-[var(--fg-muted)]">
-                0{idx + 1} //
+                0{idx + 1}
               </span>
               <h3 className="font-display text-lg font-bold uppercase tracking-tight">
                 {item.title}
@@ -1129,10 +1129,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── 10 // FINAL MONUMENTAL STATEMENT & CALL TO ACTION ── */}
+      {/* ── 10 FINAL MONUMENTAL STATEMENT & CALL TO ACTION ── */}
       <section className="px-6 md:px-12 py-24 sm:py-40 max-w-7xl mx-auto text-center space-y-12">
         <div className="font-mono text-xs font-bold tracking-[0.3em] uppercase text-[var(--fg-muted)]">
-          09 // THE CODA
+          09 — THE CODA
         </div>
 
         <h2 className="font-display font-black text-4xl sm:text-7xl lg:text-9xl uppercase tracking-tighter leading-[0.9]">
@@ -1154,7 +1154,7 @@ export default function LandingPage() {
             href="/dashboard"
             className="w-full sm:w-auto px-10 py-5 border border-[var(--border)] hover:border-[var(--fg)] font-mono text-xs font-bold uppercase tracking-widest transition-colors rounded-none"
           >
-            [ PATIENT PREVIEW ]
+            PATIENT PREVIEW
           </Link>
         </div>
       </section>
