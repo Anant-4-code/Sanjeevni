@@ -28,6 +28,7 @@ import {
 
 import { useAuth } from "@/context/AuthContext";
 import { API_BASE } from "@/lib/api";
+import MedicalReportRenderer from "@/components/MedicalReportRenderer";
 
 export default function DoctorOCRAndXrayPage() {
   const params = useParams();
@@ -716,12 +717,11 @@ export default function DoctorOCRAndXrayPage() {
                 <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-4/5" />
               </div>
             ) : aiImpression ? (
-              <div className="p-5 rounded-2xl bg-gradient-to-b from-purple-50/40 to-transparent dark:from-purple-950/10 dark:to-transparent border border-purple-200/80 dark:border-purple-900/40 space-y-3">
-                <div className="prose prose-sm dark:prose-invert max-w-none text-xs leading-relaxed text-[#0F172A] dark:text-gray-200 whitespace-pre-line font-sans">
-                  {aiImpression}
-                </div>
+              <div className="p-5 rounded-2xl bg-white dark:bg-[#111827] border border-purple-200/80 dark:border-purple-900/40 shadow-xs space-y-3">
+                <MedicalReportRenderer content={aiImpression} />
               </div>
             ) : (
+
               <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-900/40 border border-[#E2E8F0] dark:border-[#1F2937] text-center space-y-2">
                 <p className="text-xs text-[#64748B] dark:text-gray-400">
                   Ready to evaluate fracture alignment, physis involvement, and trauma stabilization protocol.

@@ -1367,10 +1367,28 @@ To ensure a systematic, risk-managed progression from the current prototype to a
   - [`doctor.py`](file:///c:/PROJECTS/sanjeevani-project/scaffold/backend/app/routers/doctor.py#L585-L670)
   - [`ocr-xray/page.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/app/doctor/patient/%5BpatientId%5D/ocr-xray/page.tsx#L460-L650)
   - [`doctor/layout.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/app/doctor/layout.tsx#L6)
-- **Description:** Complete end-to-end scanning, radiograph rendering, and interactive clinical clarifying questions for maximum diagnostic accuracy.
+---
+
+### BUG-UI-FORMAT-01: AI Output Rendered as Raw Messy Markdown Text Instead of Styled Clinical Tables & Callouts ✅ FIXED
+- **Fix Status:** ✅ **FIXED** — Commit `1685b2c` and working tree | [`MedicalReportRenderer.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/components/MedicalReportRenderer.tsx), [`ocr-xray/page.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/app/doctor/patient/%5BpatientId%5D/ocr-xray/page.tsx#L720)
+- **Fix Applied:**
+  1. **Medical Report Markdown Parser (`MedicalReportRenderer.tsx`):**
+     - Transformed raw markdown tables (`| Finding | Interpretation |`) into responsive HTML `<table>` elements with styled headers, alternating row fills, and column padding.
+     - Section headings (`## 1. RADIOLOGICAL IMPRESSION`) rendered with purple numbered badges (`1`, `2`, `3`, `4`) and bold typography.
+     - Bottom line / conclusions rendered in dedicated amber callout cards with warning icons.
+     - Blockquotes (`> Note: ...`) rendered in dedicated informational callout cards.
+     - Bold text parsed with `<strong>` tags without displaying raw `**` asterisks.
+     - Raw HTML tags like `<br>` sanitized into clean bullet dividers (`•`).
+  2. **Integration into X-Ray Console:**
+     - Replaced plaintext `whitespace-pre-line` container in `ocr-xray/page.tsx` with `<MedicalReportRenderer content={aiImpression} />`.
+- **Location:**
+  - [`MedicalReportRenderer.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/components/MedicalReportRenderer.tsx)
+  - [`ocr-xray/page.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/app/doctor/patient/%5BpatientId%5D/ocr-xray/page.tsx#L720)
+- **Description:** Converted messy unparsed AI text into an executive clinical report with styled tables, badges, and callout cards.
 
 ---
 *End of Audit Document — Generated for Sanjeevani Master Engineering Architecture.*
+
 
 
 
