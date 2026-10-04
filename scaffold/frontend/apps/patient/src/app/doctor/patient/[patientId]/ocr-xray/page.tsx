@@ -19,6 +19,11 @@ import {
   Activity,
   Stethoscope,
   ArrowRight,
+  Upload,
+  Image as ImageIcon,
+  Check,
+  HelpCircle,
+  SlidersHorizontal,
 } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
@@ -46,24 +51,38 @@ export default function DoctorOCRAndXrayPage() {
   });
 
   const [xrayDetections, setXrayDetections] = useState<any[]>([]);
+  const [selectedXrayImage, setSelectedXrayImage] = useState<string>("/samples/wrist_xray_sample_1.jpg");
+  const [uploadingXray, setUploadingXray] = useState(false);
+  const [confidenceThreshold, setConfidenceThreshold] = useState<number>(0.20);
   const [aiAssistantLoading, setAiAssistantLoading] = useState(false);
   const [aiImpression, setAiImpression] = useState<string>("");
   const [aiModelUsed, setAiModelUsed] = useState<string>("");
   const [aiQuestion, setAiQuestion] = useState<string>("");
+  const [interactiveQuestions, setInteractiveQuestions] = useState<any[]>([]);
+  const [clarifications, setClarifications] = useState<Record<string, string>>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleQueryAIAssistant = async (customQuestion?: string) => {
+  const handleQueryAIAssistant = async (
+    customQuestion?: string,
+    updatedClarifications?: Record<string, string>,
+    detectionsOverride?: any[]
+  ) => {
     if (!patientId) return;
     setAiAssistantLoading(true);
     try {
       const q = customQuestion !== undefined ? customQuestion : aiQuestion;
+      const clar = updatedClarifications || clarifications;
+      const dets = detectionsOverride || xrayDetections;
+
       const res = await fetch(`${API_BASE}/doctor/xray/ai-assistant`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           patient_id: patientId,
           scan_id: scanInfo?.xray_scan?.scan_id || `scan-${patientId}`,
-          detections: xrayDetections,
+          detections: dets,
           question: q || undefined,
+          clarifications: Object.keys(clar).length > 0 ? clar : undefined,
         }),
       });
       const data = await res.json();
@@ -72,6 +91,9 @@ export default function DoctorOCRAndXrayPage() {
       }
       if (data.model_tier) {
         setAiModelUsed(data.model_tier);
+      }
+      if (data.interactive_questions) {
+        setInteractiveQuestions(data.interactive_questions);
       }
       if (customQuestion === undefined) {
         setAiQuestion("");
@@ -82,6 +104,62 @@ export default function DoctorOCRAndXrayPage() {
       setAiAssistantLoading(false);
     }
   };
+
+  const handleUploadFile = async (file: File) => {
+    if (!file) return;
+    setUploadingXray(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch(
+        `${API_BASE}/doctor/xray/detect-upload?confidence_threshold=${confidenceThreshold}&patient_id=${patientId}`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+      const data = await res.json();
+      if (data.status === "success") {
+        if (data.image_url) {
+          setSelectedXrayImage(data.image_url);
+        }
+        if (data.detections) {
+          setXrayDetections(data.detections);
+          handleQueryAIAssistant(undefined, undefined, data.detections);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to upload and detect X-ray:", err);
+    } finally {
+      setUploadingXray(false);
+    }
+  };
+
+  const handleSelectSample = async (samplePath: string) => {
+    setUploadingXray(true);
+    setSelectedXrayImage(samplePath);
+    try {
+      const res = await fetch(samplePath);
+      const blob = await res.blob();
+      const file = new File([blob], samplePath.split("/").pop() || "sample.jpg", {
+        type: blob.type || "image/jpeg",
+      });
+      await handleUploadFile(file);
+    } catch (err) {
+      console.error("Failed to load sample:", err);
+      setUploadingXray(false);
+    }
+  };
+
+  const handleAnswerClarification = (questionId: string, answerText: string) => {
+    const updated = { ...clarifications, [questionId]: answerText };
+    setClarifications(updated);
+    handleQueryAIAssistant(
+      `Physician confirmed finding: ${answerText}. Please calibrate risk assessment and immobilization protocol.`,
+      updated
+    );
+  };
+
 
   const fetchScans = async () => {
     if (!patientId) return;
@@ -146,38 +224,58 @@ export default function DoctorOCRAndXrayPage() {
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const drawDetections = (scaleX = 1, scaleY = 1) => {
+        xrayDetections.forEach((det) => {
+          const x = (det.box.x || 0) * scaleX;
+          const y = (det.box.y || 0) * scaleY;
+          const w = (det.box.w || 0) * scaleX;
+          const h = (det.box.h || 0) * scaleY;
+          const isFracture = det.label.toLowerCase().includes("fracture");
 
-      // Draw simulated radiology dark background
-      ctx.fillStyle = "#0A0D14";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.strokeStyle = isFracture ? "#EF4444" : "#F59E0B";
+          ctx.lineWidth = 2.5;
+          ctx.setLineDash([4, 2]);
+          ctx.strokeRect(x, y, w, h);
+          ctx.setLineDash([]);
 
-      // Draw bone silhouette approximation
-      ctx.fillStyle = "#1E293B";
-      ctx.beginPath();
-      ctx.ellipse(canvas.width / 2, canvas.height / 2, 90, 160, Math.PI / 12, 0, Math.PI * 2);
-      ctx.fill();
+          // Label background
+          ctx.fillStyle = isFracture ? "#EF4444" : "#F59E0B";
+          const labelText = `${det.label.toUpperCase()} (${Math.round(det.confidence * 100)}%)`;
+          ctx.font = "bold 11px Inter, sans-serif";
+          const textWidth = ctx.measureText(labelText).width + 10;
+          const labelY = Math.max(0, y - 22);
+          ctx.fillRect(x, labelY, textWidth, 22);
 
-      // Render YOLOv7 Bounding Boxes
-      xrayDetections.forEach((det) => {
-        const { x, y, w, h } = det.box;
-        ctx.strokeStyle = det.label.includes("fracture") ? "#EF4444" : "#F59E0B";
-        ctx.lineWidth = 2.5;
-        ctx.setLineDash([4, 2]);
-        ctx.strokeRect(x, y, w, h);
-        ctx.setLineDash([]);
+          // Label text
+          ctx.fillStyle = "#FFFFFF";
+          ctx.fillText(labelText, x + 5, labelY + 15);
+        });
+      };
 
-        // Label background
-        ctx.fillStyle = det.label.includes("fracture") ? "#EF4444" : "#F59E0B";
-        ctx.fillRect(x, y - 20, w, 20);
-
-        // Label text
-        ctx.fillStyle = "#FFFFFF";
-        ctx.font = "bold 10px Inter, sans-serif";
-        ctx.fillText(`${det.label.toUpperCase()} (${Math.round(det.confidence * 100)}%)`, x + 4, y - 6);
-      });
+      if (selectedXrayImage) {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const scaleX = canvas.width / (img.naturalWidth || canvas.width);
+          const scaleY = canvas.height / (img.naturalHeight || canvas.height);
+          drawDetections(scaleX, scaleY);
+        };
+        img.onerror = () => {
+          ctx.fillStyle = "#0A0D14";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          drawDetections(1, 1);
+        };
+        img.src = selectedXrayImage;
+      } else {
+        ctx.fillStyle = "#0A0D14";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        drawDetections(1, 1);
+      }
     }
-  }, [activeMode, xrayDetections]);
+  }, [activeMode, xrayDetections, selectedXrayImage]);
+
 
   return (
     <div className="space-y-6">
@@ -366,50 +464,94 @@ export default function DoctorOCRAndXrayPage() {
         </div>
       ) : (
         /* ── X-Ray Canvas Overlay View ── */
-        <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-2xl p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#1F2937] pb-3">
+        <div className="bg-white dark:bg-[#111827] border border-[#E2E8F0] dark:border-[#1F2937] rounded-2xl p-6 shadow-xs space-y-5">
+          {/* Hidden File Input for Real Scanning */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,.dcm"
+            className="hidden"
+            onChange={(e) => {
+              if (e.target.files && e.target.files[0]) {
+                handleUploadFile(e.target.files[0]);
+              }
+            }}
+          />
+
+          {/* ── Top Header & Scanning Ingestion Bar ── */}
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-[#E2E8F0] dark:border-[#1F2937] pb-4">
             <div>
               <h3 className="font-bold text-sm text-[#0F172A] dark:text-white flex items-center gap-2">
                 <Bone className="w-4 h-4 text-purple-600" />
                 YOLOv7-p6 Diagnostic Imaging &amp; Fracture Canvas
               </h3>
               <p className="text-xs text-[#64748B] dark:text-gray-400 mt-0.5">
-                Model: `yolov7-p6-bonefracture.onnx` &bull; Region: {scanInfo?.xray_scan?.anatomical_region || "Radiology Scan"}
+                Model: yolov7-p6-bonefracture.onnx &bull; GRAZPEDWRI-DX Clinical Protocol
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            {/* Scan / Upload Actions */}
+            <div className="flex flex-wrap items-center gap-2">
               <button
-                onClick={handleReanalyzeXray}
-                disabled={analyzingXray}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded-xl transition-all shadow-xs"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingXray}
+                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded-xl transition shadow-xs"
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${analyzingXray ? "animate-spin" : ""}`} />
-                {analyzingXray ? "Inference Running..." : "Re-Analyze Scan (YOLOv7)"}
+                <Upload className="w-3.5 h-3.5" />
+                {uploadingXray ? "Scanning Radiograph..." : "Scan / Upload X-Ray"}
               </button>
-              <span className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded-full border ${
+
+              <div className="flex items-center border border-[#E2E8F0] dark:border-[#1F2937] rounded-xl p-0.5 bg-gray-50 dark:bg-gray-800">
+                <button
+                  onClick={() => handleSelectSample("/samples/wrist_xray_sample_1.jpg")}
+                  disabled={uploadingXray}
+                  className="px-2.5 py-1 text-[11px] font-semibold text-[#0F172A] dark:text-gray-200 hover:bg-white dark:hover:bg-gray-700 rounded-lg transition"
+                >
+                  Sample 1: Wrist Fracture
+                </button>
+                <button
+                  onClick={() => handleSelectSample("/samples/wrist_xray_sample_2.jpg")}
+                  disabled={uploadingXray}
+                  className="px-2.5 py-1 text-[11px] font-semibold text-[#0F172A] dark:text-gray-200 hover:bg-white dark:hover:bg-gray-700 rounded-lg transition"
+                >
+                  Sample 2: Pediatric Scan
+                </button>
+              </div>
+
+              <span className={`text-[10px] font-mono font-bold px-2.5 py-1.5 rounded-full border ${
                 xrayDetections.length > 0
                   ? "bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border-rose-200"
                   : "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200"
               }`}>
                 {xrayDetections.length > 0
-                  ? `${xrayDetections.length} FINDING(S) (${Math.round((xrayDetections[0]?.confidence || 0.9) * 100)}%)`
+                  ? `${xrayDetections.length} FINDING(S) (${Math.round((xrayDetections[0]?.confidence || 0.9) * 100)}% CONF)`
                   : "NO ACUTE FRACTURE / NORMAL"}
               </span>
             </div>
           </div>
 
-          <div className="flex flex-col items-center justify-center p-4 bg-[#0A0D14] rounded-2xl border border-gray-800">
+          {/* ── Radiograph Canvas Viewport ── */}
+          <div className="relative flex flex-col items-center justify-center p-4 bg-[#0A0D14] rounded-2xl border border-gray-800 min-h-[380px]">
+            {uploadingXray && (
+              <div className="absolute inset-0 bg-black/70 backdrop-blur-xs flex flex-col items-center justify-center z-20 rounded-2xl gap-2 text-white">
+                <RefreshCw className="w-6 h-6 animate-spin text-purple-400" />
+                <span className="text-xs font-semibold">Running YOLOv7-p6 Fracture Inference...</span>
+              </div>
+            )}
             <canvas
               ref={canvasRef}
-              width={480}
-              height={360}
+              width={540}
+              height={420}
               className="rounded-xl shadow-2xl max-w-full h-auto border border-gray-800"
             />
+            <div className="w-full flex items-center justify-between text-[11px] text-gray-400 pt-2 px-1">
+              <span>Projection: Radiographic AP / Lateral View</span>
+              <span>Model Confidence Filter: {Math.round(confidenceThreshold * 100)}%</span>
+            </div>
           </div>
 
-          {/* Detections List */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+          {/* ── Detected Pathologies List ── */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
             {xrayDetections.map((det, idx) => (
               <div
                 key={idx}
@@ -423,7 +565,7 @@ export default function DoctorOCRAndXrayPage() {
                     </div>
                   )}
                   <div className="text-[10px] text-[#64748B] dark:text-gray-400 font-mono mt-0.5">
-                    Region: {det.box.x}, {det.box.y} &bull; {det.box.w} &times; {det.box.h} px
+                    Region: {Math.round(det.box.x)}, {Math.round(det.box.y)} &bull; {Math.round(det.box.w)} &times; {Math.round(det.box.h)} px
                   </div>
                 </div>
                 <span className="text-xs font-mono font-black text-rose-700 dark:text-rose-400">
@@ -433,8 +575,96 @@ export default function DoctorOCRAndXrayPage() {
             ))}
           </div>
 
+          {/* ── Interactive Clinical Accuracy Clarification Section ── */}
+          <div className="p-4 rounded-2xl bg-[#F8F7F4] dark:bg-gray-900/60 border border-[#E2E8F0] dark:border-[#1F2937] space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <HelpCircle className="w-4 h-4 text-purple-600" />
+                <h4 className="text-xs font-bold text-[#0F172A] dark:text-white">
+                  Clinical Accuracy Questions (Triage Verification)
+                </h4>
+              </div>
+              <span className="text-[10px] font-mono text-[#64748B] dark:text-gray-400">
+                Answer questions below to calibrate diagnostic precision
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {(interactiveQuestions.length > 0 ? interactiveQuestions : [
+                {
+                  id: "q_trauma_mech",
+                  title: "Mechanism of Injury",
+                  prompt: "Was this a ground slip (FOOSH) or high-impact trauma?",
+                  options: [
+                    "Low-energy ground fall (FOOSH)",
+                    "High-energy trauma / MVA",
+                    "Direct blow / sports impact",
+                  ],
+                },
+                {
+                  id: "q_snuffbox",
+                  title: "Anatomic Snuffbox Tenderness",
+                  prompt: "Is there focal tenderness over the anatomic snuffbox (scaphoid occult fracture risk)?",
+                  options: [
+                    "Snuffbox negative (No pain)",
+                    "Snuffbox positive (Exquisite pain)",
+                    "Diffuse wrist swelling",
+                  ],
+                },
+                {
+                  id: "q_neurovascular",
+                  title: "Neurovascular Status",
+                  prompt: "Radial pulse, capillary refill, and median nerve distribution:",
+                  options: [
+                    "Neurovascular intact (Pulse 2+, refill <2s)",
+                    "Median nerve numbness / paresthesia",
+                    "Decreased radial pulse",
+                  ],
+                },
+                {
+                  id: "q_physis",
+                  title: "Physis / Growth Plate Alignment",
+                  prompt: "In pediatric or adolescent imaging, is physis line widened?",
+                  options: [
+                    "Skeletally mature / physis closed",
+                    "Physis open, alignment maintained",
+                    "Physis widened / Salter-Harris II suspect",
+                  ],
+                },
+              ]).map((q) => (
+                <div key={q.id} className="p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 space-y-2">
+                  <div className="text-[11px] font-bold text-[#0F172A] dark:text-white">
+                    {q.title}
+                  </div>
+                  <p className="text-[10px] text-[#64748B] dark:text-gray-400">
+                    {q.prompt}
+                  </p>
+                  <div className="flex flex-wrap gap-1.5 pt-0.5">
+                    {q.options.map((opt: string) => {
+                      const isSelected = clarifications[q.id] === opt;
+                      return (
+                        <button
+                          key={opt}
+                          onClick={() => handleAnswerClarification(q.id, opt)}
+                          className={`text-[10px] px-2.5 py-1 rounded-lg border transition flex items-center gap-1 ${
+                            isSelected
+                              ? "bg-purple-600 text-white border-purple-600 font-bold"
+                              : "bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-[#0F172A] dark:text-gray-200 hover:border-purple-400"
+                          }`}
+                        >
+                          {isSelected && <Check className="w-3 h-3" />}
+                          <span>{opt}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* ── AI Radiological Specialist Assistant Panel ── */}
-          <div className="mt-6 border-t border-[#E2E8F0] dark:border-[#1F2937] pt-5 space-y-4">
+          <div className="border-t border-[#E2E8F0] dark:border-[#1F2937] pt-5 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 flex items-center justify-center font-bold">
@@ -547,6 +777,7 @@ export default function DoctorOCRAndXrayPage() {
             </form>
           </div>
         </div>
+
       )}
     </div>
   );

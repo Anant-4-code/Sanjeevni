@@ -5,6 +5,7 @@ Sanjeevani  -  Doctor Router (Complete)
 All business logic delegated to DoctorService + GuardrailService.
 """
 
+import base64
 import hashlib
 import json
 from datetime import datetime, date, timedelta
@@ -583,12 +584,51 @@ async def analyze_patient_xray(payload: AnalyzePatientXrayRequest):
     }
 
 
+@router.post("/xray/detect-upload")
+async def detect_uploaded_xray(
+    file: UploadFile = File(...),
+    confidence_threshold: float = Query(0.20, ge=0.05, le=0.95),
+    patient_id: Optional[str] = Query(None),
+):
+    """
+    Accepts raw X-ray radiograph file upload, runs YOLOv7 GRAZPEDWRI-DX model inference,
+    and returns detected pathologies with scaled coordinates and preview data.
+    """
+    try:
+        content = await file.read()
+        if not content:
+            raise HTTPException(status_code=400, detail="Empty image file received.")
+        
+        detections = analyze_xray(content, score_threshold=confidence_threshold)
+        
+        # Filter clinical findings vs cosmetic orientation labels (e.g. 'text')
+        clinical_detections = [d for d in detections if d.get("label") != "text"]
+        
+        # Convert image to Base64 data URL for instant HTML5 Canvas rendering
+        b64 = base64.b64encode(content).decode("utf-8")
+        mime = file.content_type or "image/jpeg"
+        data_url = f"data:{mime};base64,{b64}"
+        
+        return {
+            "status": "success",
+            "detections": clinical_detections if clinical_detections else detections,
+            "all_detections": detections,
+            "clinical_findings_count": len(clinical_detections),
+            "image_url": data_url,
+            "filename": file.filename,
+            "confidence_threshold": confidence_threshold,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"X-ray detection failed: {str(e)}")
+
+
 class XrayAIAssistantRequest(BaseModel):
     patient_id: str
     scan_id: Optional[str] = None
     detections: List[Dict[str, Any]] = []
     question: Optional[str] = None
     preferred_model: Optional[str] = None
+    clarifications: Optional[Dict[str, str]] = None
 
 
 @router.post("/xray/ai-assistant")
@@ -597,7 +637,8 @@ async def xray_ai_assistant(payload: XrayAIAssistantRequest):
     Sanjeevani AI Radiological Assistant:
     Synthesizes YOLOv7 GRAZPEDWRI-DX detections with clinical context using the
     multi-tier Ollama cascade (glm-5.3:cloud -> deepseek-v4.1-flash:cloud -> llama3:8b local).
-    Provides formal radiological impressions, complication risks, and stabilization protocols.
+    Provides formal radiological impressions, complication risks, accuracy-enhancing questions,
+    and trauma stabilization protocols.
     """
     patient_id = payload.patient_id
     dashboard = doctor_service.get_patient_dashboard(patient_id, "doc-sharma-1")
@@ -612,30 +653,80 @@ async def xray_ai_assistant(payload: XrayAIAssistantRequest):
         lbl = d.get("label", "finding")
         conf = round(float(d.get("confidence", 0.8)) * 100)
         box = d.get("box", {})
-        det_summaries.append(f"- {lbl.upper()} (Confidence: {conf}%, Region: Box [{box.get('x', 0)}, {box.get('y', 0)}, {box.get('w', 0)}, {box.get('h', 0)}])")
+        det_summaries.append(f"- {lbl.upper()} (Confidence: {conf}%, Region: {box.get('x', 0)}, {box.get('y', 0)} • {box.get('w', 0)}x{box.get('h', 0)})")
     findings_str = "\n".join(det_summaries) if det_summaries else "No acute osseous fracture lines detected by YOLOv7 model."
 
+    clarification_str = ""
+    if payload.clarifications:
+        clarification_str = "\nPHYSICIAN-CONFIRMED CLINICAL FINDINGS:\n" + "\n".join([f"- {k}: {v}" for k, v in payload.clarifications.items()])
+
     system_prompt = (
-        "You are the Sanjeevani AI Radiological Assistant, an expert musculoskeletal radiologist and trauma orthopedic AI. "
-        "Your task is to analyze YOLOv7-p6 computer vision detections from a pediatric/adult radiographic scan (GRAZPEDWRI-DX protocol) "
+        "You are the Sanjeevani AI Radiological Assistant, an expert musculoskeletal radiologist and trauma orthopedic specialist. "
+        "Your task is to analyze YOLOv7-p6 computer vision detections from a radiographic scan (GRAZPEDWRI-DX protocol) "
         "and provide clear, structured, evidence-based radiological intelligence to the attending physician.\n\n"
         f"PATIENT CONTEXT:\nName: {p_name} | Age: {p_age} | Gender: {p_gender} | Known Conditions: {p_conditions}\n\n"
-        f"YOLOV7 COMPUTER VISION DETECTIONS:\n{findings_str}\n\n"
-        "STRUCTURE YOUR RESPONSE INTO:\n"
-        "1. RADIOLOGICAL IMPRESSION: Objective interpretation of detected fracture or osseous lesion.\n"
-        "2. COMPLICATIONS & RISK STRATIFICATION: Assess displacement risk, neurovascular concerns, growth plate / physis involvement.\n"
-        "3. RECOMMENDED CLINICAL PROTOCOL: Splinting/casting angles, analgesics (safe with renal/hepatic profile), orthopaedic consult urgency, follow-up timeline."
+        f"YOLOV7 COMPUTER VISION DETECTIONS:\n{findings_str}{clarification_str}\n\n"
+        "STRUCTURE YOUR RESPONSE INTO THE FOLLOWING DISTINCT SECTIONS:\n"
+        "1. RADIOLOGICAL IMPRESSION: Objective interpretation of detected fracture or osseous lesion, fracture line, and displacement assessment.\n"
+        "2. ACCURACY-ENHANCING CLINICAL QUESTIONS: Proactively ask 3-4 specific clinical questions to the physician to verify trauma mechanism, physical findings (e.g. snuffbox tenderness, DRUJ stability), and neurovascular integrity.\n"
+        "3. COMPLICATIONS & RISK STRATIFICATION: Assess displacement risk, neurovascular concerns (median nerve), growth plate / physis involvement (Salter-Harris risk), and diabetic healing delay.\n"
+        "4. TARGETED CLINICAL PROTOCOL: Splinting/casting angles (e.g. volar sugar-tong in 10-15° extension), analgesics safe with renal/hepatic profile, orthopaedic consult urgency, follow-up timeline."
     )
 
-    user_query = payload.question.strip() if payload.question else "Please provide a comprehensive radiological interpretation of these findings and management protocol."
+    user_query = payload.question.strip() if payload.question else "Please provide a comprehensive radiological interpretation of these findings, ask clarifying clinical questions to calibrate accuracy, and outline management protocol."
     prompt = f"Physician Query: {user_query}\n\nRadiological Assessment:"
 
     answer, model_used = query_ollama_cascade(
         prompt=prompt,
         system_prompt=system_prompt,
         preferred_model=payload.preferred_model,
-        timeout_per_model=12.0,
+        timeout_cloud=3.5,
+        timeout_local=25.0,
     )
+
+    # Standard interactive clinical clarifying questions to enhance accuracy
+    interactive_questions = [
+        {
+            "id": "q_trauma_mech",
+            "title": "Mechanism of Injury",
+            "prompt": "Was this a low-energy ground slip or high-energy trauma?",
+            "options": [
+                "Low-energy ground fall (FOOSH)",
+                "High-energy trauma / MVA",
+                "Direct blow / sports impact",
+            ],
+        },
+        {
+            "id": "q_snuffbox",
+            "title": "Anatomic Snuffbox Tenderness",
+            "prompt": "Is there tenderness over the anatomic snuffbox (scaphoid occult fracture risk)?",
+            "options": [
+                "Snuffbox tenderness negative (No pain)",
+                "Snuffbox tenderness positive (Exquisite pain)",
+                "Diffuse swelling prevents palpation",
+            ],
+        },
+        {
+            "id": "q_neurovascular",
+            "title": "Neurovascular Status",
+            "prompt": "Check radial pulse, capillary refill, and median nerve distribution:",
+            "options": [
+                "Neurovascular intact (Pulse 2+, refill <2s)",
+                "Median nerve numbness / paresthesia",
+                "Decreased radial pulse / pale fingers",
+            ],
+        },
+        {
+            "id": "q_physis",
+            "title": "Physis / Growth Plate Status",
+            "prompt": "In pediatric / adolescent patients, is the distal radial physis widened?",
+            "options": [
+                "Physis closed / skeletally mature",
+                "Physis open, alignment maintained",
+                "Physis widened / Salter-Harris II suspect",
+            ],
+        },
+    ]
 
     if not answer or model_used == "fallback_exhausted" or model_used == "ollama_offline":
         # Deterministic clinical fallback if LLM server is not running
@@ -644,9 +735,13 @@ async def xray_ai_assistant(payload: XrayAIAssistantRequest):
                 "**1. RADIOLOGICAL IMPRESSION:**\n"
                 "Acute cortical disruption observed in the distal radial metaphysis consistent with a hairline non-displaced fracture. "
                 "No gross intra-articular step-off or radiocarpal joint widening identified on standard projection.\n\n"
-                "**2. COMPLICATIONS & RISK STRATIFICATION:**\n"
-                "Low risk of neurovascular compromise. Radial and ulnar pulses intact. Monitor for swelling within first 48 hours.\n\n"
-                "**3. RECOMMENDED CLINICAL PROTOCOL:**\n"
+                "**2. ACCURACY-ENHANCING CLINICAL QUESTIONS:**\n"
+                "- Did the injury occur via low-energy fall on outstretched hand (FOOSH) or high-impact deceleration?\n"
+                "- Is there point tenderness in the anatomical snuffbox to rule out concurrent scaphoid fracture?\n"
+                "- Are distal motor and sensory functions (median/radial nerve) completely intact?\n\n"
+                "**3. COMPLICATIONS & RISK STRATIFICATION:**\n"
+                "Low risk of acute neurovascular compromise. In patients with diabetes mellitus, bone remodeling may require extended immobilization.\n\n"
+                "**4. RECOMMENDED CLINICAL PROTOCOL:**\n"
                 "- Immobilization: Volar / sugar-tong splint with wrist in 10-15° extension for 4-6 weeks.\n"
                 "- Pain control: Paracetamol / Acetaminophen preferred (avoid high-dose NSAIDs if renal concerns).\n"
                 "- Orthopedic referral: Routine outpatient consult within 5-7 days with repeat radiograph to evaluate alignment."
@@ -656,7 +751,10 @@ async def xray_ai_assistant(payload: XrayAIAssistantRequest):
             answer = (
                 "**1. RADIOLOGICAL IMPRESSION:**\n"
                 "No acute bone fracture line, cortical disruption, or joint effusion detected. Osseous mineralization and alignment appear within normal developmental limits.\n\n"
-                "**2. CLINICAL PROTOCOL:**\n"
+                "**2. ACCURACY-ENHANCING CLINICAL QUESTIONS:**\n"
+                "- Is there focal tenderness over any carpal bone or distal radioulnar joint?\n"
+                "- Did patient experience clicking or sudden pain during pronation-supination?\n\n"
+                "**3. CLINICAL PROTOCOL:**\n"
                 "- Symptomatic management if post-traumatic contusion: RICE protocol (Rest, Ice, Compression, Elevation).\n"
                 "- If pain persists > 7 days, consider follow-up radiograph or MRI to evaluate occult scaphoid/ligamentous injury."
             )
@@ -668,7 +766,9 @@ async def xray_ai_assistant(payload: XrayAIAssistantRequest):
         "scan_id": payload.scan_id,
         "model_tier": model_used,
         "radiological_impression": answer,
+        "interactive_questions": interactive_questions,
     }
+
 
 
 # =============================================================================

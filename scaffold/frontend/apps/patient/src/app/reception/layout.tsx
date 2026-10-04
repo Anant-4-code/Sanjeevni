@@ -15,7 +15,7 @@ export default function ReceptionLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#090D16] text-[#0F172A] dark:text-[#F9FAFB] flex flex-col font-sans">
-      <RoleHeader currentRole="receptionist" badgeCode="01 // RECEPTION & TRIAGE" />
+      <RoleHeader currentRole="receptionist" badgeCode="01 — RECEPTION & TRIAGE" />
       {/* Sub-Navigation Tabs */}
       <div className="sticky top-16 z-30 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border-b border-[#E2E8F0] dark:border-[#1F2937] px-6">
         <nav className="max-w-7xl mx-auto flex items-center gap-1">

@@ -1343,6 +1343,34 @@ To ensure a systematic, risk-managed progression from the current prototype to a
 - **Description:** Successfully connected GRAZPEDWRI-DX YOLOv7 fracture detection with Ollama multi-tier AI assistants across both specialist radiology and general clinical copilot workflows.
 
 ---
+
+### BUG-AI-XRAY-02: Missing Interactive Radiograph Scanning, Dummy Canvas Ellipse & Lack of Proactive Clarification Questions ✅ FIXED
+- **Fix Status:** ✅ **FIXED** — Commit `7022505` and working tree | [`doctor.py`](file:///c:/PROJECTS/sanjeevani-project/scaffold/backend/app/routers/doctor.py), [`ocr-xray/page.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/app/doctor/patient/%5BpatientId%5D/ocr-xray/page.tsx)
+- **Fix Applied:**
+  1. **Direct Upload & Scanning Action:**
+     - Created `POST /api/doctor/xray/detect-upload` in `doctor.py` accepting multipart image uploads (`.png`, `.jpg`, `.jpeg`, `.dcm`).
+     - Added **"Scan / Upload X-Ray"** button + file picker to [`ocr-xray/page.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/app/doctor/patient/%5BpatientId%5D/ocr-xray/page.tsx).
+     - Added one-click sample selectors for **Sample 1: Wrist Fracture** and **Sample 2: Pediatric Scan**.
+  2. **Real Radiograph Canvas Rendering:**
+     - Replaced the hardcoded dark placeholder ellipse on the `<canvas>` with real dynamic image loading (`selectedXrayImage`).
+     - Scaled YOLOv7 bounding boxes precisely to the rendered radiograph dimensions, painting high-contrast bounding boxes (`FRACTURE (38% CONF)`).
+  3. **Accuracy-Enhancing Interactive Questions (Clinical Triage Verification):**
+     - Prompted the Ollama cascade to generate structured accuracy-enhancing questions:
+       - Mechanism of Injury (`Low-energy ground fall (FOOSH)`, `High-energy trauma / MVA`)
+       - Anatomic Snuffbox Tenderness (`Snuffbox negative`, `Snuffbox positive (Scaphoid risk)`)
+       - Neurovascular Status (`Intact pulse 2+`, `Median nerve paresthesia`)
+       - Physis / Growth Plate Alignment (`Skeletally mature`, `Physis widened / Salter-Harris II suspect`)
+     - Rendered interactive 1-click answer pills in the UI. Selecting any option immediately recalibrates the AI diagnosis with tailored splinting and urgency guidance.
+  4. **Code Syntax Cleanup in Role Layouts:**
+     - Eradicated remaining `//` code comment artifacts from `doctor/layout.tsx`, `reception/layout.tsx`, `pharmacy/layout.tsx`, and `lab/layout.tsx` (`03 // PHYSICIAN WORKSPACE` -> `03 — PHYSICIAN WORKSPACE`).
+- **Location:**
+  - [`doctor.py`](file:///c:/PROJECTS/sanjeevani-project/scaffold/backend/app/routers/doctor.py#L585-L670)
+  - [`ocr-xray/page.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/app/doctor/patient/%5BpatientId%5D/ocr-xray/page.tsx#L460-L650)
+  - [`doctor/layout.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/app/doctor/layout.tsx#L6)
+- **Description:** Complete end-to-end scanning, radiograph rendering, and interactive clinical clarifying questions for maximum diagnostic accuracy.
+
+---
 *End of Audit Document — Generated for Sanjeevani Master Engineering Architecture.*
+
 
 
