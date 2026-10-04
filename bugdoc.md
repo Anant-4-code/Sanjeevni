@@ -23,6 +23,7 @@
 | BUG-HOME-05 | Desktop CTA directly links to `/doctor` | ✅ **FIXED** (Dual CTAs link to `/dashboard` & `/login`) |
 | BUG-NAV-01 | Navbar role switcher leaks staff access | ✅ **FIXED** (Role switcher dropdown completely removed from `Navbar.tsx`) |
 | BUG-NAV-02 | Missing Mobile Navigation Drawer | ✅ **FIXED** (Mobile hamburger drawer + bottom PWA bar in `Navbar.tsx`) |
+| BUG-NAV-03 | React Hydration Mismatch (`<div>` inside `<a>`) | ✅ **FIXED** (Replaced block-level `<div>` tags with inline `<span>` elements across `Navbar.tsx`, `RoleHeader.tsx`, and `login/page.tsx`) |
 | BUG-DASH-01 | Hardcoded `patient-ramesh` vs `demo-patient` ID mismatch | ✅ **FIXED** (Unified patient matching in `patient_service.py` & `dashboard/page.tsx`) |
 | BUG-DASH-02 | UTF-8 Mojibake in dashboard source comments | ✅ **FIXED** (Clean UTF-8 characters across `dashboard/page.tsx`) |
 | BUG-DASH-03 | Photo upload uses DataURL instead of multipart | ✅ **FIXED** (Multipart `FormData` POST to `/api/upload` in `dashboard/page.tsx`) |
@@ -294,6 +295,25 @@ This document provides a line-by-line, component-by-component, and endpoint-by-e
   ```
 - **Location:** [`Navbar.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/components/Navbar.tsx#L193-L248)
 - **Description:** Mobile users now have both a full 8-item drawer and a persistent bottom navigation bar matching native PWA standards.
+
+#### BUG-NAV-03: React Hydration Mismatch Caused by `<div>` Nested Inside `<Link>` / `<a>` ✅ FIXED
+- **Fix Status:** ✅ **FIXED** — Commit `04366fa` & `2d1705d` | [`Navbar.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/components/Navbar.tsx), [`RoleHeader.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/components/RoleHeader.tsx), [`login/page.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/app/login/page.tsx)
+- **Fix Applied:**
+  ```tsx
+  // Before (Caused HTML parser DOM mutation & React hydration mismatch: Expected server HTML to contain a matching <div> in <a>)
+  <Link href="/dashboard" className="...">
+    <div className="w-8 h-8 rounded-lg ...">S</div>
+    <span>SANJEEVANI</span>
+  </Link>
+
+  // After (Clean semantic inline elements avoiding DOM re-parenting)
+  <Link href="/dashboard" className="...">
+    <span className="w-8 h-8 rounded-lg ...">S</span>
+    <span>SANJEEVANI</span>
+  </Link>
+  ```
+- **Location:** [`Navbar.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/components/Navbar.tsx#L97-L106), [`RoleHeader.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/components/RoleHeader.tsx#L122-L130), [`login/page.tsx`](file:///c:/PROJECTS/sanjeevani-project/scaffold/frontend/apps/patient/src/app/login/page.tsx#L176-L182)
+- **Description:** Next.js and browser HTML parsers treat block-level `<div>` elements inside anchor `<a>` tags strictly during SSR reconciliation. Replaced all nested `<div>` badges with styled inline `<span>` tags, eliminating hydration mismatches. Verified with 0 runtime errors on live page navigation.
 
 ---
 
