@@ -2055,17 +2055,13 @@ A **UML Sequence Diagram** is an **interaction diagram** that models how objects
 
 ---
 
-## 36. Sanjeevani Sequence Diagram 1: Clinical E-Prescription & Safety Interlock
+---
 
-This sequence diagram models the core clinical lifecycle:
-1. Attending physician (*Dr. V. K. Rai*) drafts a cardiac prescription for *Ramesh Kumar* containing *Clopidogrel 75mg*.
-2. The `PrescriptionController` triggers the `DrugSafetyRuleEngine`.
-3. The engine synchronously fetches patient lab telemetry ($K^+ = 6.2\text{ mmol/L}$) and detects an emergency contraindication.
-4. An `alt` frame illustrates:
-   * **Branch A (Contraindication)**: System locks order, notifies doctor, accepts clinical override rationale, applies digital signature, and writes to database.
-   * **Branch B (Clean Profile)**: Direct signature and instant QR issuance.
+## 36. Role 1: Attending Physician (Doctor) Sequence Diagram
 
-### 36.1 Sequence Diagram (Mermaid Model)
+### Clinical Scenario: Outpatient Consultation, Drug Safety Interlock & Clinical Override
+* **Actor**: `Doctor (Dr. V. K. Rai, Cardiologist)`
+* **Scenario**: The doctor examines patient *Ramesh Kumar*, reviews diagnostic history, and prescribes *Clopidogrel 75mg* and *Enalapril 5mg*. The `PrescriptionController` triggers the `DrugSafetyEngine`, which discovers serum potassium is $6.2\text{ mmol/L}$ (Critical High). The system locks the prescription order. The doctor enters a mandatory clinical override rationale (*"Concurrent potassium binder initiated; ICU telemetry monitoring"*), which applies an Ed25519 digital signature and commits the order to the database.
 
 ```mermaid
 sequenceDiagram
@@ -2078,9 +2074,9 @@ sequenceDiagram
     participant Crypto as cryptoSvc : Ed25519Signer
     participant DB as db : PostgreSQLDatabase
 
-    Doctor ->> UI: 1. Input Diagnosis & Select Clopidogrel 75mg
+    Doctor ->> UI: 1. Input Diagnosis & Select Clopidogrel + Enalapril
     activate UI
-    UI ->> API: 2. POST /api/prescriptions (rxData)
+    UI ->> API: 2. POST /api/prescriptions (patientId, medItems)
     activate API
 
     API ->> Safety: 3. evaluateInteractions(patientId, medIds)
@@ -2139,7 +2135,350 @@ sequenceDiagram
 
 ---
 
-## 37. Sanjeevani Sequence Diagram 2: Hybrid AI Copilot Cascade with Fallback
+## 37. Role 2: Patient & Caregiver Sequence Diagram
+
+### Clinical Scenario: Universal Scanner Hub Ingestion & Daily Medication Intake Logging
+* **Actor**: `Patient (Ramesh Kumar / Mobile PWA)`
+* **Scenario**: 
+  1. **Flow A (Document Digitization)**: Patient uploads a photo of an OTC medicine strip or past lab report. The `ScannerHub` invokes the OCR pipeline, normalizes medication data, and archives the file in the Encrypted Vault.
+  2. **Flow B (Intake Adherence Logging)**: At 08:30 PM, the scheduled reminder prompts the patient to confirm their *Clopidogrel 75mg* dose. The patient marks it `taken`, which updates the adherence score.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Patient as 웃 Patient (Mobile PWA)
+    participant PWA as pwaClient : NextJS_PWA
+    participant ScanAPI as scanRouter : UniversalScannerHub
+    participant OCR as ocrEngine : TesseractOCRPipeline
+    participant Vault as vaultStorage : MinIO_EncryptedVault
+    participant AdhereAPI as adhereRouter : AdherenceController
+    participant DB as db : PostgreSQLDatabase
+
+    %% Flow A: Medical Document Digitization
+    rect rgb(240, 249, 255)
+        note over Patient,Vault: Flow A: Universal Medical Scanner Ingestion
+        Patient ->> PWA: 1. Capture Camera Image of Lab Slip / OTC Strip
+        activate PWA
+        PWA ->> ScanAPI: 2. POST /api/scan/upload (image_bytes, category: "lab_report")
+        activate ScanAPI
+
+        ScanAPI ->> OCR: 3. extractTextAndEntities(image_buffer)
+        activate OCR
+        OCR -->> ScanAPI: 4. Return Normalized Tokens (Analyte: "Potassium", Value: 6.2)
+        deactivate OCR
+
+        ScanAPI ->> Vault: 5. storeEncryptedFile(aes256_buffer)
+        activate Vault
+        Vault -->> ScanAPI: 6. Return immutable_vault_uri
+        deactivate Vault
+
+        ScanAPI ->> DB: 7. INSERT INTO scans (patient_id, file_url, ocr_text, extracted_metadata)
+        activate DB
+        DB -->> ScanAPI: 8. Confirm DB Record Created
+        deactivate DB
+
+        ScanAPI -->> PWA: 9. HTTP 201 Created (Categorized Lab Record)
+        PWA -->> Patient: 10. Display Digitized Document in Health Vault
+        deactivate ScanAPI
+        deactivate PWA
+    end
+
+    %% Flow B: Daily Medication Adherence Confirmation
+    rect rgb(240, 253, 244)
+        note over Patient,DB: Flow B: Medication Intake Confirmation & Adherence Tracking
+        Patient ->> PWA: 11. Tap "Mark Taken" on Scheduled Dose Alert (08:30 PM)
+        activate PWA
+        PWA ->> AdhereAPI: 12. POST /api/patient/adherence (rx_item_id, status: "taken", timestamp)
+        activate AdhereAPI
+
+        AdhereAPI ->> DB: 13. INSERT INTO adherence_logs (patient_id, status, taken_at)
+        activate DB
+        DB -->> AdhereAPI: 14. Confirm Intake Logged
+        deactivate DB
+
+        AdhereAPI ->> AdhereAPI: 15. recalculateAdherenceScore(patient_id)
+        AdhereAPI -->> PWA: 16. HTTP 200 OK (New Score: 94.2%, Streak: 18 Days)
+        PWA -->> Patient: 17. Display Success Animation & Updated Streak Counter
+        deactivate AdhereAPI
+        deactivate PWA
+    end
+```
+
+---
+
+## 38. Role 3: Pharmacist (Dispensary) Sequence Diagram
+
+### Clinical Scenario: QR Code Verification, Safety Lock Check, Dispensation & Stock Velocity
+* **Actor**: `Pharmacist (Apollo Central Dispensary)`
+* **Scenario**: Pharmacist scans a patient's prescription QR code. The system checks the Ed25519 digital signature and verifies that all safety interlocks were clinically overridden. The pharmacist dispenses the medication, which atomically decrements the inventory batch and recalculates the daily burn velocity.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Pharmacist as 웃 Pharmacist
+    participant POS as pharmUI : PharmacyDispensaryTerminal
+    participant API as pharmCtrl : PharmacyController
+    participant Crypto as cryptoSvc : Ed25519Verifier
+    participant Inv as invMgr : InventoryManager
+    participant DB as db : PostgreSQLDatabase
+
+    Pharmacist ->> POS: 1. Scan Prescription QR Code using 2D USB Scanner
+    activate POS
+    POS ->> API: 2. POST /api/pharmacy/verify-qr (qrTokenPayload)
+    activate API
+
+    API ->> Crypto: 3. verifySignature(qrTokenPayload)
+    activate Crypto
+    Crypto -->> API: 4. Signature Valid (Signed by Dr. V. K. Rai, MCI-48291)
+    deactivate Crypto
+
+    API ->> DB: 5. SELECT prescription, items, interaction_flags WHERE id = 'RX-902'
+    activate DB
+    DB -->> API: 6. Return RxDetails (Status: "ISSUED", is_overridden: true, rationale: "ICU Monitoring")
+    deactivate DB
+
+    alt Prescription Unlocked & Authorized
+        API -->> POS: 7. HTTP 200 OK (Render Rx Items: Clopidogrel 75mg, Qty: 30)
+        POS -->> Pharmacist: 8. Display Dispensing Checklist & Override Rationale
+        
+        Pharmacist ->> POS: 9. Confirm Physical Dispense (Batch: "BATCH-2026-CLP")
+        POS ->> API: 10. POST /api/pharmacy/dispense (rxId, batchId, qty: 30)
+        
+        API ->> Inv: 11. deductStockAtomic(medicationId, qty: 30)
+        activate Inv
+        Inv ->> DB: 12. UPDATE inventory_stock SET qty = qty - 30 WHERE id = medId
+        activate DB
+        DB -->> Inv: 13. Confirm Row Updated (New Qty: 420)
+        deactivate DB
+
+        Inv ->> Inv: 14. recalculateDailyBurnVelocity(medId)
+        Inv -->> API: 15. Stock Updated (Days Remaining: 27.6 Days)
+        deactivate Inv
+
+        API ->> DB: 16. INSERT INTO pharmacy_dispense_log (rx_id, pharmacist_id, dispensed_at)
+        activate DB
+        DB -->> API: 17. Dispense Log Committed
+        deactivate DB
+
+        API -->> POS: 18. HTTP 200 OK (Dispense Receipt & Remaining Stock)
+        POS -->> Pharmacist: 19. Print Dispense Label & Receipt
+    else Tampered / Unacknowledged Lock
+        API -->> POS: 20. HTTP 403 Forbidden (Tamper Alert or Safety Pending)
+        POS -->> Pharmacist: 21. Display Lock Alert: "Dispensing Prohibited"
+    end
+
+    deactivate API
+    deactivate POS
+```
+
+---
+
+## 39. Role 4: Front-Desk Receptionist & Triage Nurse Sequence Diagram
+
+### Clinical Scenario: Patient Telephone Lookup, AI Acuity Triage & Doctor Queue Routing
+* **Actor**: `Receptionist / Triage Nurse`
+* **Scenario**: A patient arrives at outpatient reception. The receptionist searches their 10-digit mobile number. The patient reports acute chest pressure. The AI triage classifier evaluates the complaint, flags priority as *Critical (Red)*, and routes the patient directly to the Cardiology OPD priority token queue.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Receptionist as 웃 Receptionist
+    participant Terminal as recTerminal : ReceptionTerminal
+    participant Gateway as triageAPI : TriageGateway
+    participant TriageAI as triageEngine : AcuityClassifier
+    participant QueueMgr as queueService : QueueRouter
+    participant DB as db : PostgreSQLDatabase
+
+    Receptionist ->> Terminal: 1. Enter Patient Phone ("9820148291")
+    activate Terminal
+    Terminal ->> Gateway: 2. GET /api/patients/lookup?phone=9820148291
+    activate Gateway
+
+    Gateway ->> DB: 3. SELECT * FROM patients WHERE phone = '9820148291'
+    activate DB
+    DB -->> Gateway: 4. Return Patient Profile (Ramesh Kumar, 54M, Allergies: [ACEI, Penicillin])
+    deactivate DB
+    Gateway -->> Terminal: 5. Render Demographic Profile & Allergy Alert Badge
+    deactivate Gateway
+
+    Receptionist ->> Terminal: 6. Input Chief Complaint ("Crushing retrosternal chest pain + sweating")
+    Terminal ->> Gateway: 7. POST /api/triage/classify (patientId, symptoms, vitals: {BP: "148/94"})
+    activate Gateway
+
+    Gateway ->> TriageAI: 8. evaluateAcuityScore(symptoms, vitals)
+    activate TriageAI
+    TriageAI -->> Gateway: 9. Return AcuityScore (Priority: 3 - CRITICAL_RED, Urgency: Emergency)
+    deactivate TriageAI
+
+    Gateway ->> QueueMgr: 10. assignQueueToken(patientId, specialty: "Cardiology", priority: "CRITICAL")
+    activate QueueMgr
+    QueueMgr ->> DB: 11. INSERT INTO doctor_queues (patient_id, doctor_id, token_no, priority)
+    activate DB
+    DB -->> QueueMgr: 12. Token #C-01 Created (Priority Slot 1)
+    deactivate DB
+    QueueMgr -->> Gateway: 13. Token Allotted (Doctor: Dr. V. K. Rai, Room 304, Wait: 0 min)
+    deactivate QueueMgr
+
+    Gateway -->> Terminal: 14. HTTP 200 OK (Token Card & Emergency Route)
+    deactivate Gateway
+    Terminal -->> Receptionist: 15. Print Token Slip & Display Flashing Red Emergency Route
+    deactivate Terminal
+```
+
+---
+
+## 40. Role 5: Diagnostic Laboratory Technician Sequence Diagram
+
+### Clinical Scenario: Pathology Slip Ingestion, Panic Value Interlock & Direct Vault Publishing
+* **Actor**: `Lab Technician`
+* **Scenario**: Lab technician receives a serum electrolyte sample for *Ramesh Kumar*. The analyzer outputs Potassium at $6.2\text{ mmol/L}$. The technician uploads the result slip; the system flags the panic value ($\ge 6.0\text{ mmol/L}$), publishes the verified record to the patient's Vault, and broadcasts an emergency alert to the attending cardiologist.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor LabTech as 웃 Lab Technician
+    participant LabUI as labTerminal : PathologyDeskUI
+    participant API as labRouter : LaboratoryController
+    participant Parser as ocrParser : PathologyReportParser
+    participant Notif as alertGateway : EmergencyBroadcaster
+    participant DB as db : PostgreSQLDatabase
+
+    LabTech ->> LabUI: 1. Upload Analyte Slip (PDF / Image) & Select Patient P-1092
+    activate LabUI
+    LabUI ->> API: 2. POST /api/lab/process-report (file_bytes, test_type: "Electrolytes")
+    activate API
+
+    API ->> Parser: 3. extractBiomarkers(file_bytes)
+    activate Parser
+    Parser -->> API: 4. Extracted: { "Potassium (K+)": 6.2, "Sodium (Na+)": 138, "Chloride": 101 }
+    deactivate Parser
+
+    API ->> API: 5. evaluatePanicThresholds(analyteMap)
+    note right of API: Panic Threshold Triggered:<br/>K+ (6.2 mmol/L) >= 6.0 mmol/L Critical Bound
+
+    API -->> LabUI: 6. Display Extracted Values with Flashing Red Panic Flag
+    deactivate API
+
+    LabTech ->> LabUI: 7. Confirm Lab Values & Apply Technician Signature
+    LabUI ->> API: 8. POST /api/lab/publish (reportId, signed_values, is_panic: true)
+    activate API
+
+    API ->> DB: 9. INSERT INTO lab_reports (patient_id, analyte, value, status: "VERIFIED_PANIC")
+    activate DB
+    DB -->> API: 10. Record Committed to Vault
+    deactivate DB
+
+    par Parallel Broadcast
+        API ->> Notif: 11. triggerDoctorPanicAlert(docId: DOC-401, patient: "Ramesh", K+: 6.2)
+        activate Notif
+        Notif -->> API: 12. Alert Pushed to Doctor Workstation WebSocket
+        deactivate Notif
+    and Patient Notification
+        API ->> Notif: 13. dispatchSmsAlert(patientPhone, "Critical lab update published")
+        activate Notif
+        Notif -->> API: 14. SMS Dispatched
+        deactivate Notif
+    end
+
+    API -->> LabUI: 15. HTTP 200 OK (Report Published & Doctor Alerted)
+    deactivate API
+    LabUI -->> LabTech: 16. Display Green Confirmation: "Vault Updated & Emergency Notified"
+    deactivate LabUI
+```
+
+---
+
+## 41. Role 6: Emergency Paramedic / First Responder Sequence Diagram
+
+### Clinical Scenario: Zero-Auth Emergency QR Passport Scan & Critical Profile Rendering
+* **Actor**: `Emergency Paramedic / Ambulance Responder`
+* **Scenario**: A patient is found unconscious at the scene of an accident. The paramedic scans the patient's physical Emergency QR Passport card using a mobile browser. The request hits a stateless, zero-auth public endpoint. The system verifies the cryptographic signature without requiring login, immediately rendering blood group, severe allergies, active medications, and tap-to-call SOS contacts.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Paramedic as 웃 Paramedic / First Responder
+    participant Phone as responderPhone : MobileBrowser
+    participant Gateway as passportAPI : EmergencyPassportGateway
+    participant Crypto as tokenVerifier : Ed25519TokenVerifier
+    participant DB as db : PostgreSQLDatabase
+
+    Paramedic ->> Phone: 1. Scan Patient Emergency QR Card via Smartphone Camera
+    activate Phone
+    Phone ->> Gateway: 2. GET /emergency-passport?token=eyJhbGciOiJFZERTQ... (No Auth Headers)
+    activate Gateway
+
+    Gateway ->> Crypto: 3. verifyEmergencyToken(jwtToken)
+    activate Crypto
+    Crypto -->> Gateway: 4. Token Verified (PatientId: "P-1092", Expiry: Valid)
+    deactivate Crypto
+
+    Gateway ->> DB: 5. SELECT blood_group, allergies, emergency_contacts, active_meds FROM emergency_views WHERE id = 'P-1092'
+    activate DB
+    DB -->> Gateway: 6. Return EmergencyPayload (O+, Severe Penicillin Allergy, Dr. Rai 9820148291)
+    deactivate DB
+
+    Gateway ->> DB: 7. INSERT INTO emergency_access_audits (patient_id, accessed_at, responder_ip)
+    activate DB
+    DB -->> Gateway: 8. Audit Committed (Zero-Leakage Compliance)
+    deactivate DB
+
+    Gateway -->> Phone: 9. HTTP 200 OK (Render Emergency Passport View)
+    deactivate Gateway
+    Phone -->> Paramedic: 10. Display High-Contrast Emergency Card:<br/>Blood: O+ | Allergies: ACEI, Penicillin | Tap-to-Call SOS
+    deactivate Phone
+```
+
+---
+
+## 42. Role 7: Hospital Administrator Sequence Diagram
+
+### Clinical Scenario: Staff Role Provisioning & Immutable Clinical Audit Trail Inspection
+* **Actor**: `Hospital Administrator`
+* **Scenario**: The administrator provisions a new cardiologist, assigning departmental clinical privileges. Subsequently, the admin inspects the immutable clinical audit log to verify all prescription safety overrides signed during the week.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Admin as 웃 Hospital Administrator
+    participant AdminUI as adminConsole : AdminDashboardUI
+    participant AuthAPI as authAdminSvc : UserManagementController
+    participant AuditAPI as auditCtrl : ClinicalAuditController
+    participant DB as db : PostgreSQLDatabase
+
+    %% Flow 1: Provisioning New Clinician
+    Admin ->> AdminUI: 1. Input Doctor Details (Dr. Rai, Specialty: "Cardiology", MCI: "48291")
+    activate AdminUI
+    AdminUI ->> AuthAPI: 2. POST /api/admin/users/provision (role: "doctor", licenseNo)
+    activate AuthAPI
+
+    AuthAPI ->> DB: 3. INSERT INTO app_users & doctor_credentials (role: 'doctor')
+    activate DB
+    DB -->> AuthAPI: 4. Confirm User Created (ID: DOC-401)
+    deactivate DB
+    AuthAPI -->> AdminUI: 5. HTTP 201 Created (Clinician Onboarded)
+    AdminUI -->> Admin: 6. Display Success Toast: "Credentials & Department Allotted"
+    deactivate AuthAPI
+
+    %% Flow 2: Audit Trail Inspection
+    Admin ->> AdminUI: 7. Open "Safety Override Audit Logs" (Filter: Last 7 Days)
+    AdminUI ->> AuditAPI: 8. GET /api/admin/audit/overrides?from=2026-10-01
+    activate AuditAPI
+
+    AuditAPI ->> DB: 9. SELECT * FROM interaction_flags WHERE acknowledged = true ORDER BY created_at DESC
+    activate DB
+    DB -->> AuditAPI: 10. Return Override Records (Rx-902, Doc: DOC-401, Reason: "ICU Monitoring")
+    deactivate DB
+
+    AuditAPI -->> AdminUI: 11. HTTP 200 OK (Tabular Audit Log with Cryptographic Signatures)
+    deactivate AuditAPI
+    AdminUI -->> Admin: 12. Render Tamper-Proof Audit Table & PDF Export Button
+    deactivate AdminUI
+```
+
+---
+
+## 43. Hybrid AI Copilot Cascade Sequence Diagram
 
 This sequence diagram visualizes how Sanjeevani enforces **sub-second AI response times** while maintaining **100% clinical availability** via an automated circuit-breaker fallback:
 
@@ -2187,14 +2526,14 @@ sequenceDiagram
 
 ---
 
-## 38. Step-by-Step Guide to Drawing Sequence Diagrams in Exam / Tools
+## 44. Step-by-Step Guide to Drawing Role-Based Sequence Diagrams
 
-### Drawing the Sequence Diagram in Draw.io / Lucidchart / StarUML:
-1. **Place Lifeline Headers Across the Top**:
-   * Draw rectangular boxes horizontally: `Actor (Stick Figure)`, `docUI : WebClient`, `rxCtrl : BackendController`, `safetyEngine : RuleEngine`, `db : Database`.
+### Drawing Sequence Diagrams in Draw.io / Lucidchart / StarUML:
+1. **Identify the Actor & Core Subsystems**:
+   * Place the primary human actor on the far left (Stick Figure).
+   * Arrange the software layers from left to right: `Client UI` $\rightarrow$ `API Controller` $\rightarrow$ `Business/Safety Engine` $\rightarrow$ `Security/Crypto` $\rightarrow$ `Database`.
 2. **Drop Vertical Dashed Lines (Lifelines)**:
    * Draw dashed lines extending vertically downwards from the center of each header box.
-   * *Ensure all lifelines extend to the bottom of the diagram*.
 3. **Draw Synchronous Messages (`──►`)**:
    * Draw horizontal solid lines with **filled triangular arrowheads** pointing from sender to receiver.
    * Add a narrow **shaded activation bar (`█`)** on the receiver's lifeline for the duration of the call.
@@ -2202,39 +2541,38 @@ sequenceDiagram
    * Draw horizontal **dashed lines with open arrowheads** pointing back to the caller once the operation completes.
 5. **Draw Self Messages (`↺`)**:
    * Draw a U-shaped arrow departing from the lifeline and re-entering lower down on the same lifeline.
-6. **Enclose Branches in Interaction Frames (`alt`)**:
-   * Draw a large rectangle around the conditional section.
-   * Label the top-left tag with `alt`.
-   * Divide the frame horizontally with a dashed line into two compartments:
-     * Top compartment: `[Critical Contraindication Detected]`
-     * Bottom compartment: `[else: Clean Profile]`
+6. **Enclose Branches in Interaction Frames (`alt` / `par`)**:
+   * Draw a large rectangle around the conditional section labeled with `alt` or `par`.
+   * Divide the frame horizontally with a dashed line into mutually exclusive or concurrent compartments.
 7. **Number All Messages Chronologically**:
    * Top-to-bottom numbering (1, 2, 3...) strictly reflects execution sequence over time.
 
 ---
 
-## 39. University Viva & Oral Defense FAQ (Sequence Diagrams)
+## 45. University Viva & Oral Defense FAQ (Sequence Diagrams)
 
-### Q1: What is the semantic difference between Synchronous and Asynchronous messages?
+### Q1: Why are there different Sequence Diagrams for each user role in Sanjeevani?
+> **Answer:** Each role (Doctor, Patient, Pharmacist, Receptionist, Lab Tech, Paramedic, Admin) interacts with a completely different operational slice of the architecture:
+> * The **Doctor** exercises synchronous safety-gated prescribing and digital signing.
+> * The **Patient** exercises asynchronous OCR document ingestion and intake logging.
+> * The **Pharmacist** executes cryptographic QR verification and atomic inventory decrements.
+> * The **Paramedic** accesses a stateless zero-auth public endpoint for instant emergency telemetry.
+> Creating separate sequence diagrams proves that the system maintains strict **separation of concerns** and role-specific security boundaries.
+
+### Q2: What is the semantic difference between Synchronous and Asynchronous messages?
 > **Answer:**
 > * **Synchronous Call (`──►`, filled arrowhead)**: The calling thread **blocks and suspends execution** while waiting for the receiver to process the request and return a response (e.g., `evaluateInteractions()` must finish before the prescription can proceed).
 > * **Asynchronous Call (`──>`, open arrowhead)**: The caller **fires and forgets**, immediately continuing its own execution without waiting for the recipient (e.g., dispatching an SMS reminder or logging an async audit trail).
 
-### Q2: What is an Activation Bar, and when is it required?
+### Q3: What is an Activation Bar, and when is it required?
 > **Answer:** An **Activation Bar** (also known as an *Execution Specification*) is a vertical rectangle drawn over a lifeline indicating that the object is actively executing internal code or waiting for sub-routines to return. It begins when a message reaches the object and ends when the return message is sent.
 
-### Q3: What is the purpose of the `alt` Combined Fragment?
+### Q4: What is the purpose of the `alt` Combined Fragment?
 > **Answer:** The `alt` (Alternative) operator models **conditional if-else branching**. It partitions the lifelines into multiple mutually exclusive compartments separated by dashed horizontal lines. Only the compartment whose guard condition evaluates to true will execute. In Sanjeevani, `alt` clearly separates the *Clinical Override Branch* from the *Standard Approval Branch*.
 
-### Q4: How are Object Creation and Object Destruction modeled?
-> **Answer:**
-> * **Object Creation**: Represented by a dashed arrow labeled `«create»` pointing directly into the **head box** of a newly instantiated lifeline (not onto an existing dashed line).
-> * **Object Destruction**: Represented by a bold **`X`** at the bottom of the lifeline, indicating that the instance is deallocated from memory (garbage collected).
+### Q5: How does the Paramedic sequence diagram enforce security without a login password?
+> **Answer:** It uses **Asymmetric Cryptographic Proof of Possession**. The physical QR passport contains a digitally signed Ed25519 token generated by the hospital. The public gateway verifies the cryptographic signature with the hospital's public key; if valid, it returns only emergency-relevant data (blood group, allergies, active meds), ensuring life-saving speed without opening unauthorized administrative database access.
 
-### Q5: How do Sequence Diagrams complement Activity Diagrams?
-> **Answer:**
-> * An **Activity Diagram** models **high-level process flow, decision branching, and concurrency** without tying calls to specific programming APIs.
-> * A **Sequence Diagram** models **concrete object-to-object message passing over time**, specifying exact function calls, parameters, HTTP verbs, and database transactions between running software objects.
 
 
 
