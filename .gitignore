@@ -24,9 +24,16 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# Large model binaries
+# Large model binaries & datasets
 *.onnx
 *.pb
 *.weights
 *.h5
-
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.gguf
+*.zip
+OCR/
+GRAZPEDWRI-DX-Fracture-Detection-main/

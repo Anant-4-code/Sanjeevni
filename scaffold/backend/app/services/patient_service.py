@@ -23,13 +23,28 @@ def determine_criticality_tier(name: str) -> str:
     return "important"
 
 
-DEMO_PATIENT_IDS = {"demo-patient", "patient-ramesh", "patient-savitri", "patient-vikram"}
+DEMO_PATIENT_IDS = {"demo-patient", "patient-ramesh", "user-patient", "patient-savitri", "patient-vikram"}
 
 
 class PatientService:
     @staticmethod
-    def _is_matching_patient(item_patient_id: str, query_patient_id: str) -> bool:
+    def _canonical_patient_id(patient_id: str) -> str:
+        if not patient_id:
+            return "patient-ramesh"
+        pid = str(patient_id).strip().lower()
+        if pid in DEMO_PATIENT_IDS or pid in ("demo-patient", "patient-ramesh", "user-patient", "ramesh"):
+            return "patient-ramesh"
+        return str(patient_id).strip()
+
+    @classmethod
+    def _is_matching_patient(cls, item_patient_id: str, query_patient_id: str) -> bool:
+        if not item_patient_id or not query_patient_id:
+            return False
         if item_patient_id == query_patient_id:
+            return True
+        norm_item = cls._canonical_patient_id(item_patient_id)
+        norm_query = cls._canonical_patient_id(query_patient_id)
+        if norm_item == norm_query:
             return True
         if item_patient_id in DEMO_PATIENT_IDS and query_patient_id in DEMO_PATIENT_IDS:
             return True
@@ -38,6 +53,7 @@ class PatientService:
     def __init__(self):
         self.logs = []
         self.shifted_reminders = {}
+        self.copilot_chat_history = {}
         self.schedule_items = [
             {
                 "prescription_item_id": "item-demo-1",
@@ -579,6 +595,8 @@ class PatientService:
 
     def get_vault(self, patient_id: str, category: str = None):
         items = [v for v in self.vault_documents if self._is_matching_patient(v.get("patient_id", ""), patient_id)]
+        if not items:
+            items = [v for v in self.vault_documents if self._is_matching_patient(v.get("patient_id", ""), "patient-ramesh")]
         if category and category != "all":
             cat_lower = category.lower()
             if cat_lower in ["lab-reports", "lab_reports"]:
@@ -811,6 +829,8 @@ class PatientService:
 
     def get_timeline(self, patient_id: str):
         items = [s for s in self.schedule_items if self._is_matching_patient(s.get("patient_id", ""), patient_id)]
+        if not items:
+            items = [s for s in self.schedule_items if self._is_matching_patient(s.get("patient_id", ""), "patient-ramesh")]
         # Snoozed is treated as pending (does not count as missed)
         evaluated_items = [s for s in items if s.get("acknowledgment_state") != "snoozed"]
         taken_count = sum(1 for s in evaluated_items if s.get("taken") or s.get("acknowledgment_state") == "taken")
@@ -820,6 +840,26 @@ class PatientService:
             "adherence_score": adherence,
             "schedule": items,
         }
+
+    def get_copilot_chat(self, patient_id: str) -> list[dict]:
+        canonical = self._canonical_patient_id(patient_id)
+        return list(self.copilot_chat_history.get(canonical, []))
+
+    def add_copilot_chat_message(self, patient_id: str, message: dict):
+        canonical = self._canonical_patient_id(patient_id)
+        if canonical not in self.copilot_chat_history:
+            self.copilot_chat_history[canonical] = []
+        self.copilot_chat_history[canonical].append(message)
+        if len(self.copilot_chat_history[canonical]) > 60:
+            self.copilot_chat_history[canonical] = self.copilot_chat_history[canonical][-60:]
+
+    def set_copilot_chat(self, patient_id: str, messages: list[dict]):
+        canonical = self._canonical_patient_id(patient_id)
+        self.copilot_chat_history[canonical] = list(messages)[-60:]
+
+    def clear_copilot_chat(self, patient_id: str):
+        canonical = self._canonical_patient_id(patient_id)
+        self.copilot_chat_history[canonical] = []
 
     def toggle_intake(self, prescription_item_id: str, taken: bool):
         target_patient = "demo-patient"

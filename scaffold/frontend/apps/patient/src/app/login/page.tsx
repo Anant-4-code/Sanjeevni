@@ -97,8 +97,17 @@ export default function Login() {
           admin:        "Hospital Administrator",
         };
 
+        const idMap: Record<string, string> = {
+          doctor:       "doc-sharma-1",
+          patient:      "patient-ramesh",
+          receptionist: "rec-priya-1",
+          pharmacist:   "pharm-anita-1",
+          lab_tech:     "lab-suresh-1",
+          admin:        "admin-1",
+        };
+
         login({
-          id: `user-${userRole}`,
+          id: idMap[userRole] || `user-${userRole}`,
           full_name: nameMap[userRole] || userRole,
           email: cleanEmail,
           phone: "+91 98765 43210",

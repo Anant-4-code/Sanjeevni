@@ -100,13 +100,14 @@ def query_ollama_cascade(
         "gemma3:4b",
     ]
 
-    # Prioritize installed local models
+    # Prioritize models that are actually installed and registered in Ollama
+    ordered_cloud = [m for m in cloud_candidates if m in installed] + [m for m in cloud_candidates if m not in installed]
     ordered_local = [m for m in local_candidates if m in installed] + [m for m in local_candidates if m not in installed]
 
     cascade: List[str] = []
     if preferred_model:
         cascade.append(preferred_model)
-    cascade.extend([m for m in cloud_candidates if m not in cascade])
+    cascade.extend([m for m in ordered_cloud if m not in cascade])
     cascade.extend([m for m in ordered_local if m not in cascade])
 
     full_prompt = f"{system_prompt}\n\n{prompt}".strip() if system_prompt else prompt
